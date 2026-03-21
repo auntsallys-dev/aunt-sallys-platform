@@ -39,3 +39,9 @@ drizzle/migrations/*.sql
 
 # Misc
 *.tsbuildinfo
+node_modules/
+.env
+*.env
+dist/
+.next/
+apps/api/public/
