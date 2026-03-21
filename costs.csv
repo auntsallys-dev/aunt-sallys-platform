@@ -1,0 +1,41 @@
+Aunt Sally's Laundry Platform — Project Cost Tracker,,,,,
+,,,,,
+CATEGORY,ITEM,COST (USD),FREQUENCY,ANNUAL COST (USD),NOTES
+,,,,,
+INFRASTRUCTURE,,,,,
+,Google Workspace Business Starter,$5.46,Monthly,$65.52,Plus tax (~12% VAT = ~$73.38/yr)
+,Domain (auntsallyslaundry.com),$12.00,Yearly,$12.00,Plus tax. Just purchased.
+,Neon PostgreSQL (Free Tier),$0.00,Monthly,$0.00,Free tier: 0.5 GB storage / 190 compute hours. Enough for MVP.
+,Neon PostgreSQL (Launch Plan),$19.00,Monthly,$228.00,If we outgrow free tier. 10 GB storage / 300 compute hours.
+,Vercel (Free Tier),$0.00,Monthly,$0.00,Hosting customer website. Free for hobby/small projects.
+,Vercel (Pro),$20.00,Monthly,$240.00,If traffic grows. Unlimited bandwidth + analytics.
+,Railway (API hosting),$5.00,Monthly,$60.00,API server. $5/mo hobby plan or pay-per-use.
+,Cloudflare R2 (File Storage),$0.00,Monthly,$0.00,Free tier: 10 GB. For receipts/images.
+,,,,,
+DEVELOPMENT (AI API COSTS),,,,,
+,Phase 1 — Scaffolding + POS (done/current),$7.04,One-time,$7.04,Actual spend so far on Aunt Sally's tasks.
+,Phase 1 — POS Functional + DB + Auth (estimate),$15.00,One-time,$15.00,Connecting DB / building CRUD / auth / testing.
+,Phase 1 — Customer Website (estimate),$12.00,One-time,$12.00,Booking flow / service pages / payment.
+,Phase 1 — Admin Dashboard (estimate),$10.00,One-time,$10.00,Branch management / reports / staff management.
+,Phase 1 — Delivery Tracking (estimate),$8.00,One-time,$8.00,Basic tracking module.
+,Phase 1 — Payment Integration (estimate),$8.00,One-time,$8.00,PayMongo / GCash / Maya integration.
+,Phase 1 — Testing + Polish (estimate),$10.00,One-time,$10.00,Bug fixes / UX improvements / deployment.
+,Phase 2 — AI Features (estimate),$20.00,One-time,$20.00,Chat support / smart routing / demand forecasting.
+,Phase 3 — Franchise Module (estimate),$15.00,One-time,$15.00,Onboarding flow / franchise dashboard.
+,,,,,
+THIRD-PARTY SERVICES,,,,,
+,PayMongo Transaction Fees,2.5% + PHP 15,Per transaction,Varies,Per card/e-wallet transaction. Customer pays or absorbed.
+,SMS/OTP (Semaphore),$0.01,Per SMS,~$50/yr estimate,Order notifications + OTP. ~5000 SMS/yr estimate.
+,,,,,
+SUMMARY,,,,,
+,,,,,
+,Infrastructure (Year 1 — Free Tiers),,,$77.38,Google Workspace + Domain only.
+,Infrastructure (Year 1 — Paid Tiers),,,$613.38,If scaling to paid plans.
+,Development (AI API — Total Estimate),,,$105.04,All phases. One-time cost.
+,,,,,
+,TOTAL YEAR 1 (Free Tiers + Dev),,,$182.42,
+,TOTAL YEAR 1 (Paid Tiers + Dev),,,$718.42,
+,,,,,
+CONTEXT,,,,,
+,Current 3rd-party POS cost at Ayala 30th,PHP 60000,Yearly,~$1050 USD,This is what we're REPLACING.
+,Aunt Sally's platform saves,,,,~$870-970/yr vs current POS. Plus: multi-branch / online booking / delivery tracking / franchise-ready.
