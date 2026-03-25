@@ -189,6 +189,9 @@ importers:
 
   packages/db:
     dependencies:
+      bcryptjs:
+        specifier: ^2.4.3
+        version: 2.4.3
       drizzle-orm:
         specifier: ^0.36.4
         version: 0.36.4(@types/react@19.2.14)(postgres@3.4.8)(react@19.2.4)

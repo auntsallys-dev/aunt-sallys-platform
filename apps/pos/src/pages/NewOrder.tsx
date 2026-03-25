@@ -3,6 +3,30 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 
+// ── Tab / category config ─────────────────────────────────────────────────────
+
+const TABS = [
+  {
+    label: "Laundry service",
+    categories: ["wash_dry_fold", "wash_dry_press", "dry_only", "heavy_wash", "comforter"],
+  },
+  { label: "Dryclean/Toys", categories: ["dry_clean"] },
+  { label: "Add ons", categories: ["addon", "logistics"] },
+];
+
+const CATEGORY_COLORS: Record<string, string> = {
+  wash_dry_fold: "#00ACC1",
+  wash_dry_press: "#1E88E5",
+  dry_only:       "#FB8C00",
+  heavy_wash:     "#D81B60",
+  comforter:      "#43A047",
+  dry_clean:      "#F57C00",
+  addon:          "#1976D2",
+  logistics:      "#1565C0",
+};
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
 interface Service {
   id: string;
   name: string;
@@ -10,6 +34,7 @@ interface Service {
   priceUnit: string;
   minQuantity: string;
   category: string;
+  description?: string;
 }
 
 interface LineItem {
@@ -18,6 +43,13 @@ interface LineItem {
   quantity: number;
   unitPrice: number;
   priceUnit: string;
+}
+
+interface Customer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
 }
 
 interface CreatedOrder {
@@ -33,15 +65,167 @@ interface CreatedOrder {
   createdAt: string;
 }
 
+// ── Customer search modal ─────────────────────────────────────────────────────
+
+function CustomerModal({
+  onClose,
+  onSelect,
+}: {
+  onClose: () => void;
+  onSelect: (c: Customer) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<Customer[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [notFound, setNotFound] = useState(false);
+  const [newFirst, setNewFirst] = useState("");
+  const [newLast, setNewLast] = useState("");
+  const [newPhone, setNewPhone] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+
+  async function handleSearch() {
+    if (!query.trim()) return;
+    setSearching(true);
+    setNotFound(false);
+    setResults([]);
+    try {
+      const res = await api.customers.search(query.trim());
+      if (res.data.length === 0) {
+        setNotFound(true);
+        setNewPhone(query.trim());
+      } else {
+        setResults(res.data);
+      }
+    } catch {
+      setNotFound(true);
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  async function handleCreate() {
+    if (!newFirst.trim()) return;
+    setCreating(true);
+    try {
+      const res = await api.customers.create({
+        firstName: newFirst.trim(),
+        lastName: newLast.trim() || undefined,
+        phone: newPhone.trim() || undefined,
+      });
+      onSelect(res.data);
+    } catch {
+      // ignore
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-base font-bold text-gray-900">Add Customer</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+        </div>
+
+        {/* Search */}
+        <div className="mb-3 flex gap-2">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            placeholder="Phone or name…"
+            className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
+          />
+          <button
+            onClick={handleSearch}
+            disabled={searching}
+            className="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+          >
+            {searching ? "…" : "Search"}
+          </button>
+        </div>
+
+        {/* Results */}
+        {results.length > 0 && (
+          <div className="mb-3 space-y-1">
+            {results.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => onSelect(c)}
+                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-left text-sm hover:bg-gray-50"
+              >
+                <div className="font-medium text-gray-900">
+                  {c.firstName} {c.lastName}
+                </div>
+                {c.phone && <div className="text-xs text-gray-500">{c.phone}</div>}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Not found → create */}
+        {(notFound || showCreate) && (
+          <div className="space-y-2 border-t border-gray-100 pt-3">
+            <p className="text-xs font-medium text-gray-500">New customer</p>
+            <input
+              value={newFirst}
+              onChange={(e) => setNewFirst(e.target.value)}
+              placeholder="First name *"
+              className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
+            />
+            <input
+              value={newLast}
+              onChange={(e) => setNewLast(e.target.value)}
+              placeholder="Last name"
+              className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
+            />
+            <input
+              value={newPhone}
+              onChange={(e) => setNewPhone(e.target.value)}
+              placeholder="Phone"
+              className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
+            />
+            <button
+              onClick={handleCreate}
+              disabled={creating || !newFirst.trim()}
+              className="w-full rounded-xl bg-brand-600 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+            >
+              {creating ? "Creating…" : "Create & Add"}
+            </button>
+          </div>
+        )}
+
+        {!notFound && results.length === 0 && !showCreate && (
+          <button
+            onClick={() => setShowCreate(true)}
+            className="w-full rounded-xl border border-dashed border-gray-300 py-2.5 text-sm text-gray-500 hover:border-brand-400 hover:text-brand-600"
+          >
+            + New customer
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+
 export function NewOrderPage() {
   const navigate = useNavigate();
   const { selectedBranchId } = useAuth();
+
   const [services, setServices] = useState<Service[]>([]);
   const [loadingServices, setLoadingServices] = useState(true);
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
-  const [orderType, setOrderType] = useState<"walk_in" | "pickup" | "delivery">("walk_in");
+  const [activeTab, setActiveTab] = useState(0);
   const [items, setItems] = useState<LineItem[]>([]);
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
+  const [orderType] = useState<"walk_in" | "pickup" | "delivery">("walk_in");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -49,7 +233,8 @@ export function NewOrderPage() {
 
   useEffect(() => {
     if (selectedBranchId) {
-      api.services.list(selectedBranchId)
+      api.services
+        .list(selectedBranchId)
         .then((res) => setServices(res.data))
         .catch(() => api.services.list().then((res) => setServices(res.data)))
         .finally(() => setLoadingServices(false));
@@ -57,29 +242,40 @@ export function NewOrderPage() {
   }, [selectedBranchId]);
 
   const subtotal = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
-  const deliveryFee = orderType === "delivery" ? 50 : 0;
-  const total = subtotal + deliveryFee;
+  const VAT_RATE = 0.12;
+  const tax = subtotal * VAT_RATE;
+  const total = subtotal + tax;
+
+  const tabCategories = TABS[activeTab].categories;
+  const filteredServices = services.filter((s) => tabCategories.includes(s.category));
 
   function addService(service: Service) {
-    const minQty = parseFloat(service.minQuantity) || 1;
     const unitPrice = parseFloat(service.basePrice);
     setItems((prev) => {
       const existing = prev.find((i) => i.serviceId === service.id);
       if (existing) {
-        return prev.map((i) => i.serviceId === service.id ? { ...i, quantity: i.quantity + 1 } : i);
+        return prev.map((i) =>
+          i.serviceId === service.id ? { ...i, quantity: i.quantity + 1 } : i
+        );
       }
-      return [...prev, { serviceId: service.id, name: service.name, quantity: minQty, unitPrice, priceUnit: service.priceUnit }];
+      return [
+        ...prev,
+        { serviceId: service.id, name: service.name, quantity: 1, unitPrice, priceUnit: service.priceUnit },
+      ];
     });
   }
 
-  function updateQty(serviceId: string, qty: number) {
-    const service = services.find((s) => s.id === serviceId);
-    const minQty = service ? parseFloat(service.minQuantity) || 1 : 1;
-    if (qty < minQty) {
-      setItems((prev) => prev.filter((i) => i.serviceId !== serviceId));
-    } else {
-      setItems((prev) => prev.map((i) => i.serviceId === serviceId ? { ...i, quantity: qty } : i));
-    }
+  function adjustQty(serviceId: string, delta: number) {
+    setItems((prev) => {
+      const updated = prev.map((i) =>
+        i.serviceId === serviceId ? { ...i, quantity: i.quantity + delta } : i
+      );
+      return updated.filter((i) => i.quantity > 0);
+    });
+  }
+
+  function removeItem(serviceId: string) {
+    setItems((prev) => prev.filter((i) => i.serviceId !== serviceId));
   }
 
   async function handleSubmit() {
@@ -92,6 +288,7 @@ export function NewOrderPage() {
         branchId: selectedBranchId,
         orderType,
         paymentMethod,
+        customerId: customer?.id,
         items: items.map((i) => ({ serviceId: i.serviceId, quantity: i.quantity })),
       });
       setCreatedOrder(res.data);
@@ -102,12 +299,11 @@ export function NewOrderPage() {
     }
   }
 
-  // Receipt view
+  // ── Receipt view ───────────────────────────────────────────────────────────
   if (createdOrder) {
     return (
       <div className="flex h-full items-center justify-center bg-gray-50 p-8">
         <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-xl ring-1 ring-gray-200">
-          {/* Receipt header */}
           <div className="mb-6 text-center">
             <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-600">
               <span className="text-lg font-bold text-white">AS</span>
@@ -128,7 +324,12 @@ export function NewOrderPage() {
             </div>
             <div className="flex justify-between text-gray-500">
               <span>Time</span>
-              <span>{new Date(createdOrder.createdAt).toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit" })}</span>
+              <span>
+                {new Date(createdOrder.createdAt).toLocaleTimeString("en-PH", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </span>
             </div>
             <div className="flex justify-between text-gray-500">
               <span>Type</span>
@@ -145,14 +346,19 @@ export function NewOrderPage() {
               <div key={i} className="mb-2 flex justify-between text-sm">
                 <div>
                   <div className="font-medium text-gray-800">{item.serviceName}</div>
-                  <div className="text-xs text-gray-400">&times;{item.quantity} {item.priceUnit} @ &#8369;{parseFloat(item.unitPrice).toFixed(2)}</div>
+                  <div className="text-xs text-gray-400">
+                    &times;{item.quantity} {item.priceUnit} @ &#8369;
+                    {parseFloat(item.unitPrice).toFixed(2)}
+                  </div>
                 </div>
-                <div className="font-medium text-gray-900">&#8369;{parseFloat(item.totalPrice).toFixed(2)}</div>
+                <div className="font-medium text-gray-900">
+                  &#8369;{parseFloat(item.totalPrice).toFixed(2)}
+                </div>
               </div>
             ))}
           </div>
 
-          <div className="border-t border-gray-200 pt-4 space-y-1 text-sm">
+          <div className="space-y-1 border-t border-gray-200 pt-4 text-sm">
             <div className="flex justify-between text-gray-500">
               <span>Subtotal</span>
               <span>&#8369;{parseFloat(createdOrder.subtotal).toFixed(2)}</span>
@@ -173,7 +379,11 @@ export function NewOrderPage() {
 
           <div className="mt-6 flex gap-3">
             <button
-              onClick={() => { setCreatedOrder(null); setItems([]); setCustomerName(""); setCustomerPhone(""); }}
+              onClick={() => {
+                setCreatedOrder(null);
+                setItems([]);
+                setCustomer(null);
+              }}
               className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               New Order
@@ -190,163 +400,229 @@ export function NewOrderPage() {
     );
   }
 
-  const CATEGORY_ICONS: Record<string, string> = {
-    wash: "🫧",
-    dry_clean: "✨",
-    iron: "👔",
-    special: "⭐",
-  };
-
+  // ── Main POS layout ────────────────────────────────────────────────────────
   return (
-    <div className="flex h-full">
-      {/* Left: Service selection */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <h1 className="mb-6 text-2xl font-bold text-gray-900">New Order</h1>
+    <div className="flex h-full overflow-hidden">
 
-        {/* Customer info */}
-        <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-          <h2 className="mb-3 text-sm font-semibold text-gray-700">Customer Details</h2>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600">Name (optional)</label>
-              <input
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                placeholder="Walk-in customer"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/20"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-gray-600">Phone (optional)</label>
-              <input
-                value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
-                placeholder="09XX XXX XXXX"
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/20"
-              />
-            </div>
-          </div>
+      {/* LEFT SIDEBAR: Category tabs */}
+      <div className="flex w-40 flex-shrink-0 flex-col border-r border-gray-200 bg-gray-50">
+        {TABS.map((tab, i) => (
+          <button
+            key={tab.label}
+            onClick={() => setActiveTab(i)}
+            className="w-full border-b border-gray-200 px-3 text-left text-sm transition-colors"
+            style={{
+              minHeight: 80,
+              paddingTop: 16,
+              paddingBottom: 16,
+              fontWeight: activeTab === i ? 700 : 500,
+              color: activeTab === i ? "#0e7490" : "#374151",
+              background: activeTab === i ? "#ffffff" : "transparent",
+              borderLeft: `4px solid ${activeTab === i ? "#00ACC1" : "transparent"}`,
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* CENTER: Service grid + bottom bar */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+
+        {/* Top bar */}
+        <div className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-2.5">
+          <span className="text-sm font-semibold text-gray-700">
+            {TABS[activeTab].label}
+          </span>
+          <button
+            onClick={() => setShowCustomerModal(true)}
+            className="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium transition-colors"
+            style={{
+              minHeight: 40,
+              color: customer ? "#16a34a" : "#374151",
+              background: customer ? "#f0fdf4" : "#ffffff",
+              borderColor: customer ? "#86efac" : undefined,
+            }}
+          >
+            {customer ? `${customer.firstName} ${customer.lastName}` : "+ Add Customer"}
+          </button>
         </div>
 
-        {/* Order type */}
-        <div className="mb-6">
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500">Order Type</label>
-          <div className="flex gap-2">
-            {(["walk_in", "pickup", "delivery"] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => setOrderType(t)}
-                className={`rounded-xl border px-5 py-2.5 text-sm font-medium capitalize transition-all ${
-                  orderType === t
-                    ? "border-brand-500 bg-brand-50 text-brand-700 shadow-sm"
-                    : "border-gray-200 bg-white text-gray-600 hover:border-brand-300"
-                }`}
-              >
-                {t.replace("_", " ")}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Service grid */}
-        <div>
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500">Services</label>
+        {/* Service tiles */}
+        <div className="flex-1 overflow-y-auto p-4">
           {loadingServices ? (
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <div key={i} className="h-20 animate-pulse rounded-xl bg-gray-100" />
+            <div className="grid grid-cols-4 gap-3">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="h-24 animate-pulse rounded-xl bg-gray-200" />
               ))}
             </div>
+          ) : filteredServices.length === 0 ? (
+            <div className="flex h-32 items-center justify-center text-sm text-gray-400">
+              No services in this category
+            </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-              {services.map((service) => {
+            <div className="grid grid-cols-4 gap-3">
+              {filteredServices.map((service) => {
+                const color = CATEGORY_COLORS[service.category] ?? "#6b7280";
                 const inCart = items.find((i) => i.serviceId === service.id);
                 return (
                   <button
                     key={service.id}
                     onClick={() => addService(service)}
-                    className={`rounded-xl border p-4 text-left transition-all ${
-                      inCart
-                        ? "border-brand-400 bg-brand-50 shadow-sm"
-                        : "border-gray-200 bg-white hover:border-brand-300 hover:bg-brand-50"
-                    }`}
+                    className="relative rounded-xl text-left transition-all"
+                    style={{
+                      minHeight: 96,
+                      padding: "14px 12px 12px",
+                      background: color,
+                      border: inCart
+                        ? "3px solid rgba(255,255,255,0.85)"
+                        : "3px solid transparent",
+                      boxShadow: inCart
+                        ? `0 0 0 2px ${color}, 0 4px 12px rgba(0,0,0,0.25)`
+                        : "0 2px 6px rgba(0,0,0,0.15)",
+                    }}
                   >
-                    <div className="mb-1 text-lg">{CATEGORY_ICONS[service.category] ?? "🧺"}</div>
-                    <div className="font-semibold text-gray-900 text-sm">{service.name}</div>
-                    <div className="text-sm text-brand-600 font-medium">
-                      &#8369;{parseFloat(service.basePrice).toFixed(0)}/{service.priceUnit}
-                    </div>
+                    {/* Qty badge */}
                     {inCart && (
-                      <div className="mt-1 text-xs font-semibold text-brand-700">&times;{inCart.quantity} in cart</div>
+                      <span
+                        className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold"
+                        style={{ background: "rgba(0,0,0,0.35)", color: "#fff" }}
+                      >
+                        {inCart.quantity}
+                      </span>
                     )}
+                    <div
+                      className="mb-1 text-xs font-semibold leading-snug"
+                      style={{ color: "rgba(255,255,255,0.95)", wordBreak: "break-word" }}
+                    >
+                      {service.name}
+                    </div>
+                    <div className="text-sm font-bold" style={{ color: "#fff" }}>
+                      &#8369;{parseFloat(service.basePrice).toFixed(0)}
+                    </div>
                   </button>
                 );
               })}
             </div>
           )}
         </div>
+
+        {/* Bottom bar */}
+        <div className="flex items-center gap-6 border-t border-gray-200 bg-white px-5 py-3">
+          <div className="flex flex-1 gap-8 text-sm">
+            <span className="text-gray-500">
+              Subtotal&nbsp;
+              <strong className="text-gray-800">&#8369;{subtotal.toFixed(2)}</strong>
+            </span>
+            <span className="text-gray-500">
+              Discount&nbsp;
+              <strong className="text-gray-800">&#8369;0.00</strong>
+            </span>
+            <span className="text-gray-500">
+              Store Credit&nbsp;
+              <strong className="text-gray-800">&#8369;0.00</strong>
+            </span>
+            <span className="text-gray-500">
+              Tax (12% VAT)&nbsp;
+              <strong className="text-gray-800">&#8369;{tax.toFixed(2)}</strong>
+            </span>
+          </div>
+          <button
+            onClick={() => navigate("/queue")}
+            className="rounded-xl px-6 font-bold text-white"
+            style={{
+              minHeight: 44,
+              background: "#F57C00",
+              border: "none",
+              fontSize: 14,
+            }}
+          >
+            Orders
+          </button>
+        </div>
       </div>
 
-      {/* Right: Order summary */}
-      <div className="flex w-80 flex-col border-l border-gray-200 bg-white">
-        <div className="border-b border-gray-100 p-4">
-          <h2 className="font-semibold text-gray-900">Order Summary</h2>
+      {/* RIGHT PANEL: Order summary */}
+      <div className="flex w-72 flex-shrink-0 flex-col border-l border-gray-200 bg-white">
+
+        {/* Panel header */}
+        <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+          <h2 className="text-base font-bold text-gray-900">Order</h2>
+          {customer && (
+            <span className="text-xs font-medium text-green-700">
+              {customer.firstName} {customer.lastName}
+            </span>
+          )}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        {/* Items list */}
+        <div className="flex-1 overflow-y-auto px-3 py-2">
           {items.length === 0 ? (
-            <div className="flex flex-col items-center pt-12 text-gray-400">
-              <div className="text-4xl mb-3">🧺</div>
-              <p className="text-sm">No services added yet</p>
-              <p className="text-xs">Click a service to add it</p>
+            <div className="flex flex-col items-center pt-10 text-gray-400">
+              <span className="mb-2 text-3xl">🧺</span>
+              <p className="text-xs">Tap a service to add it</p>
             </div>
           ) : (
-            items.map((item) => (
-              <div key={item.serviceId} className="rounded-xl bg-gray-50 p-3 ring-1 ring-gray-100">
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-800">{item.name}</span>
-                  <span className="text-sm font-bold text-gray-900">&#8369;{(item.quantity * item.unitPrice).toFixed(2)}</span>
+            <div className="space-y-2">
+              {items.map((item) => (
+                <div key={item.serviceId} className="rounded-xl bg-gray-50 px-3 py-2.5 ring-1 ring-gray-100">
+                  <div className="mb-1.5 flex items-start justify-between gap-2">
+                    <span className="text-xs font-semibold leading-snug text-gray-800">
+                      {item.name}
+                    </span>
+                    <button
+                      onClick={() => removeItem(item.serviceId)}
+                      className="text-gray-300 hover:text-red-500 text-base leading-none flex-shrink-0"
+                      style={{ minWidth: 20, minHeight: 20 }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => adjustQty(item.serviceId, -1)}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-100"
+                        style={{ fontSize: 16, lineHeight: 1 }}
+                      >
+                        −
+                      </button>
+                      <span className="w-7 text-center text-sm font-bold tabular-nums">
+                        {item.quantity}
+                      </span>
+                      <button
+                        onClick={() => adjustQty(item.serviceId, 1)}
+                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-100"
+                        style={{ fontSize: 16, lineHeight: 1 }}
+                      >
+                        +
+                      </button>
+                    </div>
+                    <span className="text-sm font-bold text-gray-900">
+                      &#8369;{(item.quantity * item.unitPrice).toFixed(2)}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => updateQty(item.serviceId, item.quantity - 1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 text-lg leading-none"
-                  >–</button>
-                  <span className="w-8 text-center text-sm font-medium tabular-nums">{item.quantity}</span>
-                  <button
-                    onClick={() => updateQty(item.serviceId, item.quantity + 1)}
-                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 text-lg leading-none"
-                  >+</button>
-                  <span className="ml-1 text-xs text-gray-400">{item.priceUnit}</span>
-                </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
 
-        <div className="border-t border-gray-100 p-4 space-y-4">
+        {/* Panel footer */}
+        <div className="border-t border-gray-100 p-4 space-y-3">
           {error && (
-            <div className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700 ring-1 ring-red-200">{error}</div>
+            <div className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700 ring-1 ring-red-200">
+              {error}
+            </div>
           )}
-          <div className="space-y-1 text-sm">
-            <div className="flex justify-between text-gray-500">
-              <span>Subtotal</span>
-              <span>&#8369;{subtotal.toFixed(2)}</span>
-            </div>
-            {deliveryFee > 0 && (
-              <div className="flex justify-between text-gray-500">
-                <span>Delivery fee</span>
-                <span>&#8369;{deliveryFee.toFixed(2)}</span>
-              </div>
-            )}
-            <div className="flex justify-between text-base font-bold text-gray-900 border-t border-gray-100 pt-2">
-              <span>Total</span>
-              <span className="text-brand-700">&#8369;{total.toFixed(2)}</span>
-            </div>
+
+          <div className="flex justify-between text-sm font-bold text-gray-900">
+            <span>Total</span>
+            <span className="text-brand-700">&#8369;{total.toFixed(2)}</span>
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">Payment Method</label>
+            <label className="mb-1 block text-xs font-medium text-gray-500">Payment</label>
             <select
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
@@ -363,12 +639,29 @@ export function NewOrderPage() {
           <button
             disabled={items.length === 0 || submitting}
             onClick={handleSubmit}
-            className="w-full rounded-xl bg-brand-600 py-3.5 font-semibold text-white shadow-sm hover:bg-brand-700 disabled:opacity-50 transition-colors"
+            className="w-full rounded-xl py-3.5 font-bold text-white transition-colors disabled:opacity-40"
+            style={{
+              background: items.length === 0 ? "#d1d5db" : "#00ACC1",
+              minHeight: 52,
+              fontSize: 15,
+              cursor: items.length === 0 ? "not-allowed" : "pointer",
+            }}
           >
-            {submitting ? "Creating Order…" : `Create Order · &#8369;${total.toFixed(2)}`}
+            {submitting ? "Creating Order…" : "Place Order"}
           </button>
         </div>
       </div>
+
+      {/* Customer modal */}
+      {showCustomerModal && (
+        <CustomerModal
+          onClose={() => setShowCustomerModal(false)}
+          onSelect={(c) => {
+            setCustomer(c);
+            setShowCustomerModal(false);
+          }}
+        />
+      )}
     </div>
   );
 }

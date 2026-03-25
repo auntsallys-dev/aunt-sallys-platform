@@ -1,0 +1,50 @@
+You are updating the Aunt Sally's Laundry POS system at C:\Users\jianb\Projects\aunt-sallys\apps\pos.
+
+Read ALL existing files before making any changes. Understand what's already built.
+
+TASK: Rebuild the NewOrder screen to exactly match the real Aunt Sally's POS layout.
+
+EXACT LAYOUT FROM PHOTOS:
+- LEFT SIDEBAR: vertical tab list, exactly these 3 names: "Laundry service", "Dryclean/Toys", "Add ons"
+- MAIN AREA: scrollable grid of colored service tiles (4 columns on tablet)
+- BOTTOM BAR: Subtotal | Discount | Store Credit | Tax (show as 0) | "Orders" button (orange/teal)
+- TOP: "Add Customer" button top-right
+
+TAB -> CATEGORY MAPPING:
+- "Laundry service": wash_dry_fold, wash_dry_press, dry_only, heavy_wash, comforter
+- "Dryclean/Toys": dry_clean
+- "Add ons": addon, logistics
+
+TILE COLORS (match photos exactly):
+- wash_dry_fold: teal #00ACC1
+- wash_dry_press: blue #1E88E5
+- dry_only: orange #FB8C00
+- heavy_wash: pink #D81B60
+- comforter: green #43A047
+- dry_clean: orange #F57C00 (same orange as photo shows for dry clean tab)
+- addon: medium blue #1976D2
+- logistics: darker blue #1565C0
+
+TILE CONTENT: Show service name (wrap to 2 lines if needed) and price below. Example:
+  "Wash Dry Fold
+   Regular Bag"
+  "P400"
+
+Each tile tap adds 1 qty to the order. Show current order as a list on the right side panel (or if on mobile/tablet portrait, as a bottom sheet).
+
+API: Fetch services from GET http://localhost:3001/api/services
+- Check apps/api/src first to see if this route exists
+- If not, add it: return all active services with fields: id, name, category, basePrice, priceUnit, description
+- The API uses Express, check existing route files to understand the pattern
+
+ORDER PANEL (right side on landscape tablet):
+- List of added items with name, unit price, qty (+/-), line total
+- Remove button per item
+- Subtotal
+- No tax calculation (owner says taxes not included)
+- "Place Order" / "Checkout" button
+
+IMPORTANT: Make all tap targets at least 80px tall. This is used on a Samsung tablet.
+
+When completely finished, run this command to notify:
+openclaw system event --text "Done: Aunt Sallys POS rebuilt with real layout and services" --mode now
