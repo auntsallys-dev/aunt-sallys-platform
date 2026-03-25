@@ -1,0 +1,81 @@
+You are rebuilding the Aunt Sally's Laundry customer website (apps/web). This is a Next.js app.
+
+## Design Brief
+- Brand color: Tiffany blue (#0ABAB5) as primary accent
+- Style: Clean, light, minimal, ELEGANT. Think premium laundry service.
+- Fonts: Use Google Fonts. Cormorant Garamond (serif, elegant) for headings/logo text. Inter for body. Import via next/font/google.
+- Logo: There is a logo image at /logo.jpg (square, black background with teal hanger icon and Aunt Sally's script text). Use it in the navbar on a dark/black navbar background so it looks good.
+
+## Tagline
+"We take the laundry, You take the time"
+
+## Correct Business Data
+- Branches (Metro Manila):
+  1. Arton Rockwell (Rockwell, Makati)
+  2. Ayala 30th (30th Street BGC, Taguig)
+  3. Tiendesitas (Pasig)
+  4. Xavierville (Katipunan, Quezon City)
+- Location: Metro Manila, Philippines (NOT Cebu)
+
+## Services to show on the website (key ones):
+- Wash Dry Fold: Regular Bag (1-5kg) P400, Large Bag (6kg+) P500
+- Wash Dry Press: Regular (12 pcs ironed) P1,120, Large (24 pcs ironed) P1,680
+- Dry Only: 1-5kg P240, 6-10kg P340
+- Heavy Wash (sheets, blankets, towels up to 8kg): P780
+- Comforter: Single/Twin P500, Double/Queen P560, King P670
+- Dry Clean: Barong Adults P670, Coat/Jacket Adults P560, Dress Adults P670, Wedding Gown P2,800+
+- Add-ons: Special Detergent P50, Fabric Conditioner P50, Rush Same Day P500, Rush Next Day P300
+- Pick-up & Delivery: P180
+
+## Subscription Plans
+- Starter Plan: P480/month
+- Regular Plan: P880/month
+- Family Plan: P1,500/month
+
+## Pages to build:
+
+### 1. Homepage (app/page.tsx) - FULLY REPLACE
+- Navbar: black background, logo image (/logo.jpg, height ~44px), nav links (Services, Branches, Book Now CTA button in Tiffany blue)
+- Hero: elegant headline, tagline "We take the laundry, You take the time", Book a Pickup + View Services buttons
+- Services section: clean grid of service categories with prices
+- Branches section: 4 cards with branch names and neighborhoods, Open badge in tiffany blue
+- Subscription plans section: 3 plan cards
+- CTA section: book now call to action
+- Footer: copyright, Metro Manila Philippines
+
+### 2. Booking page (app/book/page.tsx) - CREATE NEW
+Multi-step form (3 steps):
+- Step 1: Customer info (first name, last name, phone, email, address, barangay/city)
+- Step 2: Service selection (checkboxes for main service categories, preferred pickup date and time, special instructions)
+- Step 3: Review & confirm (summary of booking, note that staff will confirm via SMS/call)
+After submit: show booking confirmation with ORDER TRACKING CODE (format: AS-XXXXXX). Tell customer to use this code to track at /track
+POST to /api/bookings - stub returning { success: true, trackingCode: string }
+
+### 3. Order tracking page (app/track/page.tsx) - CREATE NEW
+- Input field for tracking code (AS-XXXXXX format)
+- On submit: show order status timeline
+- Status steps: Booking Confirmed, Picked Up, Being Washed, Ready for Delivery, Delivered
+- Stub with mock data when code is entered (show first 2 steps completed as demo)
+- GET /api/track/[code] stub
+
+### 4. Services page (app/services/page.tsx) - FULLY REPLACE
+- Full services list organized by category with prices
+- Clean card layout
+
+## API stubs needed:
+- app/api/bookings/route.ts: POST returns { success: true, trackingCode: "AS-" + random 6 chars, message: "Booking received" }
+- app/api/track/[code]/route.ts: GET returns mock order status with 2 completed steps
+
+## Tech notes:
+- Use Tailwind CSS (already installed)
+- Use next/font/google for Cormorant_Garamond and Inter
+- Update app/layout.tsx with new fonts
+- All prices in Philippine Pesos with the peso sign
+- Mobile-responsive
+- Use Next.js Image component for the logo (next/image)
+- The existing pages can be completely replaced
+
+Make it look genuinely premium and beautiful. Tiffany blue accents throughout. Elegant serif headings. Clean white/light gray backgrounds. Generous whitespace.
+
+When completely finished, run this command to notify:
+openclaw system event --text "Done: Aunt Sallys website rebuilt with Tiffany blue design, booking flow, and order tracking" --mode now

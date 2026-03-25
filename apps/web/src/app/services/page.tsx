@@ -1,59 +1,66 @@
 import Link from "next/link";
+import Navbar from "@/components/Navbar";
 
-// In production, fetch from /api/v1/services
 const SERVICES = [
-  { id: "1", name: "Wash & Fold", category: "wash", basePrice: "65.00", priceUnit: "kg", estimatedHours: 4, description: "Regular wash, dry, and fold." },
-  { id: "2", name: "Wash & Iron", category: "wash", basePrice: "90.00", priceUnit: "kg", estimatedHours: 6, description: "Wash, dry, and iron." },
-  { id: "3", name: "Dry Clean", category: "dry_clean", basePrice: "150.00", priceUnit: "piece", estimatedHours: 24, description: "Professional dry cleaning." },
-  { id: "4", name: "Iron Only", category: "iron", basePrice: "40.00", priceUnit: "piece", estimatedHours: 2, description: "Ironing service only." },
-  { id: "5", name: "Beddings & Linens", category: "wash", basePrice: "120.00", priceUnit: "piece", estimatedHours: 8, description: "Comforters, pillows, bedsheets." },
-  { id: "6", name: "Sneaker Cleaning", category: "special", basePrice: "250.00", priceUnit: "pair", estimatedHours: 48, description: "Specialized shoe cleaning." },
-  { id: "7", name: "Express Wash & Fold", category: "wash", basePrice: "90.00", priceUnit: "kg", estimatedHours: 6, description: "Same-day (drop off before 10am)." },
+  { id: "1", name: "Wash & Fold",        category: "Wash",      basePrice: "65",  priceUnit: "kg",    estimatedHours: 4,  description: "Regular wash, dry, and fold. Returned neatly stacked and fresh." },
+  { id: "2", name: "Wash & Iron",        category: "Wash",      basePrice: "90",  priceUnit: "kg",    estimatedHours: 6,  description: "Wash, dry, and pressed to perfection." },
+  { id: "3", name: "Dry Clean",          category: "Dry Clean", basePrice: "150", priceUnit: "piece", estimatedHours: 24, description: "Professional dry cleaning for delicate and formal garments." },
+  { id: "4", name: "Iron Only",          category: "Iron",      basePrice: "40",  priceUnit: "piece", estimatedHours: 2,  description: "Crisp, wrinkle-free results on any garment." },
+  { id: "5", name: "Beddings & Linens",  category: "Wash",      basePrice: "120", priceUnit: "piece", estimatedHours: 8,  description: "Comforters, pillows, and bedsheets handled with care." },
+  { id: "6", name: "Sneaker Cleaning",   category: "Special",   basePrice: "250", priceUnit: "pair",  estimatedHours: 48, description: "Specialized deep-clean for your favourite kicks." },
+  { id: "7", name: "Express Wash & Fold",category: "Wash",      basePrice: "90",  priceUnit: "kg",    estimatedHours: 6,  description: "Same-day turnaround. Drop off before 10 am." },
 ];
-
-const CATEGORY_LABELS: Record<string, string> = {
-  wash: "Wash",
-  dry_clean: "Dry Clean",
-  iron: "Iron",
-  special: "Special",
-};
 
 export default function ServicesPage() {
   return (
     <main className="min-h-screen bg-white">
-      <div className="mx-auto max-w-4xl px-4 py-16">
-        <div className="mb-8">
-          <Link href="/" className="text-sm text-brand-600 hover:underline">
+      <Navbar />
+
+      <div className="mx-auto max-w-5xl px-4 py-20">
+        {/* Header */}
+        <div className="mb-16">
+          <Link href="/" className="text-xs tracking-widest text-brand-500 hover:text-brand-700 uppercase transition-colors">
             ← Home
           </Link>
+          <h1 className="font-display mt-6 text-5xl font-light text-gray-900">
+            Our Services
+          </h1>
+          <p className="mt-3 text-sm text-gray-400">
+            Professionally priced. Minimum 3 kg for wash services.
+          </p>
         </div>
-        <h1 className="mb-3 text-4xl font-bold text-gray-900">Our Services</h1>
-        <p className="mb-10 text-gray-500">
-          Professional laundry services priced fairly. Minimum 3kg for wash services.
-        </p>
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        {/* Grid */}
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {SERVICES.map((service) => (
             <div
               key={service.id}
-              className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow"
+              className="group border border-gray-100 p-6 hover:border-brand-200 transition-colors"
             >
-              <div className="mb-3 flex items-center justify-between">
-                <span className="rounded-full bg-brand-100 px-3 py-1 text-xs font-medium text-brand-700">
-                  {CATEGORY_LABELS[service.category] ?? service.category}
+              <div className="mb-5 flex items-start justify-between">
+                <span className="text-xs font-medium tracking-widest text-brand-500 uppercase">
+                  {service.category}
                 </span>
-                <span className="text-xs text-gray-400">~{service.estimatedHours}h turnaround</span>
+                <span className="text-xs text-gray-300">~{service.estimatedHours}h</span>
               </div>
-              <h3 className="mb-1 text-lg font-semibold text-gray-900">{service.name}</h3>
-              <p className="mb-4 text-sm text-gray-500">{service.description}</p>
-              <div className="flex items-center justify-between">
+
+              <h3 className="font-display mb-2 text-xl font-medium text-gray-900">
+                {service.name}
+              </h3>
+              <p className="mb-6 text-sm leading-relaxed text-gray-400">
+                {service.description}
+              </p>
+
+              <div className="flex items-end justify-between">
                 <div>
-                  <span className="text-2xl font-bold text-brand-700">₱{service.basePrice}</span>
-                  <span className="text-sm text-gray-400">/{service.priceUnit}</span>
+                  <span className="font-display text-3xl font-light text-gray-900">
+                    ₱{service.basePrice}
+                  </span>
+                  <span className="ml-1 text-xs text-gray-400">/{service.priceUnit}</span>
                 </div>
                 <Link
                   href={`/order?serviceId=${service.id}`}
-                  className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
+                  className="rounded-sm bg-brand-500 px-4 py-2 text-xs font-medium tracking-wide text-white hover:bg-brand-600 transition-colors"
                 >
                   Book
                 </Link>

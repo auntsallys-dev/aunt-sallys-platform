@@ -1,0 +1,197 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import Navbar from "@/components/Navbar";
+
+interface StatusStep {
+  label: string;
+  description: string;
+  completedAt: string | null;
+}
+
+interface TrackingData {
+  trackingCode: string;
+  customerName: string;
+  status: string;
+  steps: StatusStep[];
+}
+
+export default function TrackPage() {
+  const searchParams = useSearchParams();
+  const [code, setCode] = useState(searchParams.get("code") ?? "");
+  const [inputValue, setInputValue] = useState(searchParams.get("code") ?? "");
+  const [data, setData] = useState<TrackingData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const initial = searchParams.get("code");
+    if (initial) {
+      setCode(initial);
+      setInputValue(initial);
+      fetchTracking(initial);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function fetchTracking(trackingCode: string) {
+    setLoading(true);
+    setError(null);
+    setData(null);
+    try {
+      const res = await fetch(`/api/track/${encodeURIComponent(trackingCode.trim().toUpperCase())}`);
+      if (!res.ok) {
+        setError("No booking found for that tracking code. Please check and try again.");
+        return;
+      }
+      const json = await res.json();
+      setData(json);
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = inputValue.trim().toUpperCase();
+    setCode(trimmed);
+    if (trimmed) fetchTracking(trimmed);
+  }
+
+  const completedCount = data?.steps.filter((s) => s.completedAt !== null).length ?? 0;
+
+  return (
+    <>
+      <Navbar />
+      <main className="min-h-[calc(100vh-56px)] bg-[#fafafa]">
+        <div className="mx-auto max-w-xl px-4 py-16">
+          <Link href="/" className="text-xs tracking-widest text-[#0ABAB5] hover:text-[#089e9a] uppercase transition-colors">
+            ← Home
+          </Link>
+
+          <h1 className="font-display mt-6 mb-2 text-4xl font-light text-gray-900">
+            Track Your Order
+          </h1>
+          <p className="mb-10 text-sm leading-relaxed text-gray-400">
+            Enter the tracking code you received after booking.
+          </p>
+
+          {/* Search form */}
+          <form onSubmit={handleSubmit} className="mb-10 flex gap-3">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value.toUpperCase())}
+              placeholder="AS-XXXXXX"
+              maxLength={9}
+              className="flex-1 border border-gray-200 bg-white px-4 py-3 font-mono text-sm text-gray-900 placeholder-gray-300 tracking-widest focus:border-[#0ABAB5] focus:outline-none transition-colors uppercase"
+            />
+            <button
+              type="submit"
+              disabled={!inputValue.trim() || loading}
+              className="rounded-sm bg-[#0ABAB5] px-6 py-3 text-sm font-medium tracking-wide text-white hover:bg-[#089e9a] disabled:opacity-40 transition-colors"
+            >
+              {loading ? "…" : "Track"}
+            </button>
+          </form>
+
+          {/* Error */}
+          {error && (
+            <div className="border border-red-100 bg-red-50 px-5 py-4 text-sm text-red-600">
+              {error}
+            </div>
+          )}
+
+          {/* Results */}
+          {data && (
+            <div>
+              {/* Header card */}
+              <div className="mb-8 border border-[#0ABAB5]/20 bg-white p-6">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="mb-1 text-xs font-medium tracking-widest text-[#0ABAB5] uppercase">
+                      Tracking Code
+                    </p>
+                    <p className="font-mono text-xl font-medium tracking-widest text-gray-900">
+                      {data.trackingCode}
+                    </p>
+                    {data.customerName && (
+                      <p className="mt-1 text-sm text-gray-400">{data.customerName}</p>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <span className="inline-block rounded-full bg-[#0ABAB5]/10 px-3 py-1 text-xs font-medium text-[#0ABAB5]">
+                      {data.status}
+                    </span>
+                    <p className="mt-2 text-xs text-gray-400">
+                      {completedCount} of {data.steps.length} steps done
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Timeline */}
+              <div className="space-y-0">
+                {data.steps.map((step, i) => {
+                  const isCompleted = step.completedAt !== null;
+                  const isCurrent   = !isCompleted && (i === 0 || data.steps[i - 1].completedAt !== null);
+                  const isLast      = i === data.steps.length - 1;
+
+                  return (
+                    <div key={step.label} className="flex gap-4">
+                      {/* Timeline column */}
+                      <div className="flex flex-col items-center">
+                        <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full transition-colors ${
+                          isCompleted
+                            ? "bg-[#0ABAB5] text-white"
+                            : isCurrent
+                              ? "border-2 border-[#0ABAB5] bg-white"
+                              : "border-2 border-gray-200 bg-white"
+                        }`}>
+                          {isCompleted ? (
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                          ) : (
+                            <span className={`h-2.5 w-2.5 rounded-full ${isCurrent ? "bg-[#0ABAB5]" : "bg-gray-300"}`} />
+                          )}
+                        </div>
+                        {!isLast && (
+                          <div className={`mt-1 w-0.5 flex-1 min-h-[2rem] ${isCompleted ? "bg-[#0ABAB5]/30" : "bg-gray-100"}`} />
+                        )}
+                      </div>
+
+                      {/* Content */}
+                      <div className={`pb-8 ${isLast ? "pb-0" : ""}`}>
+                        <p className={`text-sm font-medium ${isCompleted ? "text-gray-900" : isCurrent ? "text-[#0ABAB5]" : "text-gray-300"}`}>
+                          {step.label}
+                        </p>
+                        <p className={`text-xs leading-relaxed mt-0.5 ${isCompleted ? "text-gray-400" : "text-gray-300"}`}>
+                          {step.description}
+                        </p>
+                        {step.completedAt && (
+                          <p className="mt-1 text-xs text-[#0ABAB5]/70">{step.completedAt}</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Empty state */}
+          {!data && !error && !loading && !code && (
+            <div className="border border-dashed border-gray-200 px-6 py-12 text-center">
+              <p className="text-sm text-gray-400">Enter your tracking code above to see your order status.</p>
+            </div>
+          )}
+        </div>
+      </main>
+    </>
+  );
+}

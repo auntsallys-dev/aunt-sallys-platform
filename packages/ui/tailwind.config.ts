@@ -8,33 +8,24 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Aunt Sally's brand palette — soft blue + warm accents
+        // Aunt Sally's brand palette — Tiffany blue
         brand: {
-          50: "#eff6ff",
-          100: "#dbeafe",
-          200: "#bfdbfe",
-          300: "#93c5fd",
-          400: "#60a5fa",
-          500: "#3b82f6",
-          600: "#2563eb",
-          700: "#1d4ed8",
-          800: "#1e40af",
-          900: "#1e3a8a",
-          950: "#172554",
-        },
-        accent: {
-          50: "#fff7ed",
-          100: "#ffedd5",
-          200: "#fed7aa",
-          300: "#fdba74",
-          400: "#fb923c",
-          500: "#f97316",
-          600: "#ea580c",
-          700: "#c2410c",
+          50:  "#e6faf9",
+          100: "#c2f2f1",
+          200: "#85e5e3",
+          300: "#47d8d5",
+          400: "#1ac9c6",
+          500: "#0abab5",
+          600: "#089a96",
+          700: "#067a77",
+          800: "#045957",
+          900: "#023836",
+          950: "#011c1b",
         },
       },
       fontFamily: {
-        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans:    ["var(--font-inter)",     "ui-sans-serif", "system-ui", "sans-serif"],
+        display: ["var(--font-cormorant)", "Georgia",       "serif"],
       },
     },
   },
