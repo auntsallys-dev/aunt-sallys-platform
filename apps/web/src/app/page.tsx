@@ -185,17 +185,17 @@ export default function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="bg-gray-900 py-20 px-4 text-center">
-        <p className="text-xs tracking-[0.3em] text-brand-400 uppercase mb-4">Ready?</p>
+      <section className="bg-[#0ABAB5] py-20 px-4 text-center">
+        <p className="text-xs tracking-[0.3em] text-white/70 uppercase mb-4">Ready?</p>
         <h2 className="font-serif text-4xl font-light text-white mb-4">Fresh laundry, delivered.</h2>
-        <p className="text-gray-400 mb-8">Book in under 2 minutes. We handle everything else.</p>
-        <Link href="/book" className="bg-brand-500 hover:bg-brand-600 text-white px-8 py-3.5 text-sm tracking-widest uppercase transition-colors">
+        <p className="text-white/80 mb-8">Book in under 2 minutes. We handle everything else.</p>
+        <Link href="/book" className="bg-white hover:bg-white/90 text-[#0ABAB5] font-medium px-8 py-3.5 text-sm tracking-widest uppercase transition-colors">
           Book a Pickup
         </Link>
       </section>
 
       {/* Footer */}
-      <footer className="py-8 text-center text-xs text-gray-400 tracking-wide">
+      <footer className="bg-[#0ABAB5] border-t border-white/20 py-8 text-center text-xs text-white/80 tracking-wide">
         © 2026 Aunt Sally&apos;s Laundry. All rights reserved. · Metro Manila, Philippines
       </footer>
     </div>
