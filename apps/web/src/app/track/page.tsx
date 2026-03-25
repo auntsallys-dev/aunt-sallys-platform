@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
@@ -18,7 +18,7 @@ interface TrackingData {
   steps: StatusStep[];
 }
 
-export default function TrackPage() {
+function TrackPageInner() {
   const searchParams = useSearchParams();
   const [code, setCode] = useState(searchParams.get("code") ?? "");
   const [inputValue, setInputValue] = useState(searchParams.get("code") ?? "");
@@ -193,5 +193,13 @@ export default function TrackPage() {
         </div>
       </main>
     </>
+  );
+}
+
+export default function TrackPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-400">Loading...</div>}>
+      <TrackPageInner />
+    </Suspense>
   );
 }
