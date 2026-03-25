@@ -4,9 +4,7 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-40 bg-[#0ABAB5] border-b border-white/20">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <Link href="/" className="font-serif text-white text-lg tracking-wide">
-          Aunt Sally&apos;s
-        </Link>
+        <Link href="/" className="block w-8" />
         <div className="flex items-center gap-8">
           <Link
             href="/services"

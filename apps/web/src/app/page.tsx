@@ -85,22 +85,22 @@ const PLANS = [
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white font-sans">
+    <div className="bg-white font-sans">
       <Navbar />
 
       {/* Hero */}
-      <section className="px-4 py-24 text-center max-w-4xl mx-auto">
-        <div className="flex justify-center mb-8">
+      <section className="px-4 pt-12 pb-20 text-center max-w-4xl mx-auto">
+        <div className="flex justify-center mb-10">
           <Image
-            src="/logo.jpg"
+            src="/logo-cropped.png"
             alt="Aunt Sally's Laundry"
-            width={180}
-            height={180}
-            className="rounded-xl shadow-md"
+            width={420}
+            height={192}
+            className="object-contain"
             priority
           />
         </div>
-        <p className="text-xs tracking-[0.3em] uppercase mb-6" style={{ color: TEAL }}>
+        <p className="text-xs tracking-[0.3em] uppercase mb-4" style={{ color: TEAL }}>
           Premium Laundry · Metro Manila
         </p>
         <h1 className="font-serif text-6xl md:text-7xl font-light text-gray-900 leading-tight mb-6">
