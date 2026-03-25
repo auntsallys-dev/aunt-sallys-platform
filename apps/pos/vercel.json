@@ -1,0 +1,5 @@
+{
+  "buildCommand": "cd ../.. && pnpm install && pnpm --filter pos build",
+  "outputDirectory": "dist",
+  "framework": "vite"
+}
