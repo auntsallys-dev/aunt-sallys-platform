@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 
+const TEAL = "#0ABAB5";
+
 const SERVICES = [
   {
     category: "Wash Dry Fold",
@@ -57,9 +59,27 @@ const BRANCHES = [
 ];
 
 const PLANS = [
-  { name: "Starter", price: "₱480", period: "/month", perks: ["Up to 5kg/week", "Wash & fold only", "Free pickup & delivery"] },
-  { name: "Regular", price: "₱880", period: "/month", perks: ["Up to 10kg/week", "Wash, dry & press", "Free pickup & delivery", "Priority scheduling"] },
-  { name: "Family", price: "₱1,500", period: "/month", perks: ["Up to 20kg/week", "All services included", "Free pickup & delivery", "Priority scheduling", "Dedicated branch contact"] },
+  {
+    name: "Starter",
+    price: "₱480",
+    period: "/month",
+    popular: false,
+    perks: ["Up to 5kg/week", "Wash & fold only", "Free pickup & delivery"],
+  },
+  {
+    name: "Regular",
+    price: "₱880",
+    period: "/month",
+    popular: true,
+    perks: ["Up to 10kg/week", "Wash, dry & press", "Free pickup & delivery", "Priority scheduling"],
+  },
+  {
+    name: "Family",
+    price: "₱1,500",
+    period: "/month",
+    popular: false,
+    perks: ["Up to 20kg/week", "All services included", "Free pickup & delivery", "Priority scheduling", "Dedicated branch contact"],
+  },
 ];
 
 export default function HomePage() {
@@ -69,43 +89,60 @@ export default function HomePage() {
 
       {/* Hero */}
       <section className="px-4 py-24 text-center max-w-4xl mx-auto">
-        <p className="text-xs tracking-[0.3em] text-brand-500 uppercase mb-6">Premium Laundry · Metro Manila</p>
+        <p className="text-xs tracking-[0.3em] uppercase mb-6" style={{ color: TEAL }}>
+          Premium Laundry · Metro Manila
+        </p>
         <h1 className="font-serif text-6xl md:text-7xl font-light text-gray-900 leading-tight mb-6">
-          We take the laundry,<br />
-          <em className="text-brand-500 not-italic">You take the time.</em>
+          We take the laundry,
+          <br />
+          <em className="not-italic" style={{ color: TEAL }}>You take the time.</em>
         </h1>
         <p className="text-gray-500 text-lg max-w-xl mx-auto mb-10 leading-relaxed">
-          Professional laundry services across 4 branches in Metro Manila. Book online — we pick up, wash, and deliver.
+          Professional laundry services across 4 branches in Metro Manila.
+          Book online — we pick up, wash, and deliver.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/book" className="bg-brand-500 hover:bg-brand-600 text-white px-8 py-3.5 text-sm tracking-widest uppercase transition-colors">
+          <Link
+            href="/book"
+            className="px-8 py-3.5 text-sm tracking-widest uppercase text-white transition-colors"
+            style={{ backgroundColor: TEAL }}
+          >
             Book a Pickup
           </Link>
-          <Link href="/services" className="border border-gray-300 hover:border-brand-500 text-gray-700 hover:text-brand-500 px-8 py-3.5 text-sm tracking-widest uppercase transition-colors">
+          <Link
+            href="/services"
+            className="border border-gray-300 text-gray-700 px-8 py-3.5 text-sm tracking-widest uppercase transition-colors hover:border-[#0ABAB5] hover:text-[#0ABAB5]"
+          >
             View Services
           </Link>
         </div>
       </section>
 
       {/* Divider */}
-      <div className="max-w-6xl mx-auto px-4"><div className="border-t border-gray-100" /></div>
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="border-t border-gray-100" />
+      </div>
 
       {/* Services */}
       <section className="py-20 px-4 max-w-6xl mx-auto">
         <div className="text-center mb-14">
-          <p className="text-xs tracking-[0.3em] text-brand-500 uppercase mb-3">What We Offer</p>
+          <p className="text-xs tracking-[0.3em] uppercase mb-3" style={{ color: TEAL }}>
+            What We Offer
+          </p>
           <h2 className="font-serif text-4xl font-light text-gray-900">Our Services</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {SERVICES.map((s) => (
-            <div key={s.category} className="border border-gray-100 p-6 hover:border-brand-300 transition-colors">
-              <div className="w-6 h-px bg-brand-500 mb-4" />
+            <div key={s.category} className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
+              <div className="w-6 h-px mb-4" style={{ backgroundColor: TEAL }} />
               <h3 className="font-serif text-xl font-medium text-gray-900 mb-3">{s.category}</h3>
               <ul className="space-y-2">
                 {s.items.map((item) => (
                   <li key={item.name} className="flex justify-between text-sm text-gray-600">
                     <span>{item.name}</span>
-                    <span className="text-brand-600 font-medium ml-4 shrink-0">{item.price}</span>
+                    <span className="ml-4 shrink-0 font-medium" style={{ color: TEAL }}>
+                      {item.price}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -113,7 +150,11 @@ export default function HomePage() {
           ))}
         </div>
         <div className="text-center mt-10">
-          <Link href="/services" className="text-sm text-brand-500 hover:text-brand-700 tracking-widest uppercase border-b border-brand-300 pb-0.5 transition-colors">
+          <Link
+            href="/services"
+            className="text-sm tracking-widest uppercase border-b pb-0.5 transition-colors"
+            style={{ color: TEAL, borderColor: TEAL }}
+          >
             See full price list →
           </Link>
         </div>
@@ -122,28 +163,36 @@ export default function HomePage() {
       {/* Add-ons strip */}
       <section className="bg-gray-50 py-8 px-4">
         <div className="max-w-6xl mx-auto flex flex-wrap gap-x-10 gap-y-2 justify-center text-sm text-gray-500">
-          <span>Special Detergent <span className="text-brand-500 font-medium">₱50</span></span>
-          <span>Fabric Conditioner <span className="text-brand-500 font-medium">₱50</span></span>
-          <span>Pick-up & Delivery <span className="text-brand-500 font-medium">₱180</span></span>
-          <span>Rush Next Day <span className="text-brand-500 font-medium">₱300</span></span>
-          <span>Rush Same Day <span className="text-brand-500 font-medium">₱500</span></span>
+          {[
+            ["Special Detergent", "₱50"],
+            ["Fabric Conditioner", "₱50"],
+            ["Pick-up & Delivery", "₱180"],
+            ["Rush Next Day", "₱300"],
+            ["Rush Same Day", "₱500"],
+          ].map(([label, price]) => (
+            <span key={label}>
+              {label} <span className="font-medium" style={{ color: TEAL }}>{price}</span>
+            </span>
+          ))}
         </div>
       </section>
 
       {/* Branches */}
       <section id="branches" className="py-20 px-4 max-w-6xl mx-auto">
         <div className="text-center mb-14">
-          <p className="text-xs tracking-[0.3em] text-brand-500 uppercase mb-3">Where to Find Us</p>
+          <p className="text-xs tracking-[0.3em] uppercase mb-3" style={{ color: TEAL }}>
+            Where to Find Us
+          </p>
           <h2 className="font-serif text-4xl font-light text-gray-900">Our Branches</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {BRANCHES.map((b) => (
-            <div key={b.name} className="border border-gray-100 p-6 hover:border-brand-300 transition-colors">
-              <div className="w-6 h-px bg-brand-500 mb-4" />
+            <div key={b.name} className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
+              <div className="w-6 h-px mb-4" style={{ backgroundColor: TEAL }} />
               <h3 className="font-serif text-lg font-medium text-gray-900 mb-1">{b.name}</h3>
               <p className="text-sm text-gray-500 mb-3">{b.area}</p>
-              <span className="inline-flex items-center gap-1.5 text-xs text-brand-600 font-medium">
-                <span className="w-1.5 h-1.5 rounded-full bg-brand-500 inline-block" />
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: TEAL }}>
+                <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: TEAL }} />
                 Open
               </span>
             </div>
@@ -155,27 +204,45 @@ export default function HomePage() {
       <section className="bg-gray-50 py-20 px-4">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-14">
-            <p className="text-xs tracking-[0.3em] text-brand-500 uppercase mb-3">Save More</p>
+            <p className="text-xs tracking-[0.3em] uppercase mb-3" style={{ color: TEAL }}>
+              Save More
+            </p>
             <h2 className="font-serif text-4xl font-light text-gray-900">Monthly Plans</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {PLANS.map((plan, i) => (
-              <div key={plan.name} className={`p-8 border ${i === 1 ? "border-brand-400 bg-white shadow-sm" : "border-gray-100 bg-white"}`}>
-                {i === 1 && <p className="text-xs text-brand-500 tracking-widest uppercase mb-3">Most Popular</p>}
+            {PLANS.map((plan) => (
+              <div
+                key={plan.name}
+                className={`p-8 bg-white ${plan.popular ? "shadow-sm" : "border border-gray-100"}`}
+                style={plan.popular ? { border: `1px solid ${TEAL}` } : {}}
+              >
+                {plan.popular && (
+                  <p className="text-xs tracking-widest uppercase mb-3" style={{ color: TEAL }}>
+                    Most Popular
+                  </p>
+                )}
                 <h3 className="font-serif text-2xl font-light text-gray-900 mb-1">{plan.name}</h3>
                 <div className="flex items-end gap-1 mb-6">
-                  <span className="text-3xl font-medium text-brand-500">{plan.price}</span>
+                  <span className="text-3xl font-medium" style={{ color: TEAL }}>{plan.price}</span>
                   <span className="text-sm text-gray-400 pb-1">{plan.period}</span>
                 </div>
                 <ul className="space-y-2 mb-8">
                   {plan.perks.map((p) => (
                     <li key={p} className="flex items-center gap-2 text-sm text-gray-600">
-                      <span className="text-brand-500">✓</span>
+                      <span style={{ color: TEAL }}>✓</span>
                       {p}
                     </li>
                   ))}
                 </ul>
-                <Link href="/book" className={`block text-center py-2.5 text-sm tracking-widest uppercase transition-colors ${i === 1 ? "bg-brand-500 text-white hover:bg-brand-600" : "border border-gray-300 text-gray-700 hover:border-brand-500 hover:text-brand-500"}`}>
+                <Link
+                  href="/book"
+                  className="block text-center py-2.5 text-sm tracking-widest uppercase transition-colors"
+                  style={
+                    plan.popular
+                      ? { backgroundColor: TEAL, color: "#fff" }
+                      : { border: "1px solid #d1d5db", color: "#374151" }
+                  }
+                >
                   Get Started
                 </Link>
               </div>
@@ -185,17 +252,24 @@ export default function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="bg-[#0ABAB5] py-20 px-4 text-center">
-        <p className="text-xs tracking-[0.3em] text-white/70 uppercase mb-4">Ready?</p>
+      <section className="py-20 px-4 text-center" style={{ backgroundColor: TEAL }}>
+        <p className="text-xs tracking-[0.3em] uppercase mb-4 text-white/70">Ready?</p>
         <h2 className="font-serif text-4xl font-light text-white mb-4">Fresh laundry, delivered.</h2>
         <p className="text-white/80 mb-8">Book in under 2 minutes. We handle everything else.</p>
-        <Link href="/book" className="bg-white hover:bg-white/90 text-[#0ABAB5] font-medium px-8 py-3.5 text-sm tracking-widest uppercase transition-colors">
+        <Link
+          href="/book"
+          className="bg-white font-medium px-8 py-3.5 text-sm tracking-widest uppercase transition-colors hover:bg-white/90"
+          style={{ color: TEAL }}
+        >
           Book a Pickup
         </Link>
       </section>
 
       {/* Footer */}
-      <footer className="bg-[#0ABAB5] border-t border-white/20 py-8 text-center text-xs text-white/80 tracking-wide">
+      <footer
+        className="py-8 text-center text-xs tracking-wide border-t border-white/20 text-white/80"
+        style={{ backgroundColor: TEAL }}
+      >
         © 2026 Aunt Sally&apos;s Laundry. All rights reserved. · Metro Manila, Philippines
       </footer>
     </div>

@@ -12,6 +12,7 @@ export default function Navbar() {
             width={52}
             height={52}
             className="rounded-sm"
+            style={{ mixBlendMode: "screen" }}
             priority
           />
         </Link>
