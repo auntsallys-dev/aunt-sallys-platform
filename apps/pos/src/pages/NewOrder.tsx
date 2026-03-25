@@ -213,6 +213,82 @@ function CustomerModal({
   );
 }
 
+// ── Custom service modal ──────────────────────────────────────────────────────
+
+function CustomServiceModal({
+  onClose,
+  onAdd,
+}: {
+  onClose: () => void;
+  onAdd: (name: string, price: number) => void;
+}) {
+  const [name, setName] = useState("");
+  const [priceStr, setPriceStr] = useState("");
+  const price = parseFloat(priceStr) || 0;
+  const vat = price * 0.12;
+  const total = price + vat;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-base font-bold text-gray-900">Custom Service</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-600">Service / Item Name</label>
+            <input
+              autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Extra detergent, Rush fee…"
+              className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-600">Price (ex-VAT) ₱</label>
+            <input
+              type="number"
+              inputMode="decimal"
+              value={priceStr}
+              onChange={(e) => setPriceStr(e.target.value)}
+              placeholder="0.00"
+              className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        {price > 0 && (
+          <div className="mt-4 rounded-xl bg-gray-50 px-4 py-3 text-sm space-y-1">
+            <div className="flex justify-between text-gray-500">
+              <span>Price (ex-VAT)</span><span>₱{price.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-gray-500">
+              <span>VAT (12%)</span><span>₱{vat.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between font-bold text-gray-900 border-t border-gray-200 pt-1">
+              <span>Total</span><span>₱{total.toFixed(2)}</span>
+            </div>
+          </div>
+        )}
+
+        <button
+          disabled={!name.trim() || price <= 0}
+          onClick={() => { onAdd(name.trim(), price); onClose(); }}
+          className="mt-4 w-full rounded-xl bg-brand-600 py-2.5 text-sm font-medium text-white disabled:opacity-40"
+        >
+          Add to Order
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export function NewOrderPage() {
@@ -225,6 +301,7 @@ export function NewOrderPage() {
   const [items, setItems] = useState<LineItem[]>([]);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [showCustomerModal, setShowCustomerModal] = useState(false);
+  const [showCustomServiceModal, setShowCustomServiceModal] = useState(false);
   const [orderType] = useState<"walk_in" | "pickup" | "delivery">("walk_in");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [submitting, setSubmitting] = useState(false);
@@ -272,6 +349,14 @@ export function NewOrderPage() {
       );
       return updated.filter((i) => i.quantity > 0);
     });
+  }
+
+  function addCustomService(name: string, unitPrice: number) {
+    const id = `custom-${Date.now()}`;
+    setItems((prev) => [
+      ...prev,
+      { serviceId: id, name, quantity: 1, unitPrice, priceUnit: "item" },
+    ]);
   }
 
   function removeItem(serviceId: string) {
@@ -462,6 +547,26 @@ export function NewOrderPage() {
             </div>
           ) : (
             <div className="grid grid-cols-5 gap-2">
+              {/* Custom service tile */}
+              <button
+                onClick={() => setShowCustomServiceModal(true)}
+                className="relative rounded-xl text-left transition-all"
+                style={{
+                  minHeight: 64,
+                  padding: "8px 8px 8px",
+                  background: "#374151",
+                  border: "3px dashed rgba(255,255,255,0.3)",
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                }}
+              >
+                <div className="mb-0.5 text-[10px] font-semibold leading-tight" style={{ color: "rgba(255,255,255,0.9)" }}>
+                  Custom
+                </div>
+                <div className="text-xs font-bold" style={{ color: "rgba(255,255,255,0.7)" }}>
+                  + Add
+                </div>
+              </button>
+
               {filteredServices.map((service) => {
                 const color = CATEGORY_COLORS[service.category] ?? "#6b7280";
                 const inCart = items.find((i) => i.serviceId === service.id);
@@ -660,6 +765,12 @@ export function NewOrderPage() {
             setCustomer(c);
             setShowCustomerModal(false);
           }}
+        />
+      )}
+      {showCustomServiceModal && (
+        <CustomServiceModal
+          onClose={() => setShowCustomServiceModal(false)}
+          onAdd={addCustomService}
         />
       )}
     </div>
