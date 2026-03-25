@@ -57,7 +57,7 @@ authRoutes.post("/login", async (c) => {
     data: {
       accessToken,
       refreshToken: rawRefreshToken,
-      expiresIn: 900,
+      expiresIn: 43200,
       user: {
         id: user.id,
         email: user.email,
@@ -102,7 +102,7 @@ authRoutes.post("/refresh", async (c) => {
   await db.insert(refreshTokens).values({ userId: user.id, tokenHash: newHash, expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) });
 
   const accessToken = await signJWT({ sub: user.id, role: user.role, orgId: user.orgId, branchId: user.branchId }, "15m");
-  return c.json({ success: true, data: { accessToken, refreshToken: newRaw, expiresIn: 900 } });
+  return c.json({ success: true, data: { accessToken, refreshToken: newRaw, expiresIn: 43200 } });
 });
 
 // GET /api/v1/auth/me
@@ -112,3 +112,4 @@ authRoutes.get("/me", async (c) => {
   // Just return success for health check
   return c.json({ success: true });
 });
+

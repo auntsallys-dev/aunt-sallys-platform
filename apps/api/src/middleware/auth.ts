@@ -18,8 +18,8 @@ declare module "hono" {
 
 const secret = new TextEncoder().encode(JWT_SECRET);
 
-export async function signJWT(payload: Record<string, unknown>, expiresIn = "15m"): Promise<string> {
-  const expSeconds = expiresIn === "15m" ? 900 : expiresIn === "7d" ? 7 * 24 * 3600 : 900;
+export async function signJWT(payload: Record<string, unknown>, expiresIn = "12h"): Promise<string> {
+  const expSeconds = expiresIn === "12h" ? 900 : expiresIn === "7d" ? 7 * 24 * 3600 : 900;
   return new jose.SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -61,3 +61,4 @@ export async function requireRole(role: string) {
     await next();
   };
 }
+
