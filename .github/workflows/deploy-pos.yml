@@ -29,7 +29,7 @@ jobs:
       - name: Build POS
         run: pnpm --filter pos build
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_API_URL: https://aunt-sallys-pos.onrender.com
 
       - name: Add 404 SPA redirect
         run: cp apps/pos/dist/index.html apps/pos/dist/404.html
