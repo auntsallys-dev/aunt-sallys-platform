@@ -451,7 +451,7 @@ export function NewOrderPage() {
         {/* Service tiles */}
         <div className="flex-1 overflow-y-auto p-4">
           {loadingServices ? (
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-5 gap-2">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div key={i} className="h-24 animate-pulse rounded-xl bg-gray-200" />
               ))}
@@ -461,7 +461,7 @@ export function NewOrderPage() {
               No services in this category
             </div>
           ) : (
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-5 gap-2">
               {filteredServices.map((service) => {
                 const color = CATEGORY_COLORS[service.category] ?? "#6b7280";
                 const inCart = items.find((i) => i.serviceId === service.id);
@@ -471,8 +471,8 @@ export function NewOrderPage() {
                     onClick={() => addService(service)}
                     className="relative rounded-xl text-left transition-all"
                     style={{
-                      minHeight: 96,
-                      padding: "14px 12px 12px",
+                      minHeight: 64,
+                      padding: "8px 8px 8px",
                       background: color,
                       border: inCart
                         ? "3px solid rgba(255,255,255,0.85)"
@@ -492,12 +492,12 @@ export function NewOrderPage() {
                       </span>
                     )}
                     <div
-                      className="mb-1 text-xs font-semibold leading-snug"
+                      className="mb-0.5 text-[10px] font-semibold leading-tight"
                       style={{ color: "rgba(255,255,255,0.95)", wordBreak: "break-word" }}
                     >
                       {service.name}
                     </div>
-                    <div className="text-sm font-bold" style={{ color: "#fff" }}>
+                    <div className="text-xs font-bold" style={{ color: "#fff" }}>
                       &#8369;{parseFloat(service.basePrice).toFixed(0)}
                     </div>
                   </button>
@@ -665,3 +665,4 @@ export function NewOrderPage() {
     </div>
   );
 }
+
