@@ -608,12 +608,15 @@ export function NewOrderPage() {
             </span>
             <button
               onClick={() => { setDiscountStr(discount > 0 ? discount.toString() : ""); setShowDiscountInput(true); }}
-              className="text-left transition-colors hover:opacity-80"
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
+              style={{
+                background: discount > 0 ? "#dcfce7" : "#f3f4f6",
+                color: discount > 0 ? "#16a34a" : "#374151",
+                border: `1px solid ${discount > 0 ? "#86efac" : "#e5e7eb"}`,
+              }}
             >
-              <span className="text-gray-500">Discount&nbsp;</span>
-              <strong className={discount > 0 ? "text-green-600" : "text-gray-800"}>
-                {discount > 0 ? `−₱${discount.toFixed(2)}` : "₱0.00"}
-              </strong>
+              <span>🏷</span>
+              {discount > 0 ? `−₱${discount.toFixed(2)}` : "Discount"}
             </button>
           </div>
           <button
