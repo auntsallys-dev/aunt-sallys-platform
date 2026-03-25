@@ -31,6 +31,9 @@ jobs:
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
+      - name: Add 404 SPA redirect
+        run: cp apps/pos/dist/index.html apps/pos/dist/404.html
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
