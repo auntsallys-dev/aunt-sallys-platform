@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import Navbar from "@/components/Navbar";
 
 const TEAL = "#0ABAB5";
@@ -89,6 +90,16 @@ export default function HomePage() {
 
       {/* Hero */}
       <section className="px-4 py-24 text-center max-w-4xl mx-auto">
+        <div className="flex justify-center mb-8">
+          <Image
+            src="/logo.jpg"
+            alt="Aunt Sally's Laundry"
+            width={180}
+            height={180}
+            className="rounded-xl shadow-md"
+            priority
+          />
+        </div>
         <p className="text-xs tracking-[0.3em] uppercase mb-6" style={{ color: TEAL }}>
           Premium Laundry · Metro Manila
         </p>
