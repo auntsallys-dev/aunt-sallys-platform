@@ -225,8 +225,6 @@ function CustomServiceModal({
   const [name, setName] = useState("");
   const [priceStr, setPriceStr] = useState("");
   const price = parseFloat(priceStr) || 0;
-  const vat = price * 0.12;
-  const total = price + vat;
 
   return (
     <div
@@ -251,7 +249,7 @@ function CustomServiceModal({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium text-gray-600">Price (ex-VAT) ₱</label>
+            <label className="mb-1 block text-xs font-medium text-gray-600">Price (VAT inclusive) ₱</label>
             <input
               type="number"
               inputMode="decimal"
@@ -262,20 +260,6 @@ function CustomServiceModal({
             />
           </div>
         </div>
-
-        {price > 0 && (
-          <div className="mt-4 rounded-xl bg-gray-50 px-4 py-3 text-sm space-y-1">
-            <div className="flex justify-between text-gray-500">
-              <span>Price (ex-VAT)</span><span>₱{price.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-gray-500">
-              <span>VAT (12%)</span><span>₱{vat.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between font-bold text-gray-900 border-t border-gray-200 pt-1">
-              <span>Total</span><span>₱{total.toFixed(2)}</span>
-            </div>
-          </div>
-        )}
 
         <button
           disabled={!name.trim() || price <= 0}
@@ -302,6 +286,10 @@ export function NewOrderPage() {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [showCustomServiceModal, setShowCustomServiceModal] = useState(false);
+  const [discount, setDiscount] = useState(0);
+  const [showDiscountInput, setShowDiscountInput] = useState(false);
+  const [discountStr, setDiscountStr] = useState("");
+  const [discountType, setDiscountType] = useState<"peso" | "percent">("peso");
   const [orderType] = useState<"walk_in" | "pickup" | "delivery">("walk_in");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [submitting, setSubmitting] = useState(false);
@@ -319,9 +307,7 @@ export function NewOrderPage() {
   }, [selectedBranchId]);
 
   const subtotal = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
-  const VAT_RATE = 0.12;
-  const tax = subtotal * VAT_RATE;
-  const total = subtotal + tax;
+  const total = Math.max(0, subtotal - discount);
 
   const tabCategories = TABS[activeTab].categories;
   const filteredServices = services.filter((s) => tabCategories.includes(s.category));
@@ -375,6 +361,7 @@ export function NewOrderPage() {
         paymentMethod,
         customerId: customer?.id,
         items: items.map((i) => ({ serviceId: i.serviceId, quantity: i.quantity })),
+        discount: discount > 0 ? discount : undefined,
       });
       setCreatedOrder(res.data);
     } catch (err: any) {
@@ -619,18 +606,15 @@ export function NewOrderPage() {
               Subtotal&nbsp;
               <strong className="text-gray-800">&#8369;{subtotal.toFixed(2)}</strong>
             </span>
-            <span className="text-gray-500">
-              Discount&nbsp;
-              <strong className="text-gray-800">&#8369;0.00</strong>
-            </span>
-            <span className="text-gray-500">
-              Store Credit&nbsp;
-              <strong className="text-gray-800">&#8369;0.00</strong>
-            </span>
-            <span className="text-gray-500">
-              Tax (12% VAT)&nbsp;
-              <strong className="text-gray-800">&#8369;{tax.toFixed(2)}</strong>
-            </span>
+            <button
+              onClick={() => { setDiscountStr(discount > 0 ? discount.toString() : ""); setShowDiscountInput(true); }}
+              className="text-left transition-colors hover:opacity-80"
+            >
+              <span className="text-gray-500">Discount&nbsp;</span>
+              <strong className={discount > 0 ? "text-green-600" : "text-gray-800"}>
+                {discount > 0 ? `−₱${discount.toFixed(2)}` : "₱0.00"}
+              </strong>
+            </button>
           </div>
           <button
             onClick={() => navigate("/queue")}
@@ -772,6 +756,63 @@ export function NewOrderPage() {
           onClose={() => setShowCustomServiceModal(false)}
           onAdd={addCustomService}
         />
+      )}
+
+      {showDiscountInput && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={(e) => e.target === e.currentTarget && setShowDiscountInput(false)}
+        >
+          <div className="w-full max-w-xs rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-base font-bold text-gray-900">Apply Discount</h2>
+              <button onClick={() => setShowDiscountInput(false)} className="text-gray-400 hover:text-gray-600 text-xl">×</button>
+            </div>
+            <div className="mb-3 flex rounded-xl border border-gray-200 overflow-hidden">
+              <button
+                onClick={() => setDiscountType("peso")}
+                className="flex-1 py-2 text-sm font-medium transition-colors"
+                style={{ background: discountType === "peso" ? "#0e7490" : "#fff", color: discountType === "peso" ? "#fff" : "#374151" }}
+              >₱ Amount</button>
+              <button
+                onClick={() => setDiscountType("percent")}
+                className="flex-1 py-2 text-sm font-medium transition-colors"
+                style={{ background: discountType === "percent" ? "#0e7490" : "#fff", color: discountType === "percent" ? "#fff" : "#374151" }}
+              >% Percent</button>
+            </div>
+            <input
+              autoFocus
+              type="number"
+              inputMode="decimal"
+              value={discountStr}
+              onChange={(e) => setDiscountStr(e.target.value)}
+              placeholder={discountType === "peso" ? "e.g. 50" : "e.g. 10"}
+              className="mb-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
+            />
+            {discountStr && parseFloat(discountStr) > 0 && (
+              <p className="mb-3 text-xs text-gray-500">
+                {discountType === "percent"
+                  ? `= ₱${(subtotal * parseFloat(discountStr) / 100).toFixed(2)} off`
+                  : `₱${parseFloat(discountStr).toFixed(2)} off`}
+              </p>
+            )}
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setDiscount(0); setDiscountStr(""); setShowDiscountInput(false); }}
+                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-600"
+              >Remove</button>
+              <button
+                disabled={!discountStr || parseFloat(discountStr) <= 0}
+                onClick={() => {
+                  const val = parseFloat(discountStr);
+                  setDiscount(discountType === "percent" ? subtotal * val / 100 : val);
+                  setShowDiscountInput(false);
+                }}
+                className="flex-1 rounded-xl bg-brand-600 py-2.5 text-sm font-medium text-white disabled:opacity-40"
+              >Apply</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

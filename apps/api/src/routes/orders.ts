@@ -106,9 +106,8 @@ ordersRoutes.post("/", authenticate, async (c) => {
   }
 
   const deliveryFee = orderType === "delivery" ? 50 : 0;
-  const VAT_RATE = 0.12;
-  const taxAmount = subtotal * VAT_RATE;
-  const total = subtotal + taxAmount + deliveryFee;
+  const discountAmount = parseFloat(body.discount ?? "0") || 0;
+  const total = Math.max(0, subtotal - discountAmount) + deliveryFee;
 
   const [order] = await db.insert(orders).values({
     orderNumber,
