@@ -8,6 +8,7 @@ import { servicesRoutes } from "./routes/services.js";
 import { branchesRoutes } from "./routes/branches.js";
 import { customersRoutes } from "./routes/customers.js";
 import { paymentsRoutes } from "./routes/payments.js";
+import { publicRoutes } from "./routes/public.js";
 import { readFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -34,6 +35,7 @@ app.route("/api/v1/services", servicesRoutes);
 app.route("/api/v1/branches", branchesRoutes);
 app.route("/api/v1/customers", customersRoutes);
 app.route("/api/v1/payments", paymentsRoutes);
+app.route("/api/v1/public", publicRoutes);
 
 // Serve static POS frontend
 app.use("/assets/*", serveStatic({ root: "./public" }));

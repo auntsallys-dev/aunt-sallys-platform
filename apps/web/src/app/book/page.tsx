@@ -1,97 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 
-type Step = "info" | "services" | "review";
+const API = "https://aunt-sallys-pos.onrender.com";
 
-const SERVICE_GROUPS = [
-  {
-    label: "Wash, Dry & Fold",
-    services: [
-      { id: "wdf-reg",   name: "Regular Bag (1–5kg)",          basePrice: 400,  priceUnit: "bag",   note: "Wash, dry & fold" },
-      { id: "wdf-lrg",   name: "Large Bag (6kg+)",              basePrice: 500,  priceUnit: "bag",   note: "Wash, dry & fold" },
-    ],
-  },
-  {
-    label: "Wash, Dry & Press",
-    services: [
-      { id: "wdp-reg",   name: "Regular Bag (12 pcs ironed)",   basePrice: 1120, priceUnit: "bag",   note: "Wash, dry & press" },
-      { id: "wdp-lrg",   name: "Large Bag (24 pcs ironed)",     basePrice: 1680, priceUnit: "bag",   note: "Wash, dry & press" },
-      { id: "hwf",       name: "Hand Wash & Fold (per kg)",     basePrice: 400,  priceUnit: "kg",    note: "" },
-      { id: "hwp",       name: "Hand Wash & Press (per kg)",    basePrice: 1120, priceUnit: "kg",    note: "" },
-    ],
-  },
-  {
-    label: "Dry Only",
-    services: [
-      { id: "dry-sm",    name: "Dry Only – 1 to 5kg",           basePrice: 240,  priceUnit: "load",  note: "" },
-      { id: "dry-lg",    name: "Dry Only – 6 to 10kg",          basePrice: 340,  priceUnit: "load",  note: "" },
-    ],
-  },
-  {
-    label: "Heavy Wash",
-    services: [
-      { id: "hv-bed",    name: "Bed Sheet, Blanket & Towel",    basePrice: 780,  priceUnit: "load",  note: "Up to 8kg" },
-      { id: "hv-cov",    name: "Seat Cover & Curtains",         basePrice: 890,  priceUnit: "load",  note: "Up to 8kg" },
-    ],
-  },
-  {
-    label: "Comforter",
-    services: [
-      { id: "cf-tw",     name: "Single / Twin",                 basePrice: 500,  priceUnit: "piece", note: "" },
-      { id: "cf-dq",     name: "Double / Queen",                basePrice: 560,  priceUnit: "piece", note: "" },
-      { id: "cf-kg",     name: "King",                          basePrice: 670,  priceUnit: "piece", note: "" },
-      { id: "cf-xk",     name: "Extra King",                    basePrice: 1120, priceUnit: "piece", note: "" },
-    ],
-  },
-  {
-    label: "Dry Clean",
-    services: [
-      { id: "dc-barong-k",  name: "Barong (Kids S–XL)",         basePrice: 450,  priceUnit: "piece", note: "" },
-      { id: "dc-barong-a",  name: "Barong (Adults S–XXXL)",     basePrice: 670,  priceUnit: "piece", note: "" },
-      { id: "dc-coat-k",    name: "Coat / Sweater / Jacket (Kids)",  basePrice: 450, priceUnit: "piece", note: "" },
-      { id: "dc-coat-a",    name: "Coat / Sweater / Jacket (Adults)", basePrice: 560, priceUnit: "piece", note: "" },
-      { id: "dc-pants",     name: "Pants & Skirt",              basePrice: 340,  priceUnit: "piece", note: "" },
-      { id: "dc-blouse",    name: "Blouse / Collared Shirt",    basePrice: 340,  priceUnit: "piece", note: "" },
-      { id: "dc-dress-k",   name: "Dress (Kids / Youth)",       basePrice: 450,  priceUnit: "piece", note: "" },
-      { id: "dc-dress-a",   name: "Dress (Adults)",             basePrice: 670,  priceUnit: "piece", note: "" },
-      { id: "dc-gown-l",    name: "Evening Gown (Light)",       basePrice: 670,  priceUnit: "piece", note: "" },
-      { id: "dc-gown-ly",   name: "Evening Gown (Layered)",     basePrice: 1120, priceUnit: "piece", note: "" },
-      { id: "dc-wed",       name: "Wedding Gown",               basePrice: 2800, priceUnit: "piece", note: "" },
-      { id: "dc-suit-y",    name: "Two-Piece Suit (Youth)",     basePrice: 670,  priceUnit: "piece", note: "" },
-      { id: "dc-suit-a",    name: "Two-Piece Suit (Adults)",    basePrice: 890,  priceUnit: "piece", note: "" },
-      { id: "dc-pillow",    name: "Pillows",                    basePrice: 220,  priceUnit: "piece", note: "" },
-      { id: "dc-cap",       name: "Caps (Washable)",            basePrice: 400,  priceUnit: "piece", note: "" },
-      { id: "dc-bag-sm",    name: "Bags – Small (Washable)",    basePrice: 340,  priceUnit: "piece", note: "" },
-      { id: "dc-bag-lg",    name: "Bags – Medium to Large",     basePrice: 670,  priceUnit: "piece", note: "" },
-      { id: "dc-shoes",     name: "Shoes (Washable)",           basePrice: 400,  priceUnit: "pair",  note: "" },
-      { id: "dc-toy-12",    name: "Stuffed Toy (up to 12\")",   basePrice: 220,  priceUnit: "piece", note: "" },
-      { id: "dc-toy-25",    name: "Stuffed Toy (up to 25\")",   basePrice: 450,  priceUnit: "piece", note: "" },
-      { id: "dc-toy-36",    name: "Stuffed Toy (up to 36\")",   basePrice: 890,  priceUnit: "piece", note: "" },
-      { id: "dc-toy-60",    name: "Stuffed Toy (up to 60\")",   basePrice: 1680, priceUnit: "piece", note: "" },
-    ],
-  },
-  {
-    label: "Add-ons",
-    services: [
-      { id: "ao-deterg",    name: "Special Detergent",          basePrice: 50,   priceUnit: "60ml",  note: "" },
-      { id: "ao-fabric",    name: "Special Fabric Conditioner", basePrice: 50,   priceUnit: "60ml",  note: "" },
-      { id: "ao-drysheet",  name: "Drying Sheet",               basePrice: 50,   priceUnit: "piece", note: "" },
-      { id: "ao-hanger",    name: "Hanger",                     basePrice: 20,   priceUnit: "piece", note: "" },
-      { id: "ao-ecobag",    name: "Eco-Bag",                    basePrice: 200,  priceUnit: "piece", note: "" },
-      { id: "ao-rep-min",   name: "Repair – Minor",             basePrice: 50,   priceUnit: "item",  note: "" },
-      { id: "ao-rep-maj",   name: "Repair – Major",             basePrice: 100,  priceUnit: "item",  note: "" },
-      { id: "ao-pickup",    name: "Pick-up / Delivery",         basePrice: 180,  priceUnit: "trip",  note: "Door-to-door" },
-      { id: "ao-rush-nd",   name: "Rush – Next Day",            basePrice: 300,  priceUnit: "order", note: "" },
-      { id: "ao-rush-sd",   name: "Rush – Same Day",            basePrice: 500,  priceUnit: "order", note: "" },
-    ],
-  },
-];
+type Step = "info" | "branch" | "services" | "review";
 
-// Flatten for lookup
-const SERVICES = SERVICE_GROUPS.flatMap((g) => g.services);
+interface Branch {
+  id: string;
+  name: string;
+  address: string | null;
+}
+
+interface Service {
+  id: string;
+  name: string;
+  category: string;
+  basePrice: string;
+  priceUnit: string;
+  description: string | null;
+}
 
 interface SelectedItem {
   serviceId: string;
@@ -103,27 +33,94 @@ interface SelectedItem {
 
 const STEP_LABELS: Record<Step, string> = {
   info:     "Your Info",
+  branch:   "Branch",
   services: "Services",
   review:   "Review",
 };
-const STEPS: Step[] = ["info", "services", "review"];
+const STEPS: Step[] = ["info", "branch", "services", "review"];
+
+const CATEGORY_LABELS: Record<string, string> = {
+  wash_dry_fold:  "Wash, Dry & Fold",
+  wash_dry_press: "Wash, Dry & Press",
+  dry_only:       "Dry Only",
+  heavy_wash:     "Heavy Wash",
+  comforter:      "Comforter",
+  dry_clean:      "Dry Clean",
+  addon:          "Add-ons",
+  logistics:      "Logistics",
+};
+
+const CATEGORY_ORDER = [
+  "wash_dry_fold",
+  "wash_dry_press",
+  "dry_only",
+  "heavy_wash",
+  "comforter",
+  "dry_clean",
+  "addon",
+  "logistics",
+];
+
+function groupServices(list: Service[]) {
+  const map: Record<string, Service[]> = {};
+  for (const svc of list) {
+    if (!map[svc.category]) map[svc.category] = [];
+    map[svc.category].push(svc);
+  }
+  return CATEGORY_ORDER.filter((cat) => map[cat]?.length).map((cat) => ({
+    key: cat,
+    label: CATEGORY_LABELS[cat] ?? cat,
+    services: map[cat],
+  }));
+}
 
 export default function BookPage() {
   const [step, setStep] = useState<Step>("info");
   const [trackingCode, setTrackingCode] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Step 1
+  // Remote data
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [serviceGroups, setServiceGroups] = useState<ReturnType<typeof groupServices>>([]);
+  const [loadingData, setLoadingData] = useState(true);
+
+  // Step 1 — info
   const [name, setName]       = useState("");
   const [phone, setPhone]     = useState("");
   const [email, setEmail]     = useState("");
   const [address, setAddress] = useState("");
 
-  // Step 2
+  // Step 2 — branch
+  const [branchId, setBranchId] = useState("");
+
+  // Step 3 — services
   const [items, setItems] = useState<SelectedItem[]>([]);
 
   const subtotal = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
 
-  function addItem(svc: (typeof SERVICES)[number]) {
+  useEffect(() => {
+    async function load() {
+      try {
+        const [bRes, sRes] = await Promise.all([
+          fetch(`${API}/api/v1/public/branches`),
+          fetch(`${API}/api/v1/public/services`),
+        ]);
+        const bData = await bRes.json();
+        const sData = await sRes.json();
+        if (bData.success) setBranches(bData.data);
+        if (sData.success) setServiceGroups(groupServices(sData.data));
+      } catch {
+        // fail silently — fallback handled via error state
+      } finally {
+        setLoadingData(false);
+      }
+    }
+    load();
+  }, []);
+
+  function addItem(svc: Service) {
+    const price = parseFloat(svc.basePrice);
     setItems((prev) => {
       const existing = prev.find((i) => i.serviceId === svc.id);
       if (existing) {
@@ -131,7 +128,7 @@ export default function BookPage() {
           i.serviceId === svc.id ? { ...i, quantity: i.quantity + 1 } : i
         );
       }
-      return [...prev, { serviceId: svc.id, name: svc.name, quantity: 1, unitPrice: svc.basePrice, priceUnit: svc.priceUnit }];
+      return [...prev, { serviceId: svc.id, name: svc.name, quantity: 1, unitPrice: price, priceUnit: svc.priceUnit }];
     });
   }
 
@@ -144,16 +141,41 @@ export default function BookPage() {
   }
 
   async function handleSubmit() {
-    const res = await fetch("/api/bookings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, phone, email, address, items }),
-    });
-    const data = await res.json();
-    setTrackingCode(data.trackingCode);
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API}/api/v1/public/bookings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          phone,
+          email: email || undefined,
+          address,
+          branchId,
+          items: items.map((i) => ({
+            serviceId: i.serviceId,
+            quantity: i.quantity,
+            unitPrice: i.unitPrice,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setError(data.error ?? "Booking failed. Please try again.");
+        return;
+      }
+      setTrackingCode(data.data.trackingCode);
+    } catch {
+      setError("Network error. Please check your connection and try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
-  // ── Confirmation screen ────────────────────────────────────────────────
+  const selectedBranch = branches.find((b) => b.id === branchId);
+
+  // ── Confirmation screen ──────────────────────────────────────────────
   if (trackingCode) {
     return (
       <>
@@ -215,7 +237,7 @@ export default function BookPage() {
             {STEPS.map((s, i) => (
               <div key={s} className="flex items-center">
                 {i > 0 && (
-                  <div className={`h-px w-10 transition-colors ${
+                  <div className={`h-px w-8 transition-colors ${
                     STEPS.indexOf(step) >= i ? "bg-[#0ABAB5]" : "bg-gray-200"
                   }`} />
                 )}
@@ -248,9 +270,7 @@ export default function BookPage() {
             <div className="space-y-5">
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
-                  <label className="mb-2 block text-xs font-medium tracking-widest text-gray-500 uppercase">
-                    Full Name
-                  </label>
+                  <label className="mb-2 block text-xs font-medium tracking-widest text-gray-500 uppercase">Full Name</label>
                   <input
                     type="text"
                     value={name}
@@ -260,9 +280,7 @@ export default function BookPage() {
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-xs font-medium tracking-widest text-gray-500 uppercase">
-                    Phone Number
-                  </label>
+                  <label className="mb-2 block text-xs font-medium tracking-widest text-gray-500 uppercase">Phone Number</label>
                   <input
                     type="tel"
                     value={phone}
@@ -273,9 +291,7 @@ export default function BookPage() {
                 </div>
               </div>
               <div>
-                <label className="mb-2 block text-xs font-medium tracking-widest text-gray-500 uppercase">
-                  Email Address
-                </label>
+                <label className="mb-2 block text-xs font-medium tracking-widest text-gray-500 uppercase">Email Address <span className="normal-case text-gray-300">(optional)</span></label>
                 <input
                   type="email"
                   value={email}
@@ -285,9 +301,7 @@ export default function BookPage() {
                 />
               </div>
               <div>
-                <label className="mb-2 block text-xs font-medium tracking-widest text-gray-500 uppercase">
-                  Pickup Address
-                </label>
+                <label className="mb-2 block text-xs font-medium tracking-widest text-gray-500 uppercase">Pickup Address</label>
                 <textarea
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
@@ -298,7 +312,7 @@ export default function BookPage() {
               </div>
               <button
                 disabled={!name.trim() || !phone.trim() || !address.trim()}
-                onClick={() => setStep("services")}
+                onClick={() => setStep("branch")}
                 className="w-full rounded-sm bg-[#0ABAB5] py-4 text-sm font-medium tracking-wide text-white hover:bg-[#089e9a] disabled:opacity-40 transition-colors"
               >
                 Continue →
@@ -306,83 +320,39 @@ export default function BookPage() {
             </div>
           )}
 
-          {/* ── Step 2: Service Selection ──────────────────────────── */}
-          {step === "services" && (
+          {/* ── Step 2: Branch Selection ───────────────────────────── */}
+          {step === "branch" && (
             <div className="space-y-4">
-              <div className="space-y-6">
-                {SERVICE_GROUPS.map((group) => (
-                  <div key={group.label}>
-                    <div className="mb-2 text-xs font-medium tracking-widest text-gray-400 uppercase">
-                      {group.label}
-                    </div>
-                    <div className="space-y-2">
-                      {group.services.map((svc) => {
-                        const item = items.find((i) => i.serviceId === svc.id);
-                        return (
-                          <div
-                            key={svc.id}
-                            className={`flex items-center justify-between border bg-white p-4 transition-colors ${
-                              item ? "border-[#0ABAB5]/40" : "border-gray-100"
-                            }`}
-                          >
-                            <div>
-                              <div className="text-sm font-medium text-gray-900">{svc.name}</div>
-                              <div className="text-xs text-gray-400">
-                                ₱{svc.basePrice.toLocaleString()}/{svc.priceUnit}
-                                {svc.note ? ` · ${svc.note}` : ""}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              {item && (
-                                <>
-                                  <button
-                                    onClick={() => decreaseItem(svc.id)}
-                                    className="flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors"
-                                    aria-label="Remove"
-                                  >
-                                    –
-                                  </button>
-                                  <span className="w-5 text-center text-sm font-medium text-gray-900">
-                                    {item.quantity}
-                                  </span>
-                                </>
-                              )}
-                              <button
-                                onClick={() => addItem(svc)}
-                                className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0ABAB5] text-white hover:bg-[#089e9a] transition-colors"
-                                aria-label="Add"
-                              >
-                                +
-                              </button>
-                            </div>
+              <p className="text-sm text-gray-500">Select your nearest Aunt Sally&apos;s branch.</p>
+              {loadingData ? (
+                <div className="py-8 text-center text-sm text-gray-400">Loading branches…</div>
+              ) : (
+                <div className="space-y-2">
+                  {branches.map((b) => (
+                    <button
+                      key={b.id}
+                      onClick={() => setBranchId(b.id)}
+                      className={`w-full text-left border p-5 transition-colors ${
+                        branchId === b.id ? "border-[#0ABAB5] bg-[#0ABAB5]/5" : "border-gray-100 bg-white hover:border-gray-200"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="font-medium text-gray-900">{b.name}</div>
+                          {b.address && <div className="mt-0.5 text-xs text-gray-400">{b.address}</div>}
+                        </div>
+                        {branchId === b.id && (
+                          <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#0ABAB5]">
+                            <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {items.length > 0 && (
-                <div className="border border-[#0ABAB5]/20 bg-[#0ABAB5]/5 p-5">
-                  <div className="mb-3 text-xs font-medium tracking-widest text-[#0ABAB5] uppercase">
-                    Selected
-                  </div>
-                  <div className="space-y-1">
-                    {items.map((i) => (
-                      <div key={i.serviceId} className="flex justify-between text-sm text-teal-700">
-                        <span>{i.name} × {i.quantity}</span>
-                        <span>₱{(i.quantity * i.unitPrice).toFixed(2)}</span>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                  <div className="mt-3 border-t border-[#0ABAB5]/20 pt-3 flex justify-between font-medium text-gray-900 text-sm">
-                    <span>Subtotal</span>
-                    <span>₱{subtotal.toFixed(2)}</span>
-                  </div>
+                    </button>
+                  ))}
                 </div>
               )}
-
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep("info")}
@@ -391,64 +361,136 @@ export default function BookPage() {
                   ← Back
                 </button>
                 <button
-                  disabled={items.length === 0}
-                  onClick={() => setStep("review")}
+                  disabled={!branchId}
+                  onClick={() => setStep("services")}
                   className="flex-1 rounded-sm bg-[#0ABAB5] py-4 text-sm font-medium tracking-wide text-white hover:bg-[#089e9a] disabled:opacity-40 transition-colors"
                 >
-                  Review →
+                  Continue →
                 </button>
               </div>
             </div>
           )}
 
-          {/* ── Step 3: Review & Confirm ───────────────────────────── */}
+          {/* ── Step 3: Service Selection ──────────────────────────── */}
+          {step === "services" && (
+            <div className="space-y-4">
+              {loadingData ? (
+                <div className="py-8 text-center text-sm text-gray-400">Loading services…</div>
+              ) : (
+                <div className="space-y-6">
+                  {serviceGroups.map((group) => (
+                    <div key={group.key}>
+                      <div className="mb-2 text-xs font-medium tracking-widest text-gray-400 uppercase">
+                        {group.label}
+                      </div>
+                      <div className="space-y-2">
+                        {group.services.map((svc) => {
+                          const item = items.find((i) => i.serviceId === svc.id);
+                          const price = parseFloat(svc.basePrice);
+                          return (
+                            <div
+                              key={svc.id}
+                              className={`flex items-center justify-between border bg-white p-4 transition-colors ${
+                                item ? "border-[#0ABAB5]/40" : "border-gray-100"
+                              }`}
+                            >
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{svc.name}</div>
+                                <div className="text-xs text-gray-400">
+                                  ₱{price.toLocaleString()}/{svc.priceUnit}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                {item && (
+                                  <>
+                                    <button
+                                      onClick={() => decreaseItem(svc.id)}
+                                      className="flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors"
+                                    >–</button>
+                                    <span className="w-5 text-center text-sm font-medium text-gray-900">
+                                      {item.quantity}
+                                    </span>
+                                  </>
+                                )}
+                                <button
+                                  onClick={() => addItem(svc)}
+                                  className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0ABAB5] text-white hover:bg-[#089e9a] transition-colors"
+                                >+</button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {items.length > 0 && (
+                <div className="border border-[#0ABAB5]/20 bg-[#0ABAB5]/5 p-5">
+                  <div className="mb-3 text-xs font-medium tracking-widest text-[#0ABAB5] uppercase">Selected</div>
+                  <div className="space-y-1">
+                    {items.map((i) => (
+                      <div key={i.serviceId} className="flex justify-between text-sm text-teal-700">
+                        <span>{i.name} × {i.quantity}</span>
+                        <span>₱{(i.quantity * i.unitPrice).toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 border-t border-[#0ABAB5]/20 pt-3 flex justify-between font-medium text-gray-900 text-sm">
+                    <span>Subtotal</span>
+                    <span>₱{subtotal.toLocaleString()}</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setStep("branch")}
+                  className="flex-1 border border-gray-200 py-4 text-sm font-medium text-gray-500 hover:border-gray-300 transition-colors"
+                >← Back</button>
+                <button
+                  disabled={items.length === 0}
+                  onClick={() => setStep("review")}
+                  className="flex-1 rounded-sm bg-[#0ABAB5] py-4 text-sm font-medium tracking-wide text-white hover:bg-[#089e9a] disabled:opacity-40 transition-colors"
+                >Review →</button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Step 4: Review & Confirm ───────────────────────────── */}
           {step === "review" && (
             <div className="space-y-6">
-              {/* Customer details */}
               <div className="border border-gray-100 bg-white p-5">
-                <div className="mb-4 text-xs font-medium tracking-widest text-gray-400 uppercase">
-                  Your Information
-                </div>
+                <div className="mb-4 text-xs font-medium tracking-widest text-gray-400 uppercase">Your Information</div>
                 <dl className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <dt className="text-gray-400">Name</dt>
-                    <dd className="text-gray-900">{name}</dd>
-                  </div>
-                  <div className="flex justify-between">
-                    <dt className="text-gray-400">Phone</dt>
-                    <dd className="text-gray-900">{phone}</dd>
-                  </div>
-                  {email && (
-                    <div className="flex justify-between">
-                      <dt className="text-gray-400">Email</dt>
-                      <dd className="text-gray-900">{email}</dd>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <dt className="text-gray-400">Address</dt>
-                    <dd className="text-right text-gray-900 max-w-[60%]">{address}</dd>
-                  </div>
+                  <div className="flex justify-between"><dt className="text-gray-400">Name</dt><dd className="text-gray-900">{name}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-400">Phone</dt><dd className="text-gray-900">{phone}</dd></div>
+                  {email && <div className="flex justify-between"><dt className="text-gray-400">Email</dt><dd className="text-gray-900">{email}</dd></div>}
+                  <div className="flex justify-between"><dt className="text-gray-400">Address</dt><dd className="text-right text-gray-900 max-w-[60%]">{address}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-400">Branch</dt><dd className="text-gray-900">{selectedBranch?.name}</dd></div>
                 </dl>
               </div>
 
-              {/* Order summary */}
               <div className="border border-gray-100 bg-white p-5">
-                <div className="mb-4 text-xs font-medium tracking-widest text-gray-400 uppercase">
-                  Order Summary
-                </div>
+                <div className="mb-4 text-xs font-medium tracking-widest text-gray-400 uppercase">Order Summary</div>
                 <div className="space-y-2">
                   {items.map((i) => (
                     <div key={i.serviceId} className="flex justify-between text-sm">
-                      <span className="text-gray-500">{i.name} × {i.quantity} {i.priceUnit}</span>
-                      <span className="text-gray-900">₱{(i.quantity * i.unitPrice).toFixed(2)}</span>
+                      <span className="text-gray-500">{i.name} × {i.quantity}</span>
+                      <span className="text-gray-900">₱{(i.quantity * i.unitPrice).toLocaleString()}</span>
                     </div>
                   ))}
                   <div className="flex justify-between border-t border-gray-100 pt-3 font-medium">
                     <span className="text-gray-900">Total</span>
-                    <span className="text-[#0ABAB5]">₱{subtotal.toFixed(2)}</span>
+                    <span style={{ color: "#0ABAB5" }}>₱{subtotal.toLocaleString()}</span>
                   </div>
                 </div>
               </div>
+
+              {error && (
+                <div className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+              )}
 
               <p className="text-xs leading-relaxed text-gray-400">
                 By confirming, you agree to our collection and processing of your information to complete this booking. Final price may vary based on actual weight/quantity.
@@ -458,14 +500,13 @@ export default function BookPage() {
                 <button
                   onClick={() => setStep("services")}
                   className="flex-1 border border-gray-200 py-4 text-sm font-medium text-gray-500 hover:border-gray-300 transition-colors"
-                >
-                  ← Back
-                </button>
+                >← Back</button>
                 <button
                   onClick={handleSubmit}
-                  className="flex-1 rounded-sm bg-[#0ABAB5] py-4 text-sm font-medium tracking-wide text-white hover:bg-[#089e9a] transition-colors"
+                  disabled={submitting}
+                  className="flex-1 rounded-sm bg-[#0ABAB5] py-4 text-sm font-medium tracking-wide text-white hover:bg-[#089e9a] disabled:opacity-60 transition-colors"
                 >
-                  Confirm Booking
+                  {submitting ? "Submitting…" : "Confirm Booking"}
                 </button>
               </div>
             </div>

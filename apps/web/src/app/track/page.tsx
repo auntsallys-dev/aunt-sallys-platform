@@ -18,6 +18,32 @@ interface TrackingData {
   steps: StatusStep[];
 }
 
+const API = "https://aunt-sallys-pos.onrender.com";
+
+const STATUS_STEPS = [
+  { key: "pending",          label: "Booking Received",    description: "Your booking has been received and is awaiting confirmation." },
+  { key: "confirmed",        label: "Confirmed",           description: "Your booking has been confirmed. We're preparing for pickup." },
+  { key: "picked_up",        label: "Picked Up",           description: "Your laundry has been picked up and is on its way to us." },
+  { key: "processing",       label: "Processing",          description: "Your laundry is being washed, dried, and/or pressed." },
+  { key: "ready",            label: "Ready",               description: "Your laundry is clean and ready for pickup or delivery." },
+  { key: "out_for_delivery", label: "Out for Delivery",    description: "Your laundry is on its way back to you." },
+  { key: "completed",        label: "Completed",           description: "Order complete. Thank you for choosing Aunt Sally's!" },
+];
+
+function buildSteps(currentStatus: string, history: { status: string; createdAt: string }[]): StatusStep[] {
+  const historyMap: Record<string, string> = {};
+  for (const h of history) historyMap[h.status] = h.createdAt;
+
+  const currentIdx = STATUS_STEPS.findIndex((s) => s.key === currentStatus);
+  return STATUS_STEPS.map((s, i) => ({
+    label: s.label,
+    description: s.description,
+    completedAt: i <= currentIdx && historyMap[s.key]
+      ? new Date(historyMap[s.key]).toLocaleString("en-PH", { dateStyle: "medium", timeStyle: "short" })
+      : i < currentIdx ? "Completed" : null,
+  }));
+}
+
 function TrackPageInner() {
   const searchParams = useSearchParams();
   const [code, setCode] = useState(searchParams.get("code") ?? "");
@@ -41,13 +67,23 @@ function TrackPageInner() {
     setError(null);
     setData(null);
     try {
-      const res = await fetch(`/api/track/${encodeURIComponent(trackingCode.trim().toUpperCase())}`);
+      const res = await fetch(`${API}/api/v1/public/track/${encodeURIComponent(trackingCode.trim().toUpperCase())}`);
       if (!res.ok) {
         setError("No booking found for that tracking code. Please check and try again.");
         return;
       }
       const json = await res.json();
-      setData(json);
+      if (!json.success) {
+        setError("No booking found for that tracking code. Please check and try again.");
+        return;
+      }
+      const order = json.data;
+      setData({
+        trackingCode: order.orderNumber,
+        customerName: "",
+        status: order.status,
+        steps: buildSteps(order.status, order.history ?? []),
+      });
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
