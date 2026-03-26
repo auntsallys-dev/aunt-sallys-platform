@@ -6,15 +6,92 @@ import Navbar from "@/components/Navbar";
 
 type Step = "info" | "services" | "review";
 
-const SERVICES = [
-  { id: "1", name: "Wash & Fold",          basePrice: 65,  priceUnit: "kg" },
-  { id: "2", name: "Wash & Iron",           basePrice: 90,  priceUnit: "kg" },
-  { id: "3", name: "Dry Clean",             basePrice: 150, priceUnit: "piece" },
-  { id: "4", name: "Iron Only",             basePrice: 40,  priceUnit: "piece" },
-  { id: "5", name: "Beddings & Linens",     basePrice: 120, priceUnit: "piece" },
-  { id: "6", name: "Sneaker Cleaning",      basePrice: 250, priceUnit: "pair" },
-  { id: "7", name: "Express Wash & Fold",   basePrice: 90,  priceUnit: "kg" },
+const SERVICE_GROUPS = [
+  {
+    label: "Wash, Dry & Fold",
+    services: [
+      { id: "wdf-reg",   name: "Regular Bag (1–5kg)",          basePrice: 400,  priceUnit: "bag",   note: "Wash, dry & fold" },
+      { id: "wdf-lrg",   name: "Large Bag (6kg+)",              basePrice: 500,  priceUnit: "bag",   note: "Wash, dry & fold" },
+    ],
+  },
+  {
+    label: "Wash, Dry & Press",
+    services: [
+      { id: "wdp-reg",   name: "Regular Bag (12 pcs ironed)",   basePrice: 1120, priceUnit: "bag",   note: "Wash, dry & press" },
+      { id: "wdp-lrg",   name: "Large Bag (24 pcs ironed)",     basePrice: 1680, priceUnit: "bag",   note: "Wash, dry & press" },
+      { id: "hwf",       name: "Hand Wash & Fold (per kg)",     basePrice: 400,  priceUnit: "kg",    note: "" },
+      { id: "hwp",       name: "Hand Wash & Press (per kg)",    basePrice: 1120, priceUnit: "kg",    note: "" },
+    ],
+  },
+  {
+    label: "Dry Only",
+    services: [
+      { id: "dry-sm",    name: "Dry Only – 1 to 5kg",           basePrice: 240,  priceUnit: "load",  note: "" },
+      { id: "dry-lg",    name: "Dry Only – 6 to 10kg",          basePrice: 340,  priceUnit: "load",  note: "" },
+    ],
+  },
+  {
+    label: "Heavy Wash",
+    services: [
+      { id: "hv-bed",    name: "Bed Sheet, Blanket & Towel",    basePrice: 780,  priceUnit: "load",  note: "Up to 8kg" },
+      { id: "hv-cov",    name: "Seat Cover & Curtains",         basePrice: 890,  priceUnit: "load",  note: "Up to 8kg" },
+    ],
+  },
+  {
+    label: "Comforter",
+    services: [
+      { id: "cf-tw",     name: "Single / Twin",                 basePrice: 500,  priceUnit: "piece", note: "" },
+      { id: "cf-dq",     name: "Double / Queen",                basePrice: 560,  priceUnit: "piece", note: "" },
+      { id: "cf-kg",     name: "King",                          basePrice: 670,  priceUnit: "piece", note: "" },
+      { id: "cf-xk",     name: "Extra King",                    basePrice: 1120, priceUnit: "piece", note: "" },
+    ],
+  },
+  {
+    label: "Dry Clean",
+    services: [
+      { id: "dc-barong-k",  name: "Barong (Kids S–XL)",         basePrice: 450,  priceUnit: "piece", note: "" },
+      { id: "dc-barong-a",  name: "Barong (Adults S–XXXL)",     basePrice: 670,  priceUnit: "piece", note: "" },
+      { id: "dc-coat-k",    name: "Coat / Sweater / Jacket (Kids)",  basePrice: 450, priceUnit: "piece", note: "" },
+      { id: "dc-coat-a",    name: "Coat / Sweater / Jacket (Adults)", basePrice: 560, priceUnit: "piece", note: "" },
+      { id: "dc-pants",     name: "Pants & Skirt",              basePrice: 340,  priceUnit: "piece", note: "" },
+      { id: "dc-blouse",    name: "Blouse / Collared Shirt",    basePrice: 340,  priceUnit: "piece", note: "" },
+      { id: "dc-dress-k",   name: "Dress (Kids / Youth)",       basePrice: 450,  priceUnit: "piece", note: "" },
+      { id: "dc-dress-a",   name: "Dress (Adults)",             basePrice: 670,  priceUnit: "piece", note: "" },
+      { id: "dc-gown-l",    name: "Evening Gown (Light)",       basePrice: 670,  priceUnit: "piece", note: "" },
+      { id: "dc-gown-ly",   name: "Evening Gown (Layered)",     basePrice: 1120, priceUnit: "piece", note: "" },
+      { id: "dc-wed",       name: "Wedding Gown",               basePrice: 2800, priceUnit: "piece", note: "" },
+      { id: "dc-suit-y",    name: "Two-Piece Suit (Youth)",     basePrice: 670,  priceUnit: "piece", note: "" },
+      { id: "dc-suit-a",    name: "Two-Piece Suit (Adults)",    basePrice: 890,  priceUnit: "piece", note: "" },
+      { id: "dc-pillow",    name: "Pillows",                    basePrice: 220,  priceUnit: "piece", note: "" },
+      { id: "dc-cap",       name: "Caps (Washable)",            basePrice: 400,  priceUnit: "piece", note: "" },
+      { id: "dc-bag-sm",    name: "Bags – Small (Washable)",    basePrice: 340,  priceUnit: "piece", note: "" },
+      { id: "dc-bag-lg",    name: "Bags – Medium to Large",     basePrice: 670,  priceUnit: "piece", note: "" },
+      { id: "dc-shoes",     name: "Shoes (Washable)",           basePrice: 400,  priceUnit: "pair",  note: "" },
+      { id: "dc-toy-12",    name: "Stuffed Toy (up to 12\")",   basePrice: 220,  priceUnit: "piece", note: "" },
+      { id: "dc-toy-25",    name: "Stuffed Toy (up to 25\")",   basePrice: 450,  priceUnit: "piece", note: "" },
+      { id: "dc-toy-36",    name: "Stuffed Toy (up to 36\")",   basePrice: 890,  priceUnit: "piece", note: "" },
+      { id: "dc-toy-60",    name: "Stuffed Toy (up to 60\")",   basePrice: 1680, priceUnit: "piece", note: "" },
+    ],
+  },
+  {
+    label: "Add-ons",
+    services: [
+      { id: "ao-deterg",    name: "Special Detergent",          basePrice: 50,   priceUnit: "60ml",  note: "" },
+      { id: "ao-fabric",    name: "Special Fabric Conditioner", basePrice: 50,   priceUnit: "60ml",  note: "" },
+      { id: "ao-drysheet",  name: "Drying Sheet",               basePrice: 50,   priceUnit: "piece", note: "" },
+      { id: "ao-hanger",    name: "Hanger",                     basePrice: 20,   priceUnit: "piece", note: "" },
+      { id: "ao-ecobag",    name: "Eco-Bag",                    basePrice: 200,  priceUnit: "piece", note: "" },
+      { id: "ao-rep-min",   name: "Repair – Minor",             basePrice: 50,   priceUnit: "item",  note: "" },
+      { id: "ao-rep-maj",   name: "Repair – Major",             basePrice: 100,  priceUnit: "item",  note: "" },
+      { id: "ao-pickup",    name: "Pick-up / Delivery",         basePrice: 180,  priceUnit: "trip",  note: "Door-to-door" },
+      { id: "ao-rush-nd",   name: "Rush – Next Day",            basePrice: 300,  priceUnit: "order", note: "" },
+      { id: "ao-rush-sd",   name: "Rush – Same Day",            basePrice: 500,  priceUnit: "order", note: "" },
+    ],
+  },
 ];
+
+// Flatten for lookup
+const SERVICES = SERVICE_GROUPS.flatMap((g) => g.services);
 
 interface SelectedItem {
   serviceId: string;
@@ -232,46 +309,58 @@ export default function BookPage() {
           {/* ── Step 2: Service Selection ──────────────────────────── */}
           {step === "services" && (
             <div className="space-y-4">
-              <div className="space-y-2">
-                {SERVICES.map((svc) => {
-                  const item = items.find((i) => i.serviceId === svc.id);
-                  return (
-                    <div
-                      key={svc.id}
-                      className={`flex items-center justify-between border bg-white p-5 transition-colors ${
-                        item ? "border-[#0ABAB5]/40" : "border-gray-100"
-                      }`}
-                    >
-                      <div>
-                        <div className="font-medium text-gray-900">{svc.name}</div>
-                        <div className="text-xs text-gray-400">₱{svc.basePrice}/{svc.priceUnit}</div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {item && (
-                          <>
-                            <button
-                              onClick={() => decreaseItem(svc.id)}
-                              className="flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors"
-                              aria-label="Remove"
-                            >
-                              –
-                            </button>
-                            <span className="w-5 text-center text-sm font-medium text-gray-900">
-                              {item.quantity}
-                            </span>
-                          </>
-                        )}
-                        <button
-                          onClick={() => addItem(svc)}
-                          className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0ABAB5] text-white hover:bg-[#089e9a] transition-colors"
-                          aria-label="Add"
-                        >
-                          +
-                        </button>
-                      </div>
+              <div className="space-y-6">
+                {SERVICE_GROUPS.map((group) => (
+                  <div key={group.label}>
+                    <div className="mb-2 text-xs font-medium tracking-widest text-gray-400 uppercase">
+                      {group.label}
                     </div>
-                  );
-                })}
+                    <div className="space-y-2">
+                      {group.services.map((svc) => {
+                        const item = items.find((i) => i.serviceId === svc.id);
+                        return (
+                          <div
+                            key={svc.id}
+                            className={`flex items-center justify-between border bg-white p-4 transition-colors ${
+                              item ? "border-[#0ABAB5]/40" : "border-gray-100"
+                            }`}
+                          >
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">{svc.name}</div>
+                              <div className="text-xs text-gray-400">
+                                ₱{svc.basePrice.toLocaleString()}/{svc.priceUnit}
+                                {svc.note ? ` · ${svc.note}` : ""}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              {item && (
+                                <>
+                                  <button
+                                    onClick={() => decreaseItem(svc.id)}
+                                    className="flex h-7 w-7 items-center justify-center rounded-full border border-gray-200 text-gray-500 hover:border-gray-400 transition-colors"
+                                    aria-label="Remove"
+                                  >
+                                    –
+                                  </button>
+                                  <span className="w-5 text-center text-sm font-medium text-gray-900">
+                                    {item.quantity}
+                                  </span>
+                                </>
+                              )}
+                              <button
+                                onClick={() => addItem(svc)}
+                                className="flex h-7 w-7 items-center justify-center rounded-full bg-[#0ABAB5] text-white hover:bg-[#089e9a] transition-colors"
+                                aria-label="Add"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
 
               {items.length > 0 && (
