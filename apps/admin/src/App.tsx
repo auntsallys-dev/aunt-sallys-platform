@@ -6,6 +6,8 @@ import { BranchesPage } from "./pages/Branches.tsx";
 import { ServicesPage } from "./pages/Services.tsx";
 import { StaffPage } from "./pages/Staff.tsx";
 import { SettingsPage } from "./pages/Settings.tsx";
+import { CustomersPage } from "./pages/Customers.tsx";
+import { DriversPage } from "./pages/Drivers.tsx";
 
 export default function App() {
   return (
@@ -18,6 +20,8 @@ export default function App() {
           <Route path="branches" element={<BranchesPage />} />
           <Route path="services" element={<ServicesPage />} />
           <Route path="staff" element={<StaffPage />} />
+          <Route path="customers" element={<CustomersPage />} />
+          <Route path="drivers" element={<DriversPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Routes>

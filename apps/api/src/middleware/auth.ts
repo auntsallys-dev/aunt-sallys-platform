@@ -41,7 +41,7 @@ export async function authenticate(c: Context, next: Next) {
       orgId: (payload.orgId as string) ?? null,
       branchId: (payload.branchId as string) ?? null,
     });
-    await next();
+    return await next();
   } catch {
     return c.json({ success: false, error: "Invalid or expired token" }, 401);
   }
@@ -58,7 +58,7 @@ export async function requireRole(role: string) {
     if ((ROLE_HIERARCHY[user.role] ?? -1) < (ROLE_HIERARCHY[role] ?? 99)) {
       return c.json({ success: false, error: "Forbidden" }, 403);
     }
-    await next();
+    return await next();
   };
 }
 

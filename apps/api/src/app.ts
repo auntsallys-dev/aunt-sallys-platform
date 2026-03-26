@@ -10,6 +10,8 @@ import { customersRoutes } from "./routes/customers.js";
 import { paymentsRoutes } from "./routes/payments.js";
 import { publicRoutes } from "./routes/public.js";
 import { analyticsRoutes } from "./routes/analytics.js";
+import { adminRoutes } from "./routes/admin.js";
+import { driversRoutes } from "./routes/drivers.js";
 import { readFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -38,6 +40,8 @@ app.route("/api/v1/customers", customersRoutes);
 app.route("/api/v1/payments", paymentsRoutes);
 app.route("/api/v1/public", publicRoutes);
 app.route("/api/v1/analytics", analyticsRoutes);
+app.route("/api/v1/admin", adminRoutes);
+app.route("/api/v1/drivers", driversRoutes);
 
 // Serve static POS frontend
 app.use("/assets/*", serveStatic({ root: "./public" }));

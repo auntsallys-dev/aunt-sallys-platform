@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, inArray } from "drizzle-orm";
 import { db, orders, orderItems, orderStatusHistory, services, branchServices, customers } from "@aunt-sallys/db";
 import { createOrderSchema, updateOrderStatusSchema } from "@aunt-sallys/shared";
 import { authenticate } from "../middleware/auth.js";
@@ -106,7 +106,7 @@ ordersRoutes.post("/", authenticate, async (c) => {
   }
 
   const deliveryFee = orderType === "delivery" ? 50 : 0;
-  const discountAmount = parseFloat(body.discount ?? "0") || 0;
+  const discountAmount = parseFloat((body as any).discount ?? "0") || 0;
   const total = Math.max(0, subtotal - discountAmount) + deliveryFee;
 
   const [order] = await db.insert(orders).values({
@@ -145,7 +145,7 @@ ordersRoutes.post("/", authenticate, async (c) => {
 
 // GET /api/v1/orders/:id
 ordersRoutes.get("/:id", authenticate, async (c) => {
-  const id = c.req.param("id");
+  const id = c.req.param("id") as string;
   const [order] = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
   if (!order) return c.json({ success: false, error: "Order not found" }, 404);
 
@@ -172,9 +172,111 @@ ordersRoutes.get("/:id", authenticate, async (c) => {
   return c.json({ success: true, data: { ...order, customerName, items } });
 });
 
+// PATCH /api/v1/orders/:id  — edit items, apply extra charges, or process refund
+ordersRoutes.patch("/:id", authenticate, async (c) => {
+  const id = c.req.param("id") as string;
+  let body: any;
+  try { body = await c.req.json(); } catch { return c.json({ success: false, error: "Invalid JSON" }, 400); }
+
+  const authUser = c.get("authUser");
+
+  const [order] = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
+  if (!order) return c.json({ success: false, error: "Order not found" }, 404);
+
+  // Block editing completed/delivered/cancelled orders
+  if (["completed", "delivered", "cancelled"].includes(order.status)) {
+    return c.json({ success: false, error: "Cannot edit a completed, delivered, or cancelled order" }, 400);
+  }
+
+  // Process refund
+  if (body.refund === true) {
+    if (order.paymentStatus !== "paid") {
+      return c.json({ success: false, error: "Order must be paid to process a refund" }, 400);
+    }
+    const [updated] = await db.update(orders)
+      .set({ paymentStatus: "refunded", updatedAt: new Date() })
+      .where(eq(orders.id, id))
+      .returning();
+    await db.insert(orderStatusHistory).values({
+      orderId: id, status: "cancelled", notes: "Refund processed", changedBy: authUser.id,
+    });
+    return c.json({ success: true, data: updated });
+  }
+
+  // Remove items
+  const removeItemIds: string[] = body.removeItemIds ?? [];
+  if (removeItemIds.length > 0) {
+    await db.delete(orderItems).where(
+      and(eq(orderItems.orderId, id), inArray(orderItems.id, removeItemIds))
+    );
+  }
+
+  // Add regular service items
+  const addItems: { serviceId: string; quantity: number; notes?: string }[] = body.addItems ?? [];
+  for (const item of addItems) {
+    const [service] = await db.select().from(services).where(eq(services.id, item.serviceId)).limit(1);
+    if (!service) continue;
+    const [bs] = await db.select().from(branchServices)
+      .where(and(eq(branchServices.serviceId, item.serviceId), eq(branchServices.branchId, order.branchId)))
+      .limit(1);
+    const unitPrice = parseFloat((bs?.priceOverride ?? service.basePrice) as string);
+    const totalPrice = unitPrice * item.quantity;
+    await db.insert(orderItems).values({
+      orderId: id,
+      serviceId: item.serviceId,
+      quantity: String(item.quantity),
+      unitPrice: String(unitPrice),
+      totalPrice: String(totalPrice),
+      notes: item.notes,
+    });
+  }
+
+  // Add extra charges (custom line items — no serviceId)
+  const extraCharges: { name: string; price: number }[] = body.extraCharges ?? [];
+  for (const charge of extraCharges) {
+    await db.insert(orderItems).values({
+      orderId: id,
+      serviceId: null,
+      customName: charge.name,
+      quantity: "1",
+      unitPrice: String(charge.price),
+      totalPrice: String(charge.price),
+    });
+  }
+
+  // Recalculate totals
+  const currentItems = await db.select().from(orderItems).where(eq(orderItems.orderId, id));
+  const subtotal = currentItems.reduce((s, i) => s + parseFloat(i.totalPrice as string), 0);
+  const deliveryFee = parseFloat(order.deliveryFee as string);
+  const discount = parseFloat(order.discount as string);
+  const total = Math.max(0, subtotal - discount) + deliveryFee;
+
+  const [updatedOrder] = await db.update(orders)
+    .set({ subtotal: String(subtotal), total: String(total), updatedAt: new Date() })
+    .where(eq(orders.id, id))
+    .returning();
+
+  const enrichedItems = await db.select({
+    id: orderItems.id,
+    serviceId: orderItems.serviceId,
+    customName: orderItems.customName,
+    quantity: orderItems.quantity,
+    unitPrice: orderItems.unitPrice,
+    totalPrice: orderItems.totalPrice,
+    notes: orderItems.notes,
+    serviceName: services.name,
+    priceUnit: services.priceUnit,
+  })
+  .from(orderItems)
+  .leftJoin(services, eq(services.id, orderItems.serviceId))
+  .where(eq(orderItems.orderId, id));
+
+  return c.json({ success: true, data: { ...updatedOrder, items: enrichedItems } });
+});
+
 // PATCH /api/v1/orders/:id/status
 ordersRoutes.patch("/:id/status", authenticate, async (c) => {
-  const id = c.req.param("id");
+  const id = c.req.param("id") as string;
   let body: unknown;
   try { body = await c.req.json(); } catch { return c.json({ success: false, error: "Invalid JSON" }, 400); }
 

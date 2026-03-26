@@ -1,17 +1,16 @@
 {
-  "name": "admin",
+  "name": "driver",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --port 5174",
+    "dev": "vite --port 5175",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@aunt-sallys/shared": "workspace:*",
-    "@aunt-sallys/ui": "workspace:*",
     "leaflet": "^1.9.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

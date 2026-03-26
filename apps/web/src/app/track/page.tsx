@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
@@ -16,9 +16,18 @@ interface TrackingData {
   customerName: string;
   status: string;
   steps: StatusStep[];
+  orderId?: string;
+}
+
+interface DriverPosition {
+  lat: number;
+  lng: number;
+  driverName?: string;
+  updatedAt?: string;
 }
 
 const API = "https://aunt-sallys-pos.onrender.com";
+const WS_URL = "wss://aunt-sallys-pos.onrender.com";
 
 const STATUS_STEPS = [
   { key: "pending",          label: "Booking Received",    description: "Your booking has been received and is awaiting confirmation." },
@@ -44,6 +53,81 @@ function buildSteps(currentStatus: string, history: { status: string; createdAt:
   }));
 }
 
+// Driver location map using Leaflet (loaded dynamically)
+function DriverMap({ position }: { position: DriverPosition }) {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstance = useRef<any>(null);
+  const markerRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    import("leaflet").then((leafletModule) => {
+      const L = leafletModule.default ?? leafletModule;
+
+      if (!mapInstance.current) {
+        (L.Icon.Default.prototype as any)._getIconUrl = undefined;
+        L.Icon.Default.mergeOptions({
+          iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+          iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+          shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+        });
+
+        const map = L.map(mapRef.current!, {
+          center: [position.lat, position.lng],
+          zoom: 15,
+          zoomControl: true,
+          scrollWheelZoom: false,
+        });
+
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: '© OpenStreetMap',
+        }).addTo(map);
+
+        const icon = L.divIcon({
+          className: "",
+          html: `<div style="background:#0ABAB5;color:#fff;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3)">🚗</div>`,
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
+        });
+
+        markerRef.current = L.marker([position.lat, position.lng], { icon })
+          .addTo(map)
+          .bindPopup(position.driverName ?? "Your driver");
+
+        mapInstance.current = map;
+      } else {
+        mapInstance.current.setView([position.lat, position.lng], 15);
+        markerRef.current?.setLatLng([position.lat, position.lng]);
+      }
+    });
+
+    return () => {
+      if (mapInstance.current) {
+        mapInstance.current.remove();
+        mapInstance.current = null;
+      }
+    };
+  }, []);
+
+  // Update marker on position change
+  useEffect(() => {
+    if (!mapInstance.current || !markerRef.current) return;
+    markerRef.current.setLatLng([position.lat, position.lng]);
+    mapInstance.current.setView([position.lat, position.lng]);
+  }, [position.lat, position.lng]);
+
+  return (
+    <div>
+      <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      />
+      <div ref={mapRef} style={{ height: 200, width: "100%", borderRadius: 4 }} />
+    </div>
+  );
+}
+
 function TrackPageInner() {
   const searchParams = useSearchParams();
   const [code, setCode] = useState(searchParams.get("code") ?? "");
@@ -51,6 +135,8 @@ function TrackPageInner() {
   const [data, setData] = useState<TrackingData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [driverPosition, setDriverPosition] = useState<DriverPosition | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     const initial = searchParams.get("code");
@@ -62,10 +148,36 @@ function TrackPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Subscribe to driver location via WebSocket when order is out for delivery
+  useEffect(() => {
+    if (!data?.orderId || data.status !== "out_for_delivery") {
+      if (wsRef.current) { wsRef.current.close(); wsRef.current = null; }
+      return;
+    }
+
+    const ws = new WebSocket(`${WS_URL}/api/v1/ws/order:${data.orderId}:driver`);
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        if (msg.type === "driver_location") {
+          setDriverPosition({
+            lat: msg.lat,
+            lng: msg.lng,
+            updatedAt: msg.timestamp,
+          });
+        }
+      } catch {}
+    };
+    wsRef.current = ws;
+
+    return () => { ws.close(); };
+  }, [data?.orderId, data?.status]);
+
   async function fetchTracking(trackingCode: string) {
     setLoading(true);
     setError(null);
     setData(null);
+    setDriverPosition(null);
     try {
       const res = await fetch(`${API}/api/v1/public/track/${encodeURIComponent(trackingCode.trim().toUpperCase())}`);
       if (!res.ok) {
@@ -83,6 +195,7 @@ function TrackPageInner() {
         customerName: "",
         status: order.status,
         steps: buildSteps(order.status, order.history ?? []),
+        orderId: order.id,
       });
     } catch {
       setError("Something went wrong. Please try again.");
@@ -169,6 +282,29 @@ function TrackPageInner() {
                   </div>
                 </div>
               </div>
+
+              {/* Live driver location (when out for delivery) */}
+              {data.status === "out_for_delivery" && (
+                <div className="mb-8 border border-[#0ABAB5]/20 bg-white p-4">
+                  <p className="mb-3 text-xs font-medium tracking-widest text-[#0ABAB5] uppercase">
+                    Live Driver Location
+                  </p>
+                  {driverPosition ? (
+                    <>
+                      <DriverMap position={driverPosition} />
+                      {driverPosition.updatedAt && (
+                        <p className="mt-2 text-xs text-gray-400">
+                          Updated {new Date(driverPosition.updatedAt).toLocaleTimeString("en-PH", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="py-4 text-center text-sm text-gray-400">
+                      Waiting for driver location…
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Timeline */}
               <div className="space-y-0">

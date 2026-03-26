@@ -44,7 +44,7 @@ paymentsRoutes.post("/", authenticate, async (c) => {
 
 // GET /api/v1/payments/:orderId
 paymentsRoutes.get("/:orderId", authenticate, async (c) => {
-  const orderId = c.req.param("orderId");
+  const orderId = c.req.param("orderId") as string;
   const list = await db.select().from(payments).where(eq(payments.orderId, orderId));
   return c.json({ success: true, data: list });
 });

@@ -48,9 +48,8 @@ export const orderItems = pgTable("order_items", {
   orderId: uuid("order_id")
     .notNull()
     .references(() => orders.id, { onDelete: "cascade" }),
-  serviceId: uuid("service_id")
-    .notNull()
-    .references(() => services.id),
+  serviceId: uuid("service_id").references(() => services.id),
+  customName: text("custom_name"),
   quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
   totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),

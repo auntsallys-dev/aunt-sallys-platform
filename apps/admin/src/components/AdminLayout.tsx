@@ -3,9 +3,11 @@ import { Outlet, NavLink } from "react-router-dom";
 const NAV_ITEMS = [
   { to: "/dashboard", icon: "📊", label: "Dashboard" },
   { to: "/orders", icon: "📦", label: "Orders" },
+  { to: "/customers", icon: "👥", label: "Customers" },
   { to: "/branches", icon: "📍", label: "Branches" },
   { to: "/services", icon: "👕", label: "Services" },
   { to: "/staff", icon: "👤", label: "Staff" },
+  { to: "/drivers", icon: "🚗", label: "Drivers" },
   { to: "/settings", icon: "⚙️", label: "Settings" },
 ];
 

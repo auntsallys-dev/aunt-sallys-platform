@@ -10,6 +10,7 @@ import { sql } from "drizzle-orm";
 import { orders } from "./orders.js";
 import { branches } from "./branches.js";
 import { customerAddresses } from "./customers.js";
+import { users } from "./users.js";
 
 export const deliveries = pgTable("deliveries", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -21,6 +22,7 @@ export const deliveries = pgTable("deliveries", {
     .references(() => branches.id),
   type: varchar("type", { length: 10 }),
   status: varchar("status", { length: 20 }).default("pending").notNull(),
+  driverId: uuid("driver_id").references(() => users.id),
   driverName: varchar("driver_name", { length: 255 }),
   driverPhone: varchar("driver_phone", { length: 20 }),
   addressId: uuid("address_id").references(() => customerAddresses.id),

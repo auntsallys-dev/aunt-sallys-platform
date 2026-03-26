@@ -50,6 +50,12 @@ export const api = {
     },
     get: (id: string) => request<{ success: boolean; data: any }>("GET", `/orders/${id}`),
     create: (data: any) => request<{ success: boolean; data: any }>("POST", "/orders", data),
+    edit: (id: string, data: {
+      addItems?: { serviceId: string; quantity: number; notes?: string }[];
+      removeItemIds?: string[];
+      extraCharges?: { name: string; price: number }[];
+      refund?: boolean;
+    }) => request<{ success: boolean; data: any }>("PATCH", `/orders/${id}`, data),
     updateStatus: (id: string, status: string, notes?: string) =>
       request<{ success: boolean; data: any }>("PATCH", `/orders/${id}/status`, { status, notes }),
   },

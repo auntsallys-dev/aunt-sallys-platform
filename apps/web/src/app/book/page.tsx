@@ -1,8 +1,161 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+
+// Google Maps address autocomplete (loaded lazily)
+const MAPS_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY;
+let mapsScriptAdded = false;
+let mapsReady = false;
+const mapsReadyCallbacks: (() => void)[] = [];
+
+function onMapsReady(cb: () => void) {
+  if (mapsReady) { cb(); return; }
+  mapsReadyCallbacks.push(cb);
+  if (mapsScriptAdded || !MAPS_KEY) {
+    if (!MAPS_KEY) { mapsReady = true; mapsReadyCallbacks.forEach((f) => f()); mapsReadyCallbacks.length = 0; }
+    return;
+  }
+  mapsScriptAdded = true;
+  const s = document.createElement("script");
+  s.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&libraries=places`;
+  s.async = true;
+  s.onload = () => { mapsReady = true; mapsReadyCallbacks.forEach((f) => f()); mapsReadyCallbacks.length = 0; };
+  document.head.appendChild(s);
+}
+
+interface AddressWithCoords {
+  line: string;
+  lat: number | null;
+  lng: number | null;
+}
+
+function AddressField({
+  value,
+  onChange,
+}: {
+  value: AddressWithCoords;
+  onChange: (v: AddressWithCoords) => void;
+}) {
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const acRef = useRef<any>(null);
+  const [showMap, setShowMap] = useState(false);
+  const [pendingLatLng, setPendingLatLng] = useState<{ lat: number; lng: number } | null>(null);
+  const mapDivRef = useRef<HTMLDivElement>(null);
+  const mapInstance = useRef<any>(null);
+  const markerRef = useRef<any>(null);
+  const [pinLat, setPinLat] = useState(0);
+  const [pinLng, setPinLng] = useState(0);
+
+  useEffect(() => {
+    onMapsReady(() => {
+      const google = (window as any).google;
+      if (!google?.maps?.places || !inputRef.current || acRef.current) return;
+      const ac = new google.maps.places.Autocomplete(inputRef.current, {
+        componentRestrictions: { country: "ph" },
+        fields: ["formatted_address", "geometry"],
+      });
+      ac.addListener("place_changed", () => {
+        const place = ac.getPlace();
+        const line = place.formatted_address ?? inputRef.current?.value ?? "";
+        const lat = place.geometry?.location?.lat() ?? null;
+        const lng = place.geometry?.location?.lng() ?? null;
+        if (lat !== null && lng !== null) {
+          setPendingLatLng({ lat, lng });
+          setPinLat(lat);
+          setPinLng(lng);
+          setShowMap(true);
+        } else {
+          onChange({ line, lat: null, lng: null });
+        }
+      });
+      acRef.current = ac;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!showMap || !mapDivRef.current || mapInstance.current) return;
+    const lat = pendingLatLng?.lat ?? 14.5995;
+    const lng = pendingLatLng?.lng ?? 120.9842;
+
+    import("leaflet").then((m) => {
+      const L = m.default ?? m;
+      (L.Icon.Default.prototype as any)._getIconUrl = undefined;
+      L.Icon.Default.mergeOptions({
+        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+        iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      });
+      const map = L.map(mapDivRef.current!, { center: [lat, lng], zoom: 17 });
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap" }).addTo(map);
+      const marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+      marker.on("dragend", () => {
+        const p = marker.getLatLng();
+        setPinLat(p.lat);
+        setPinLng(p.lng);
+      });
+      mapInstance.current = map;
+      markerRef.current = marker;
+    });
+
+    return () => {
+      if (mapInstance.current) { mapInstance.current.remove(); mapInstance.current = null; }
+    };
+  }, [showMap]);
+
+  function confirmPin() {
+    const line = inputRef.current?.value ?? value.line;
+    onChange({ line, lat: pinLat, lng: pinLng });
+    setShowMap(false);
+    mapInstance.current = null;
+  }
+
+  return (
+    <>
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+      <div className="relative">
+        <textarea
+          ref={inputRef}
+          defaultValue={value.line}
+          onChange={(e) => onChange({ line: e.target.value, lat: null, lng: null })}
+          placeholder="House / unit number, street, barangay, city"
+          rows={3}
+          className="w-full border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:border-[#0ABAB5] focus:outline-none transition-colors resize-none"
+        />
+        {value.lat && (
+          <span className="absolute right-3 bottom-3 text-xs text-[#0ABAB5]">📍 Pinned</span>
+        )}
+      </div>
+
+      {showMap && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-lg bg-white shadow-2xl overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-100">
+              <p className="font-medium text-gray-900 text-sm">Confirm exact location</p>
+              <p className="text-xs text-gray-400 mt-0.5">Drag the pin to adjust</p>
+            </div>
+            <div ref={mapDivRef} style={{ height: 280 }} />
+            <div className="flex gap-3 px-4 py-3">
+              <button
+                onClick={() => { setShowMap(false); mapInstance.current = null; }}
+                className="flex-1 border border-gray-200 py-2.5 text-sm font-medium text-gray-600"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmPin}
+                className="flex-1 rounded-sm bg-[#0ABAB5] py-2.5 text-sm font-medium text-white hover:bg-[#089e9a]"
+              >
+                Confirm Pin
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 const API = "https://aunt-sallys-pos.onrender.com";
 
@@ -89,7 +242,7 @@ export default function BookPage() {
   const [name, setName]       = useState("");
   const [phone, setPhone]     = useState("");
   const [email, setEmail]     = useState("");
-  const [address, setAddress] = useState("");
+  const [address, setAddress] = useState<AddressWithCoords>({ line: "", lat: null, lng: null });
 
   // Step 2 — branch
   const [branchId, setBranchId] = useState("");
@@ -151,7 +304,9 @@ export default function BookPage() {
           name,
           phone,
           email: email || undefined,
-          address,
+          address: address.line,
+          addressLat: address.lat ?? undefined,
+          addressLng: address.lng ?? undefined,
           branchId,
           items: items.map((i) => ({
             serviceId: i.serviceId,
@@ -302,16 +457,10 @@ export default function BookPage() {
               </div>
               <div>
                 <label className="mb-2 block text-xs font-medium tracking-widest text-gray-500 uppercase">Pickup Address</label>
-                <textarea
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="House / unit number, street, barangay, city"
-                  rows={3}
-                  className="w-full border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:border-[#0ABAB5] focus:outline-none transition-colors resize-none"
-                />
+                <AddressField value={address} onChange={setAddress} />
               </div>
               <button
-                disabled={!name.trim() || !phone.trim() || !address.trim()}
+                disabled={!name.trim() || !phone.trim() || !address.line.trim()}
                 onClick={() => setStep("branch")}
                 className="w-full rounded-sm bg-[#0ABAB5] py-4 text-sm font-medium tracking-wide text-white hover:bg-[#089e9a] disabled:opacity-40 transition-colors"
               >
@@ -467,7 +616,7 @@ export default function BookPage() {
                   <div className="flex justify-between"><dt className="text-gray-400">Name</dt><dd className="text-gray-900">{name}</dd></div>
                   <div className="flex justify-between"><dt className="text-gray-400">Phone</dt><dd className="text-gray-900">{phone}</dd></div>
                   {email && <div className="flex justify-between"><dt className="text-gray-400">Email</dt><dd className="text-gray-900">{email}</dd></div>}
-                  <div className="flex justify-between"><dt className="text-gray-400">Address</dt><dd className="text-right text-gray-900 max-w-[60%]">{address}</dd></div>
+                  <div className="flex justify-between"><dt className="text-gray-400">Address</dt><dd className="text-right text-gray-900 max-w-[60%]">{address.line}{address.lat ? " 📍" : ""}</dd></div>
                   <div className="flex justify-between"><dt className="text-gray-400">Branch</dt><dd className="text-gray-900">{selectedBranch?.name}</dd></div>
                 </dl>
               </div>

@@ -11,7 +11,7 @@ analyticsRoutes.use("*", authenticate, async (c, next) => {
   if (user.role !== "admin" && user.role !== "superadmin") {
     return c.json({ success: false, error: "Forbidden" }, 403);
   }
-  await next();
+  return await next();
 });
 
 function startOf(period: "today" | "week" | "month"): Date {

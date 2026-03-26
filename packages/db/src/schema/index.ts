@@ -6,3 +6,4 @@ export * from "./customers.js";
 export * from "./orders.js";
 export * from "./payments.js";
 export * from "./deliveries.js";
+export * from "./driver-locations.js";

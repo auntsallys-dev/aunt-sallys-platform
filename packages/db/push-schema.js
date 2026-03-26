@@ -180,7 +180,8 @@ async function run() {
   await sql`CREATE TABLE IF NOT EXISTS order_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-    service_id UUID NOT NULL REFERENCES services(id),
+    service_id UUID REFERENCES services(id),
+    custom_name TEXT,
     quantity DECIMAL(10, 2) NOT NULL,
     unit_price DECIMAL(10, 2) NOT NULL,
     total_price DECIMAL(10, 2) NOT NULL,
@@ -221,6 +222,7 @@ async function run() {
     branch_id UUID NOT NULL REFERENCES branches(id),
     type VARCHAR(10),
     status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    driver_id UUID REFERENCES users(id),
     driver_name VARCHAR(255),
     driver_phone VARCHAR(20),
     address_id UUID REFERENCES customer_addresses(id),
@@ -234,6 +236,17 @@ async function run() {
     CONSTRAINT deliveries_status_check CHECK (status IN ('pending', 'assigned', 'in_transit', 'completed', 'failed'))
   )`;
   console.log('deliveries');
+
+  await sql`CREATE TABLE IF NOT EXISTS driver_locations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    driver_id UUID NOT NULL REFERENCES users(id),
+    branch_id UUID NOT NULL REFERENCES branches(id),
+    order_id UUID REFERENCES orders(id),
+    lat DECIMAL(10, 8) NOT NULL,
+    lng DECIMAL(11, 8) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`;
+  console.log('driver_locations');
 
   console.log('\n--- Seeding data ---');
 
@@ -292,6 +305,12 @@ async function run() {
     ON CONFLICT (email) DO NOTHING
   `;
   console.log('Seeded: admin user (admin@auntsallys.ph / Admin@123)');
+
+  // Apply schema migrations for existing deployments
+  await sql`ALTER TABLE order_items ADD COLUMN IF NOT EXISTS custom_name TEXT`;
+  await sql`ALTER TABLE order_items ALTER COLUMN service_id DROP NOT NULL`;
+  await sql`ALTER TABLE deliveries ADD COLUMN IF NOT EXISTS driver_id UUID REFERENCES users(id)`;
+  console.log('Applied schema migrations');
 
   console.log('\n--- Verifying tables ---');
   const tables = await sql`
