@@ -7,6 +7,7 @@ import { QueuePage } from "./pages/Queue";
 import { NewOrderPage } from "./pages/NewOrder";
 import { OrderDetailPage } from "./pages/OrderDetail";
 import { OrderHistoryPage } from "./pages/OrderHistory";
+import { AnalyticsPage } from "./pages/Analytics";
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, selectedBranchId, isLoading } = useAuth();
@@ -34,6 +35,7 @@ function AppRoutes() {
         <Route path="orders/new" element={<NewOrderPage />} />
         <Route path="orders/history" element={<OrderHistoryPage />} />
         <Route path="orders/:id" element={<OrderDetailPage />} />
+        <Route path="analytics" element={<AnalyticsPage />} />
       </Route>
     </Routes>
   );

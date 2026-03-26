@@ -57,4 +57,8 @@ export const api = {
     create: (data: { orderId: string; amount: number; method: string; reference?: string }) =>
       request<{ success: boolean; data: any }>("POST", "/payments", data),
   },
+  analytics: {
+    overview: (period: "today" | "week" | "month") =>
+      request<{ success: boolean; data: any }>("GET", `/analytics/overview?period=${period}`),
+  },
 };
