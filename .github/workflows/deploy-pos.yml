@@ -1,4 +1,4 @@
-name: Deploy POS to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -32,12 +32,23 @@ jobs:
           VITE_API_URL: https://aunt-sallys-pos.onrender.com
           VITE_BASE_URL: /aunt-sallys-platform/
 
-      - name: Add 404 SPA redirect
-        run: cp apps/pos/dist/index.html apps/pos/dist/404.html
+      - name: Build Admin
+        run: pnpm --filter admin build
+        env:
+          VITE_API_URL: https://aunt-sallys-pos.onrender.com
+          VITE_BASE_URL: /aunt-sallys-platform/admin/
+
+      - name: Combine builds
+        run: |
+          mkdir -p deploy
+          cp -r apps/pos/dist/. deploy/
+          mkdir -p deploy/admin
+          cp -r apps/admin/dist/. deploy/admin/
+          cp apps/pos/dist/index.html deploy/404.html
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./apps/pos/dist
+          publish_dir: ./deploy
           force_orphan: true
