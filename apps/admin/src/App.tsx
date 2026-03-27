@@ -1,13 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AdminLayout } from "./components/AdminLayout.tsx";
-import { DashboardPage } from "./pages/Dashboard.tsx";
-import { OrdersPage } from "./pages/Orders.tsx";
-import { BranchesPage } from "./pages/Branches.tsx";
-import { ServicesPage } from "./pages/Services.tsx";
-import { StaffPage } from "./pages/Staff.tsx";
-import { SettingsPage } from "./pages/Settings.tsx";
-import { CustomersPage } from "./pages/Customers.tsx";
-import { DriversPage } from "./pages/Drivers.tsx";
+import { AdminLayout } from "./components/AdminLayout";
+import { DashboardPage } from "./pages/Dashboard";
+import { OrdersPage } from "./pages/Orders";
+import { BranchesPage } from "./pages/Branches";
+import { ServicesPage } from "./pages/Services";
+import { StaffPage } from "./pages/Staff";
+import { SettingsPage } from "./pages/Settings";
+import { CustomersPage } from "./pages/Customers";
+import { DriversPage } from "./pages/Drivers";
 
 export default function App() {
   return (
