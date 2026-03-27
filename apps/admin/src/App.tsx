@@ -10,8 +10,9 @@ import { CustomersPage } from "./pages/Customers";
 import { DriversPage } from "./pages/Drivers";
 
 export default function App() {
+  const base = import.meta.env.VITE_BASE_URL ?? "/";
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={base}>
       <Routes>
         <Route path="/" element={<AdminLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
