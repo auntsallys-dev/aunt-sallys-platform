@@ -1,0 +1,44 @@
+name: Deploy Admin to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build Admin
+        run: pnpm --filter admin build
+        env:
+          VITE_API_URL: https://aunt-sallys-pos.onrender.com
+          VITE_BASE_URL: /aunt-sallys-admin/
+
+      - name: Add 404 SPA redirect
+        run: cp apps/admin/dist/index.html apps/admin/dist/404.html
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./apps/admin/dist
+          destination_dir: admin
+          keep_files: true
