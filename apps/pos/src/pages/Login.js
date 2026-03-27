@@ -17,7 +17,16 @@ export function LoginPage() {
         try {
             const res = await api.auth.login(email, password);
             login(res.data.accessToken, res.data.user);
-            navigate("/queue", { replace: true });
+            const role = res.data.user.role;
+            if (role === "superadmin" || role === "org_admin") {
+                navigate("/admin/dashboard", { replace: true });
+            }
+            else if (role === "driver") {
+                navigate("/driver/dashboard", { replace: true });
+            }
+            else {
+                navigate("/queue", { replace: true });
+            }
         }
         catch (err) {
             setError(err.message ?? "Login failed");

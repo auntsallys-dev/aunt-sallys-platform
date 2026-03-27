@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
+import { useAuth } from "../contexts/AuthContext";
 
 const STATUS_STEPS = ["pending", "confirmed", "processing", "ready", "completed"];
 const STATUS_CONFIG: Record<string, { label: string; color: string; next?: string; nextLabel?: string }> = {
@@ -14,6 +15,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; next?: strin
 };
 
 const NON_EDITABLE = ["completed", "delivered", "cancelled"];
+const NON_CANCELLABLE = ["completed", "delivered", "cancelled"];
 
 // ── Edit Order Modal ──────────────────────────────────────────────────────────
 
@@ -265,6 +267,7 @@ function EditOrderModal({
 export function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -275,6 +278,8 @@ export function OrderDetailPage() {
   const [showEdit, setShowEdit] = useState(false);
   const [showRefundConfirm, setShowRefundConfirm] = useState(false);
   const [refundLoading, setRefundLoading] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   async function fetchOrder() {
     if (!id) return;
@@ -337,6 +342,20 @@ export function OrderDetailPage() {
     }
   }
 
+  async function cancelOrder() {
+    if (!order) return;
+    setCancelLoading(true);
+    try {
+      await api.orders.cancel(order.id);
+      setShowCancelConfirm(false);
+      await fetchOrder();
+    } catch (err: any) {
+      setError(err.message ?? "Failed to cancel order");
+    } finally {
+      setCancelLoading(false);
+    }
+  }
+
   if (loading) {
     return <div className="flex h-full items-center justify-center"><div className="animate-pulse text-gray-400">Loading order…</div></div>;
   }
@@ -349,6 +368,8 @@ export function OrderDetailPage() {
   const currentStep = STATUS_STEPS.indexOf(order.status);
   const canEdit = !NON_EDITABLE.includes(order.status);
   const canRefund = order.paymentStatus === "paid";
+  const canCancel = !NON_CANCELLABLE.includes(order.status) &&
+    (user?.role === "staff" || user?.role === "branch_admin" || user?.role === "superadmin" || user?.role === "org_admin");
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
@@ -487,6 +508,17 @@ export function OrderDetailPage() {
         )}
       </div>
 
+      {canCancel && (
+        <div className="mt-3">
+          <button
+            onClick={() => setShowCancelConfirm(true)}
+            className="w-full rounded-xl border border-red-200 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+          >
+            Cancel Order
+          </button>
+        </div>
+      )}
+
       {/* Payment modal */}
       {showPayment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -551,6 +583,34 @@ export function OrderDetailPage() {
                 className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
               >
                 {refundLoading ? "Processing…" : "Confirm Refund"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel order confirm modal */}
+      {showCancelConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+            <h2 className="mb-2 text-lg font-bold text-gray-900">Cancel Order?</h2>
+            <p className="mb-6 text-sm text-gray-500">
+              This will cancel order <span className="font-mono font-medium">{order.orderNumber}</span>.
+              The order will remain in the system with status <span className="font-medium text-red-600">Cancelled</span>.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowCancelConfirm(false)}
+                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Keep Order
+              </button>
+              <button
+                disabled={cancelLoading}
+                onClick={cancelOrder}
+                className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+              >
+                {cancelLoading ? "Cancelling…" : "Yes, Cancel"}
               </button>
             </div>
           </div>

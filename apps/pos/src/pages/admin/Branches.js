@@ -1,0 +1,16 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useState } from "react";
+const BRANCHES = [
+    { id: "1", name: "Mandaue City", slug: "mandaue", address: "A. Del Rosario Ave, Mandaue City", phone: "+63 32 344 0001", isActive: true, ordersToday: 8 },
+    { id: "2", name: "Cebu IT Park", slug: "it-park", address: "Cebu IT Park, Apas, Cebu City", phone: "+63 32 344 0002", isActive: true, ordersToday: 6 },
+    { id: "3", name: "Consolacion", slug: "consolacion", address: "National Highway, Consolacion", phone: "+63 32 344 0003", isActive: true, ordersToday: 5 },
+    { id: "4", name: "Lapu-Lapu City", slug: "lapu-lapu", address: "M.L. Quezon Highway, Lapu-Lapu City", phone: "+63 32 344 0004", isActive: true, ordersToday: 5 },
+];
+export function AdminBranchesPage() {
+    const [branches, setBranches] = useState(BRANCHES);
+    function toggleActive(id) {
+        setBranches((prev) => prev.map((b) => (b.id === id ? { ...b, isActive: !b.isActive } : b)));
+    }
+    return (_jsxs("div", { className: "p-8", children: [_jsxs("div", { className: "mb-6 flex items-center justify-between", children: [_jsx("h1", { className: "text-2xl font-bold text-gray-900", children: "Branches" }), _jsx("button", { className: "rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700", children: "+ Add Branch" })] }), _jsx("div", { className: "grid gap-4 sm:grid-cols-2", children: branches.map((branch) => (_jsxs("div", { className: `rounded-xl border bg-white p-6 shadow-sm ${branch.isActive ? "border-gray-200" : "border-gray-100 opacity-60"}`, children: [_jsxs("div", { className: "mb-3 flex items-start justify-between", children: [_jsxs("div", { children: [_jsx("h3", { className: "font-semibold text-gray-900", children: branch.name }), _jsxs("code", { className: "text-xs text-gray-400", children: ["/", branch.slug] })] }), _jsx("span", { className: `rounded-full px-2.5 py-0.5 text-xs font-medium ${branch.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}`, children: branch.isActive ? "Active" : "Inactive" })] }), _jsx("p", { className: "mb-1 text-sm text-gray-500", children: branch.address }), _jsx("p", { className: "mb-4 text-sm text-gray-500", children: branch.phone }), _jsx("div", { className: "mb-4 flex items-center gap-2", children: _jsxs("div", { className: "rounded-lg bg-brand-50 px-3 py-1.5 text-sm", children: [_jsx("span", { className: "font-bold text-brand-700", children: branch.ordersToday }), _jsx("span", { className: "text-brand-500", children: " orders today" })] }) }), _jsxs("div", { className: "flex gap-2", children: [_jsx("button", { className: "flex-1 rounded-lg border border-gray-200 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50", children: "Edit" }), _jsx("button", { onClick: () => toggleActive(branch.id), className: "flex-1 rounded-lg border border-gray-200 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50", children: branch.isActive ? "Deactivate" : "Activate" })] })] }, branch.id))) })] }));
+}
+//# sourceMappingURL=Branches.js.map

@@ -12,11 +12,13 @@
   "dependencies": {
     "@aunt-sallys/shared": "workspace:*",
     "@aunt-sallys/ui": "workspace:*",
+    "leaflet": "^1.9.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^6.28.0"
   },
   "devDependencies": {
+    "@types/leaflet": "^1.9.14",
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.1",
     "@vitejs/plugin-react": "^4.3.4",

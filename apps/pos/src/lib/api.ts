@@ -58,6 +58,8 @@ export const api = {
     }) => request<{ success: boolean; data: any }>("PATCH", `/orders/${id}`, data),
     updateStatus: (id: string, status: string, notes?: string) =>
       request<{ success: boolean; data: any }>("PATCH", `/orders/${id}/status`, { status, notes }),
+    cancel: (id: string) =>
+      request<{ success: boolean; data: any }>("PATCH", `/orders/${id}`, { status: "cancelled" }),
   },
   payments: {
     create: (data: { orderId: string; amount: number; method: string; reference?: string }) =>
@@ -66,5 +68,31 @@ export const api = {
   analytics: {
     overview: (period: "today" | "week" | "month") =>
       request<{ success: boolean; data: any }>("GET", `/analytics/overview?period=${period}`),
+  },
+  admin: {
+    customers: {
+      list: (params: { page?: number; pageSize?: number; sort?: string; search?: string }) => {
+        const qs = new URLSearchParams(params as Record<string, string>).toString();
+        return request<{ success: boolean; data: any[]; meta: any }>("GET", `/admin/customers?${qs}`);
+      },
+      orderHistory: (customerId: string) =>
+        request<{ success: boolean; data: any }>("GET", `/admin/customers/${customerId}/orders`),
+    },
+    drivers: {
+      list: (branchId: string) =>
+        request<{ success: boolean; data: any[] }>("GET", `/admin/drivers?branchId=${branchId}`),
+      locations: (branchId: string) =>
+        request<{ success: boolean; data: any }>("GET", `/admin/drivers/locations?branchId=${branchId}`),
+    },
+  },
+  driver: {
+    getOrders: (branchId?: string) => {
+      const qs = branchId ? `?branchId=${branchId}` : "";
+      return request<{ success: boolean; data: any[] }>("GET", `/drivers/orders${qs}`);
+    },
+    postLocation: (lat: number, lng: number, branchId: string, orderId?: string) =>
+      request<{ success: boolean; data: any }>("POST", "/drivers/location", { lat, lng, branchId, orderId }),
+    markDelivered: (orderId: string) =>
+      request<{ success: boolean; data: any }>("PATCH", `/drivers/orders/${orderId}/deliver`, {}),
   },
 };

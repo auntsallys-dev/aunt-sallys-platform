@@ -53,7 +53,27 @@ export declare const api: {
             success: boolean;
             data: any;
         }>;
+        edit: (id: string, data: {
+            addItems?: {
+                serviceId: string;
+                quantity: number;
+                notes?: string;
+            }[];
+            removeItemIds?: string[];
+            extraCharges?: {
+                name: string;
+                price: number;
+            }[];
+            refund?: boolean;
+        }) => Promise<{
+            success: boolean;
+            data: any;
+        }>;
         updateStatus: (id: string, status: string, notes?: string) => Promise<{
+            success: boolean;
+            data: any;
+        }>;
+        cancel: (id: string) => Promise<{
             success: boolean;
             data: any;
         }>;
@@ -65,6 +85,54 @@ export declare const api: {
             method: string;
             reference?: string;
         }) => Promise<{
+            success: boolean;
+            data: any;
+        }>;
+    };
+    analytics: {
+        overview: (period: "today" | "week" | "month") => Promise<{
+            success: boolean;
+            data: any;
+        }>;
+    };
+    admin: {
+        customers: {
+            list: (params: {
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                search?: string;
+            }) => Promise<{
+                success: boolean;
+                data: any[];
+                meta: any;
+            }>;
+            orderHistory: (customerId: string) => Promise<{
+                success: boolean;
+                data: any;
+            }>;
+        };
+        drivers: {
+            list: (branchId: string) => Promise<{
+                success: boolean;
+                data: any[];
+            }>;
+            locations: (branchId: string) => Promise<{
+                success: boolean;
+                data: any;
+            }>;
+        };
+    };
+    driver: {
+        getOrders: (branchId?: string) => Promise<{
+            success: boolean;
+            data: any[];
+        }>;
+        postLocation: (lat: number, lng: number, branchId: string, orderId?: string) => Promise<{
+            success: boolean;
+            data: any;
+        }>;
+        markDelivered: (orderId: string) => Promise<{
             success: boolean;
             data: any;
         }>;

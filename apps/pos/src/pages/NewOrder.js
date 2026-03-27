@@ -77,6 +77,13 @@ function CustomerModal({ onClose, onSelect, }) {
     }
     return (_jsx("div", { className: "fixed inset-0 z-50 flex items-center justify-center bg-black/40", onClick: (e) => e.target === e.currentTarget && onClose(), children: _jsxs("div", { className: "w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl", children: [_jsxs("div", { className: "mb-4 flex items-center justify-between", children: [_jsx("h2", { className: "text-base font-bold text-gray-900", children: "Add Customer" }), _jsx("button", { onClick: onClose, className: "text-gray-400 hover:text-gray-600 text-xl leading-none", children: "\u00D7" })] }), _jsxs("div", { className: "mb-3 flex gap-2", children: [_jsx("input", { value: query, onChange: (e) => setQuery(e.target.value), onKeyDown: (e) => e.key === "Enter" && handleSearch(), placeholder: "Phone or name\u2026", className: "flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none" }), _jsx("button", { onClick: handleSearch, disabled: searching, className: "rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50", children: searching ? "…" : "Search" })] }), results.length > 0 && (_jsx("div", { className: "mb-3 space-y-1", children: results.map((c) => (_jsxs("button", { onClick: () => onSelect(c), className: "w-full rounded-xl border border-gray-200 px-4 py-3 text-left text-sm hover:bg-gray-50", children: [_jsxs("div", { className: "font-medium text-gray-900", children: [c.firstName, " ", c.lastName] }), c.phone && _jsx("div", { className: "text-xs text-gray-500", children: c.phone })] }, c.id))) })), (notFound || showCreate) && (_jsxs("div", { className: "space-y-2 border-t border-gray-100 pt-3", children: [_jsx("p", { className: "text-xs font-medium text-gray-500", children: "New customer" }), _jsx("input", { value: newFirst, onChange: (e) => setNewFirst(e.target.value), placeholder: "First name *", className: "w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none" }), _jsx("input", { value: newLast, onChange: (e) => setNewLast(e.target.value), placeholder: "Last name", className: "w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none" }), _jsx("input", { value: newPhone, onChange: (e) => setNewPhone(e.target.value), placeholder: "Phone", className: "w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none" }), _jsx("button", { onClick: handleCreate, disabled: creating || !newFirst.trim(), className: "w-full rounded-xl bg-brand-600 py-2.5 text-sm font-medium text-white disabled:opacity-50", children: creating ? "Creating…" : "Create & Add" })] })), !notFound && results.length === 0 && !showCreate && (_jsx("button", { onClick: () => setShowCreate(true), className: "w-full rounded-xl border border-dashed border-gray-300 py-2.5 text-sm text-gray-500 hover:border-brand-400 hover:text-brand-600", children: "+ New customer" }))] }) }));
 }
+// ── Custom service modal ──────────────────────────────────────────────────────
+function CustomServiceModal({ onClose, onAdd, }) {
+    const [name, setName] = useState("");
+    const [priceStr, setPriceStr] = useState("");
+    const price = parseFloat(priceStr) || 0;
+    return (_jsx("div", { className: "fixed inset-0 z-50 flex items-center justify-center bg-black/40", onClick: (e) => e.target === e.currentTarget && onClose(), children: _jsxs("div", { className: "w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl", children: [_jsxs("div", { className: "mb-4 flex items-center justify-between", children: [_jsx("h2", { className: "text-base font-bold text-gray-900", children: "Custom Service" }), _jsx("button", { onClick: onClose, className: "text-gray-400 hover:text-gray-600 text-xl leading-none", children: "\u00D7" })] }), _jsxs("div", { className: "space-y-3", children: [_jsxs("div", { children: [_jsx("label", { className: "mb-1 block text-xs font-medium text-gray-600", children: "Service / Item Name" }), _jsx("input", { autoFocus: true, value: name, onChange: (e) => setName(e.target.value), placeholder: "e.g. Extra detergent, Rush fee\u2026", className: "w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none" })] }), _jsxs("div", { children: [_jsx("label", { className: "mb-1 block text-xs font-medium text-gray-600", children: "Price (VAT inclusive) \u20B1" }), _jsx("input", { type: "number", inputMode: "decimal", value: priceStr, onChange: (e) => setPriceStr(e.target.value), placeholder: "0.00", className: "w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none" })] })] }), _jsx("button", { disabled: !name.trim() || price <= 0, onClick: () => { onAdd(name.trim(), price); onClose(); }, className: "mt-4 w-full rounded-xl bg-brand-600 py-2.5 text-sm font-medium text-white disabled:opacity-40", children: "Add to Order" })] }) }));
+}
 // ── Main page ─────────────────────────────────────────────────────────────────
 export function NewOrderPage() {
     const navigate = useNavigate();
@@ -87,6 +94,11 @@ export function NewOrderPage() {
     const [items, setItems] = useState([]);
     const [customer, setCustomer] = useState(null);
     const [showCustomerModal, setShowCustomerModal] = useState(false);
+    const [showCustomServiceModal, setShowCustomServiceModal] = useState(false);
+    const [discount, setDiscount] = useState(0);
+    const [showDiscountInput, setShowDiscountInput] = useState(false);
+    const [discountStr, setDiscountStr] = useState("");
+    const [discountType, setDiscountType] = useState("peso");
     const [orderType] = useState("walk_in");
     const [paymentMethod, setPaymentMethod] = useState("cash");
     const [submitting, setSubmitting] = useState(false);
@@ -102,9 +114,7 @@ export function NewOrderPage() {
         }
     }, [selectedBranchId]);
     const subtotal = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
-    const VAT_RATE = 0.12;
-    const tax = subtotal * VAT_RATE;
-    const total = subtotal + tax;
+    const total = Math.max(0, subtotal - discount);
     const tabCategories = TABS[activeTab].categories;
     const filteredServices = services.filter((s) => tabCategories.includes(s.category));
     function addService(service) {
@@ -125,6 +135,13 @@ export function NewOrderPage() {
             const updated = prev.map((i) => i.serviceId === serviceId ? { ...i, quantity: i.quantity + delta } : i);
             return updated.filter((i) => i.quantity > 0);
         });
+    }
+    function addCustomService(name, unitPrice) {
+        const id = `custom-${Date.now()}`;
+        setItems((prev) => [
+            ...prev,
+            { serviceId: id, name, quantity: 1, unitPrice, priceUnit: "item" },
+        ]);
     }
     function removeItem(serviceId) {
         setItems((prev) => prev.filter((i) => i.serviceId !== serviceId));
@@ -147,6 +164,7 @@ export function NewOrderPage() {
                 paymentMethod,
                 customerId: customer?.id,
                 items: items.map((i) => ({ serviceId: i.serviceId, quantity: i.quantity })),
+                discount: discount > 0 ? discount : undefined,
             });
             setCreatedOrder(res.data);
         }
@@ -182,21 +200,31 @@ export function NewOrderPage() {
                                     color: customer ? "#16a34a" : "#374151",
                                     background: customer ? "#f0fdf4" : "#ffffff",
                                     borderColor: customer ? "#86efac" : undefined,
-                                }, children: customer ? `${customer.firstName} ${customer.lastName}` : "+ Add Customer" })] }), _jsx("div", { className: "flex-1 overflow-y-auto p-4", children: loadingServices ? (_jsx("div", { className: "grid grid-cols-4 gap-3", children: Array.from({ length: 8 }).map((_, i) => (_jsx("div", { className: "h-24 animate-pulse rounded-xl bg-gray-200" }, i))) })) : filteredServices.length === 0 ? (_jsx("div", { className: "flex h-32 items-center justify-center text-sm text-gray-400", children: "No services in this category" })) : (_jsx("div", { className: "grid grid-cols-4 gap-3", children: filteredServices.map((service) => {
-                                const color = CATEGORY_COLORS[service.category] ?? "#6b7280";
-                                const inCart = items.find((i) => i.serviceId === service.id);
-                                return (_jsxs("button", { onClick: () => addService(service), className: "relative rounded-xl text-left transition-all", style: {
-                                        minHeight: 96,
-                                        padding: "14px 12px 12px",
-                                        background: color,
-                                        border: inCart
-                                            ? "3px solid rgba(255,255,255,0.85)"
-                                            : "3px solid transparent",
-                                        boxShadow: inCart
-                                            ? `0 0 0 2px ${color}, 0 4px 12px rgba(0,0,0,0.25)`
-                                            : "0 2px 6px rgba(0,0,0,0.15)",
-                                    }, children: [inCart && (_jsx("span", { className: "absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold", style: { background: "rgba(0,0,0,0.35)", color: "#fff" }, children: inCart.quantity })), _jsx("div", { className: "mb-1 text-xs font-semibold leading-snug", style: { color: "rgba(255,255,255,0.95)", wordBreak: "break-word" }, children: service.name }), _jsxs("div", { className: "text-sm font-bold", style: { color: "#fff" }, children: ["\u20B1", parseFloat(service.basePrice).toFixed(0)] })] }, service.id));
-                            }) })) }), _jsxs("div", { className: "flex items-center gap-6 border-t border-gray-200 bg-white px-5 py-3", children: [_jsxs("div", { className: "flex flex-1 gap-8 text-sm", children: [_jsxs("span", { className: "text-gray-500", children: ["Subtotal\u00A0", _jsxs("strong", { className: "text-gray-800", children: ["\u20B1", subtotal.toFixed(2)] })] }), _jsxs("span", { className: "text-gray-500", children: ["Discount\u00A0", _jsx("strong", { className: "text-gray-800", children: "\u20B10.00" })] }), _jsxs("span", { className: "text-gray-500", children: ["Store Credit\u00A0", _jsx("strong", { className: "text-gray-800", children: "\u20B10.00" })] }), _jsxs("span", { className: "text-gray-500", children: ["Tax (12% VAT)\u00A0", _jsxs("strong", { className: "text-gray-800", children: ["\u20B1", tax.toFixed(2)] })] })] }), _jsx("button", { onClick: () => navigate("/queue"), className: "rounded-xl px-6 font-bold text-white", style: {
+                                }, children: customer ? `${customer.firstName} ${customer.lastName}` : "+ Add Customer" })] }), _jsx("div", { className: "flex-1 overflow-y-auto p-4", children: loadingServices ? (_jsx("div", { className: "grid grid-cols-5 gap-2", children: Array.from({ length: 8 }).map((_, i) => (_jsx("div", { className: "h-24 animate-pulse rounded-xl bg-gray-200" }, i))) })) : filteredServices.length === 0 ? (_jsx("div", { className: "flex h-32 items-center justify-center text-sm text-gray-400", children: "No services in this category" })) : (_jsxs("div", { className: "grid grid-cols-5 gap-2", children: [_jsxs("button", { onClick: () => setShowCustomServiceModal(true), className: "relative rounded-xl text-left transition-all", style: {
+                                        minHeight: 64,
+                                        padding: "8px 8px 8px",
+                                        background: "#374151",
+                                        border: "3px dashed rgba(255,255,255,0.3)",
+                                        boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                                    }, children: [_jsx("div", { className: "mb-0.5 text-[10px] font-semibold leading-tight", style: { color: "rgba(255,255,255,0.9)" }, children: "Custom" }), _jsx("div", { className: "text-xs font-bold", style: { color: "rgba(255,255,255,0.7)" }, children: "+ Add" })] }), filteredServices.map((service) => {
+                                    const color = CATEGORY_COLORS[service.category] ?? "#6b7280";
+                                    const inCart = items.find((i) => i.serviceId === service.id);
+                                    return (_jsxs("button", { onClick: () => addService(service), className: "relative rounded-xl text-left transition-all", style: {
+                                            minHeight: 64,
+                                            padding: "8px 8px 8px",
+                                            background: color,
+                                            border: inCart
+                                                ? "3px solid rgba(255,255,255,0.85)"
+                                                : "3px solid transparent",
+                                            boxShadow: inCart
+                                                ? `0 0 0 2px ${color}, 0 4px 12px rgba(0,0,0,0.25)`
+                                                : "0 2px 6px rgba(0,0,0,0.15)",
+                                        }, children: [inCart && (_jsx("span", { className: "absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold", style: { background: "rgba(0,0,0,0.35)", color: "#fff" }, children: inCart.quantity })), _jsx("div", { className: "mb-0.5 text-[10px] font-semibold leading-tight", style: { color: "rgba(255,255,255,0.95)", wordBreak: "break-word" }, children: service.name }), _jsxs("div", { className: "text-xs font-bold", style: { color: "#fff" }, children: ["\u20B1", parseFloat(service.basePrice).toFixed(0)] })] }, service.id));
+                                })] })) }), _jsxs("div", { className: "flex items-center gap-6 border-t border-gray-200 bg-white px-5 py-3", children: [_jsxs("div", { className: "flex flex-1 gap-8 text-sm", children: [_jsxs("span", { className: "text-gray-500", children: ["Subtotal\u00A0", _jsxs("strong", { className: "text-gray-800", children: ["\u20B1", subtotal.toFixed(2)] })] }), _jsxs("button", { onClick: () => { setDiscountStr(discount > 0 ? discount.toString() : ""); setShowDiscountInput(true); }, className: "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors", style: {
+                                            background: discount > 0 ? "#dcfce7" : "#f3f4f6",
+                                            color: discount > 0 ? "#16a34a" : "#374151",
+                                            border: `1px solid ${discount > 0 ? "#86efac" : "#e5e7eb"}`,
+                                        }, children: [_jsx("span", { children: "\uD83C\uDFF7" }), discount > 0 ? `−₱${discount.toFixed(2)}` : "Discount"] })] }), _jsx("button", { onClick: () => navigate("/queue"), className: "rounded-xl px-6 font-bold text-white", style: {
                                     minHeight: 44,
                                     background: "#F57C00",
                                     border: "none",
@@ -209,6 +237,12 @@ export function NewOrderPage() {
                                 }, children: submitting ? "Creating Order…" : "Place Order" })] })] }), showCustomerModal && (_jsx(CustomerModal, { onClose: () => setShowCustomerModal(false), onSelect: (c) => {
                     setCustomer(c);
                     setShowCustomerModal(false);
-                } }))] }));
+                } })), showCustomServiceModal && (_jsx(CustomServiceModal, { onClose: () => setShowCustomServiceModal(false), onAdd: addCustomService })), showDiscountInput && (_jsx("div", { className: "fixed inset-0 z-50 flex items-center justify-center bg-black/40", onClick: (e) => e.target === e.currentTarget && setShowDiscountInput(false), children: _jsxs("div", { className: "w-full max-w-xs rounded-2xl bg-white p-6 shadow-2xl", children: [_jsxs("div", { className: "mb-4 flex items-center justify-between", children: [_jsx("h2", { className: "text-base font-bold text-gray-900", children: "Apply Discount" }), _jsx("button", { onClick: () => setShowDiscountInput(false), className: "text-gray-400 hover:text-gray-600 text-xl", children: "\u00D7" })] }), _jsxs("div", { className: "mb-3 flex rounded-xl border border-gray-200 overflow-hidden", children: [_jsx("button", { onClick: () => setDiscountType("peso"), className: "flex-1 py-2 text-sm font-medium transition-colors", style: { background: discountType === "peso" ? "#0e7490" : "#fff", color: discountType === "peso" ? "#fff" : "#374151" }, children: "\u20B1 Amount" }), _jsx("button", { onClick: () => setDiscountType("percent"), className: "flex-1 py-2 text-sm font-medium transition-colors", style: { background: discountType === "percent" ? "#0e7490" : "#fff", color: discountType === "percent" ? "#fff" : "#374151" }, children: "% Percent" })] }), _jsx("input", { autoFocus: true, type: "number", inputMode: "decimal", value: discountStr, onChange: (e) => setDiscountStr(e.target.value), placeholder: discountType === "peso" ? "e.g. 50" : "e.g. 10", className: "mb-1 w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none" }), discountStr && parseFloat(discountStr) > 0 && (_jsx("p", { className: "mb-3 text-xs text-gray-500", children: discountType === "percent"
+                                ? `= ₱${(subtotal * parseFloat(discountStr) / 100).toFixed(2)} off`
+                                : `₱${parseFloat(discountStr).toFixed(2)} off` })), _jsxs("div", { className: "flex gap-2", children: [_jsx("button", { onClick: () => { setDiscount(0); setDiscountStr(""); setShowDiscountInput(false); }, className: "flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-600", children: "Remove" }), _jsx("button", { disabled: !discountStr || parseFloat(discountStr) <= 0, onClick: () => {
+                                        const val = parseFloat(discountStr);
+                                        setDiscount(discountType === "percent" ? subtotal * val / 100 : val);
+                                        setShowDiscountInput(false);
+                                    }, className: "flex-1 rounded-xl bg-brand-600 py-2.5 text-sm font-medium text-white disabled:opacity-40", children: "Apply" })] })] }) }))] }));
 }
 //# sourceMappingURL=NewOrder.js.map

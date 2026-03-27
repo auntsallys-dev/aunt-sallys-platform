@@ -1,4 +1,5 @@
-const BASE = "/api/v1";
+const API_URL = import.meta.env.VITE_API_URL ?? "";
+const BASE = `${API_URL}/api/v1`;
 function getToken() {
     return localStorage.getItem("pos_token");
 }
@@ -43,10 +44,36 @@ export const api = {
         },
         get: (id) => request("GET", `/orders/${id}`),
         create: (data) => request("POST", "/orders", data),
+        edit: (id, data) => request("PATCH", `/orders/${id}`, data),
         updateStatus: (id, status, notes) => request("PATCH", `/orders/${id}/status`, { status, notes }),
+        cancel: (id) => request("PATCH", `/orders/${id}`, { status: "cancelled" }),
     },
     payments: {
         create: (data) => request("POST", "/payments", data),
+    },
+    analytics: {
+        overview: (period) => request("GET", `/analytics/overview?period=${period}`),
+    },
+    admin: {
+        customers: {
+            list: (params) => {
+                const qs = new URLSearchParams(params).toString();
+                return request("GET", `/admin/customers?${qs}`);
+            },
+            orderHistory: (customerId) => request("GET", `/admin/customers/${customerId}/orders`),
+        },
+        drivers: {
+            list: (branchId) => request("GET", `/admin/drivers?branchId=${branchId}`),
+            locations: (branchId) => request("GET", `/admin/drivers/locations?branchId=${branchId}`),
+        },
+    },
+    driver: {
+        getOrders: (branchId) => {
+            const qs = branchId ? `?branchId=${branchId}` : "";
+            return request("GET", `/drivers/orders${qs}`);
+        },
+        postLocation: (lat, lng, branchId, orderId) => request("POST", "/drivers/location", { lat, lng, branchId, orderId }),
+        markDelivered: (orderId) => request("PATCH", `/drivers/orders/${orderId}/deliver`, {}),
     },
 };
 //# sourceMappingURL=api.js.map

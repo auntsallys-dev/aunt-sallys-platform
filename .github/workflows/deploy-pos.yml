@@ -32,18 +32,10 @@ jobs:
           VITE_API_URL: https://aunt-sallys-pos.onrender.com
           VITE_BASE_URL: /aunt-sallys-platform/
 
-      - name: Build Admin
-        run: pnpm --filter admin build
-        env:
-          VITE_API_URL: https://aunt-sallys-pos.onrender.com
-          VITE_BASE_URL: /aunt-sallys-platform/admin/
-
-      - name: Combine builds
+      - name: Prepare deploy
         run: |
           mkdir -p deploy
           cp -r apps/pos/dist/. deploy/
-          mkdir -p deploy/admin
-          cp -r apps/admin/dist/. deploy/admin/
           cp apps/pos/dist/index.html deploy/404.html
 
       - name: Deploy to GitHub Pages
