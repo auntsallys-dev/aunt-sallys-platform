@@ -135,24 +135,41 @@ export function DashboardPage() {
         )}
 
         <div className="space-y-3">
-          {orders.map((order) => (
+          {orders.map((order) => {
+            const isNew = order.isAssignedToMe &&
+              order.delivery?.updatedAt &&
+              (Date.now() - new Date(order.delivery.updatedAt).getTime()) < 5 * 60 * 1000;
+            return (
             <div
               key={order.id}
               onClick={() => navigate(`/orders/${order.id}`)}
-              className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-100 active:bg-gray-50 cursor-pointer transition-colors"
+              className={`rounded-2xl bg-white p-4 shadow-sm cursor-pointer transition-colors ${
+                isNew ? "ring-2 ring-teal-400" : "ring-1 ring-gray-100 active:bg-gray-50"
+              }`}
             >
-              <div className="mb-2 flex items-center justify-between">
-                <span className="font-mono text-sm font-semibold text-gray-900">{order.orderNumber}</span>
+              <div className="mb-2 flex items-center gap-2 justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-sm font-semibold text-gray-900">{order.orderNumber}</span>
+                  {isNew && (
+                    <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-semibold text-teal-700">🆕 New</span>
+                  )}
+                  {order.isAssignedToMe && !isNew && (
+                    <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-500">Assigned</span>
+                  )}
+                </div>
                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[order.status] ?? "bg-gray-100 text-gray-600"}`}>
                   {order.status.replace(/_/g, " ")}
                 </span>
               </div>
               <div className="text-sm font-medium text-gray-800">{order.customerName}</div>
+              {order.delivery?.notes && (
+                <div className="mt-1 text-xs text-gray-500 italic">📝 {order.delivery.notes}</div>
+              )}
               {order.customerPhone && (
                 <a
                   href={`tel:${order.customerPhone}`}
                   onClick={(e) => e.stopPropagation()}
-                  className="mt-1 text-xs text-brand-600 hover:underline"
+                  className="mt-1 text-xs text-brand-600 hover:underline block"
                 >
                   {order.customerPhone}
                 </a>
@@ -162,7 +179,8 @@ export function DashboardPage() {
                 {" · "}₱{parseFloat(order.total).toFixed(2)}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

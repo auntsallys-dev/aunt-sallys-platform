@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { eq, and, desc, inArray } from "drizzle-orm";
-import { db, orders, orderItems, orderStatusHistory, services, branchServices, customers } from "@aunt-sallys/db";
+import { db, orders, orderItems, orderStatusHistory, services, branchServices, customers, deliveries, users } from "@aunt-sallys/db";
 import { createOrderSchema, updateOrderStatusSchema } from "@aunt-sallys/shared";
 import { authenticate } from "../middleware/auth.js";
 import { formatOrderNumber } from "@aunt-sallys/shared";
@@ -272,6 +272,68 @@ ordersRoutes.patch("/:id", authenticate, async (c) => {
   .where(eq(orderItems.orderId, id));
 
   return c.json({ success: true, data: { ...updatedOrder, items: enrichedItems } });
+});
+
+// PATCH /api/v1/orders/:id/assign-driver
+ordersRoutes.patch("/:id/assign-driver", authenticate, async (c) => {
+  const id = c.req.param("id") as string;
+  let body: any;
+  try { body = await c.req.json(); } catch { return c.json({ success: false, error: "Invalid JSON" }, 400); }
+
+  const { driverId } = body;
+  if (!driverId) return c.json({ success: false, error: "driverId is required" }, 400);
+
+  const [order] = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
+  if (!order) return c.json({ success: false, error: "Order not found" }, 404);
+
+  // Fetch driver info
+  const [driver] = await db.select().from(users).where(eq(users.id, driverId)).limit(1);
+  if (!driver) return c.json({ success: false, error: "Driver not found" }, 404);
+
+  // Upsert delivery record
+  const [existingDelivery] = await db.select().from(deliveries).where(eq(deliveries.orderId, id)).limit(1);
+
+  let delivery;
+  if (existingDelivery) {
+    const [updated] = await db.update(deliveries)
+      .set({
+        driverId,
+        driverName: `${driver.firstName} ${driver.lastName}`.trim(),
+        driverPhone: driver.phone ?? null,
+        status: "assigned",
+        updatedAt: new Date(),
+      })
+      .where(eq(deliveries.orderId, id))
+      .returning();
+    delivery = updated;
+  } else {
+    const [created] = await db.insert(deliveries).values({
+      orderId: id,
+      branchId: order.branchId,
+      type: "delivery",
+      status: "assigned",
+      driverId,
+      driverName: `${driver.firstName} ${driver.lastName}`.trim(),
+      driverPhone: driver.phone ?? null,
+    }).returning();
+    delivery = created;
+  }
+
+  // Advance order status if appropriate
+  const authUser = c.get("authUser");
+  if (["processing", "ready", "confirmed"].includes(order.status)) {
+    await db.update(orders)
+      .set({ status: "out_for_delivery", updatedAt: new Date() })
+      .where(eq(orders.id, id));
+    await db.insert(orderStatusHistory).values({
+      orderId: id,
+      status: "out_for_delivery",
+      notes: `Driver assigned: ${driver.firstName} ${driver.lastName}`,
+      changedBy: authUser.id,
+    });
+  }
+
+  return c.json({ success: true, data: { delivery, driverName: `${driver.firstName} ${driver.lastName}` } });
 });
 
 // PATCH /api/v1/orders/:id/status

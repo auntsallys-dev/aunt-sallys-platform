@@ -85,6 +85,26 @@ export const api = {
         request<{ success: boolean; data: any }>("GET", `/admin/drivers/locations?branchId=${branchId}`),
     },
   },
+  adminServices: {
+    list: () => request<{ success: boolean; data: any[] }>("GET", "/services"),
+    create: (data: { name: string; category: string; basePrice: number; priceUnit: string; estimatedHours?: number; description?: string }) =>
+      request<{ success: boolean; data: any }>("POST", "/services", data),
+    update: (id: string, data: Partial<{ name: string; category: string; basePrice: number; priceUnit: string; estimatedHours: number; description: string; isActive: boolean }>) =>
+      request<{ success: boolean; data: any }>("PATCH", `/services/${id}`, data),
+    delete: (id: string) =>
+      request<{ success: boolean; data: any }>("DELETE", `/services/${id}`),
+  },
+  adminBranches: {
+    list: () => request<{ success: boolean; data: any[] }>("GET", "/branches?all=true"),
+    create: (data: { name: string; slug: string; address?: string; phone?: string; email?: string; lat?: number; lng?: number }) =>
+      request<{ success: boolean; data: any }>("POST", "/branches", data),
+    update: (id: string, data: Partial<{ name: string; slug: string; address: string; phone: string; email: string; isActive: boolean; lat: number; lng: number }>) =>
+      request<{ success: boolean; data: any }>("PATCH", `/branches/${id}`, data),
+    delete: (id: string) =>
+      request<{ success: boolean; data: any }>("DELETE", `/branches/${id}`),
+  },
+  assignDriver: (orderId: string, driverId: string) =>
+    request<{ success: boolean; data: any }>("PATCH", `/orders/${orderId}/assign-driver`, { driverId }),
   driver: {
     getOrders: (branchId?: string) => {
       const qs = branchId ? `?branchId=${branchId}` : "";

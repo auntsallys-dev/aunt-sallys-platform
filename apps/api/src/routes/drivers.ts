@@ -51,26 +51,43 @@ driversRoutes.post("/location", async (c) => {
   return c.json({ success: true, data: loc });
 });
 
-// GET /api/v1/drivers/orders — orders assigned to this driver's branch for delivery
+// GET /api/v1/drivers/orders — orders assigned to this driver
 driversRoutes.get("/orders", async (c) => {
   const authUser = c.get("authUser");
   const branchId = c.req.query("branchId") ?? authUser.branchId;
 
   if (!branchId) return c.json({ success: false, error: "No branch assigned" }, 400);
 
-  const orderList = await db
+  // Get deliveries assigned to this driver
+  const assignedDeliveries = await db
+    .select()
+    .from(deliveries)
+    .where(eq(deliveries.driverId, authUser.id))
+    .orderBy(desc(deliveries.updatedAt));
+
+  const assignedOrderIds = assignedDeliveries.map((d) => d.orderId);
+
+  // Also get unassigned delivery orders for this branch (backwards compat)
+  const allBranchOrders = await db
     .select()
     .from(orders)
     .where(eq(orders.branchId, branchId))
     .orderBy(desc(orders.createdAt));
 
-  // Filter to delivery orders that are active
-  const deliveryOrders = orderList.filter((o) =>
+  const activeDeliveryOrders = allBranchOrders.filter((o) =>
     o.orderType === "delivery" &&
     !["completed", "cancelled", "delivered"].includes(o.status)
   );
 
-  const enriched = await Promise.all(deliveryOrders.map(async (order) => {
+  // Merge: assigned orders first, then unassigned ones not already in the list
+  const assignedOrders = activeDeliveryOrders.filter((o) => assignedOrderIds.includes(o.id));
+  const unassignedOrders = activeDeliveryOrders.filter(
+    (o) => !assignedOrderIds.includes(o.id)
+  );
+
+  const ordersToShow = [...assignedOrders, ...unassignedOrders];
+
+  const enriched = await Promise.all(ordersToShow.map(async (order) => {
     let customerName = "Unknown";
     let customerPhone = null;
     if (order.customerId) {
@@ -94,7 +111,6 @@ driversRoutes.get("/orders", async (c) => {
     .leftJoin(services, eq(services.id, orderItems.serviceId))
     .where(eq(orderItems.orderId, order.id));
 
-    // Get delivery info for address
     const [delivery] = await db
       .select()
       .from(deliveries)
@@ -102,7 +118,9 @@ driversRoutes.get("/orders", async (c) => {
       .orderBy(desc(deliveries.createdAt))
       .limit(1);
 
-    return { ...order, customerName, customerPhone, items, delivery: delivery ?? null };
+    const isAssignedToMe = assignedOrderIds.includes(order.id);
+
+    return { ...order, customerName, customerPhone, items, delivery: delivery ?? null, isAssignedToMe };
   }));
 
   return c.json({ success: true, data: enriched });

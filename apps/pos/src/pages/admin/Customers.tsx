@@ -33,6 +33,11 @@ function CustomerOrderHistory({ customerId, onClose }: { customerId: string; onC
                 {data.customer.firstName} {data.customer.lastName}
               </h2>
               <p className="text-sm text-gray-500">{data.customer.phone} · {data.customer.email ?? "—"}</p>
+              {data?.orders?.length > 0 && (
+                <p className="text-xs text-gray-400 mt-1">
+                  {data.orders.length} order{data.orders.length !== 1 ? "s" : ""} · Total spend: ₱{data.orders.reduce((sum: number, o: any) => sum + parseFloat(o.total ?? "0"), 0).toLocaleString()}
+                </p>
+              )}
             </div>
           ) : (
             <h2 className="text-lg font-bold text-gray-900">Order History</h2>
