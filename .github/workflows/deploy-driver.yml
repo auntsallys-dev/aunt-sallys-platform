@@ -1,0 +1,51 @@
+name: Deploy Driver App to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/driver/**"
+      - ".github/workflows/deploy-driver.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build Driver App
+        run: pnpm --filter driver build
+        env:
+          VITE_API_URL: https://aunt-sallys-pos.onrender.com
+          VITE_BASE_URL: /aunt-sallys-platform/driver/
+
+      - name: Prepare deploy
+        run: |
+          mkdir -p deploy/driver
+          cp -r apps/driver/dist/. deploy/driver/
+          cp apps/driver/dist/index.html deploy/driver/404.html
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./deploy
+          destination_dir: driver
+          keep_files: true
+          force_orphan: false

@@ -10,6 +10,7 @@ import {
   branches,
   organizations,
   customerAddresses,
+  deliveries,
 } from "@aunt-sallys/db";
 import { formatOrderNumber } from "@aunt-sallys/shared";
 
@@ -50,13 +51,16 @@ publicRoutes.post("/bookings", async (c) => {
     return c.json({ success: false, error: "Invalid JSON" }, 400);
   }
 
-  const { name, phone, email, address, branchId, items } = body as {
+  const { name, phone, email, address, addressLat, addressLng, branchId, items, notes: driverNotes } = body as {
     name: string;
     phone: string;
     email?: string;
     address: string;
+    addressLat?: number;
+    addressLng?: number;
     branchId: string;
-    items: { serviceId: string; quantity: number; unitPrice: number }[];
+    notes?: string;
+    items: { serviceId: string; quantity: number; unitPrice: number; notes?: string }[];
   };
 
   if (!name || !phone || !branchId || !items?.length) {
@@ -90,12 +94,18 @@ publicRoutes.post("/bookings", async (c) => {
     customer = created;
   }
 
-  // Create address record for pickup
+  // Create address record for pickup (with coords if provided)
   let addressId: string | undefined;
   if (address?.trim()) {
     const [addr] = await db
       .insert(customerAddresses)
-      .values({ customerId: customer.id, label: "booking", addressLine: address.trim() })
+      .values({
+        customerId: customer.id,
+        label: "booking",
+        addressLine: address.trim(),
+        lat: addressLat ? String(addressLat) : null,
+        lng: addressLng ? String(addressLng) : null,
+      })
       .returning();
     addressId = addr.id;
   }
@@ -123,6 +133,7 @@ publicRoutes.post("/bookings", async (c) => {
       quantity: String(item.quantity),
       unitPrice: String(unitPrice),
       totalPrice: String(totalPrice),
+      notes: item.notes ?? undefined,
     });
   }
 
@@ -130,6 +141,9 @@ publicRoutes.post("/bookings", async (c) => {
   const count = await db.$count(orders);
   const year = new Date().getFullYear();
   const orderNumber = formatOrderNumber(year, count + 1);
+
+  const notesLines: string[] = [`Online booking via auntsallyslaundry.com. Pickup address: ${address}`];
+  if (driverNotes?.trim()) notesLines.push(`Driver notes: ${driverNotes.trim()}`);
 
   const [order] = await db
     .insert(orders)
@@ -141,13 +155,23 @@ publicRoutes.post("/bookings", async (c) => {
       subtotal: String(subtotal),
       deliveryFee: "0",
       total: String(subtotal),
-      notes: `Online booking via auntsallyslaundry.com. Pickup address: ${address}`,
+      notes: notesLines.join("\n"),
       pickupAddressId: addressId,
     })
     .returning();
 
   await db.insert(orderItems).values(itemsToInsert.map((i) => ({ ...i, orderId: order.id })));
   await db.insert(orderStatusHistory).values({ orderId: order.id, status: "pending" });
+
+  // Create delivery record so driver can see address + coords
+  await db.insert(deliveries).values({
+    orderId: order.id,
+    branchId,
+    type: "pickup",
+    status: "pending",
+    notes: driverNotes?.trim() || null,
+    addressId: addressId || null,
+  });
 
   return c.json({ success: true, data: { trackingCode: order.orderNumber, orderId: order.id } }, 201);
 });
