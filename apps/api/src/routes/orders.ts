@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { eq, and, desc, inArray } from "drizzle-orm";
-import { db, orders, orderItems, orderStatusHistory, services, branchServices, customers, deliveries, users } from "@aunt-sallys/db";
+import { db, orders, orderItems, orderStatusHistory, services, branchServices, customers, deliveries, users, branches } from "@aunt-sallys/db";
 import { createOrderSchema, updateOrderStatusSchema } from "@aunt-sallys/shared";
 import { authenticate } from "../middleware/auth.js";
 import { formatOrderNumber } from "@aunt-sallys/shared";
@@ -36,13 +36,16 @@ ordersRoutes.get("/", authenticate, async (c) => {
     });
   }
 
-  // Enrich with customer info
+  // Enrich with customer + branch info
   const enriched = await Promise.all(filtered.map(async (order) => {
     let customerName = "Walk-in Customer";
     if (order.customerId) {
       const [cust] = await db.select().from(customers).where(eq(customers.id, order.customerId)).limit(1);
       if (cust) customerName = `${cust.firstName} ${cust.lastName}`.trim();
     }
+
+    const [branch] = await db.select({ id: branches.id, name: branches.name })
+      .from(branches).where(eq(branches.id, order.branchId)).limit(1);
 
     const items = await db.select({
       id: orderItems.id,
@@ -58,7 +61,7 @@ ordersRoutes.get("/", authenticate, async (c) => {
     .leftJoin(services, eq(services.id, orderItems.serviceId))
     .where(eq(orderItems.orderId, order.id));
 
-    return { ...order, customerName, items };
+    return { ...order, customerName, branch: branch ?? null, items };
   }));
 
   return c.json({ success: true, data: enriched });
