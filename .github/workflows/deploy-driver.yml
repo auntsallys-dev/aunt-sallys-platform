@@ -35,17 +35,22 @@ jobs:
           VITE_API_URL: https://aunt-sallys-pos.onrender.com
           VITE_BASE_URL: /aunt-sallys-platform/driver/
 
-      - name: Prepare deploy
+      - name: Checkout gh-pages branch
         run: |
-          mkdir -p deploy/driver
-          cp -r apps/driver/dist/. deploy/driver/
-          cp apps/driver/dist/index.html deploy/driver/404.html
+          git fetch origin gh-pages || true
+          git worktree add gh-pages-out gh-pages 2>/dev/null || (git worktree add gh-pages-out --orphan gh-pages-new && git -C gh-pages-out checkout --orphan gh-pages-new)
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./deploy
-          destination_dir: driver
-          keep_files: true
-          force_orphan: false
+      - name: Copy driver build into gh-pages
+        run: |
+          mkdir -p gh-pages-out/driver
+          cp -r apps/driver/dist/. gh-pages-out/driver/
+          cp apps/driver/dist/index.html gh-pages-out/driver/404.html
+
+      - name: Commit and push
+        run: |
+          cd gh-pages-out
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add driver/
+          git diff --staged --quiet || git commit -m "deploy: driver app"
+          git push origin HEAD:gh-pages
