@@ -50,12 +50,14 @@ export function LoginPage() {
             <div>
               <label className="mb-1.5 block text-sm font-medium text-gray-700">Email</label>
               <input
-                type="email"
+                type="text"
+                inputMode="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoFocus
-                placeholder="staff@auntsallys.ph"
+                placeholder="staff@auntsallyslaundry.com"
                 className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm transition focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
               />
             </div>
