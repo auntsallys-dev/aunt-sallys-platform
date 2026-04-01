@@ -1,6 +1,6 @@
 {
-  "buildCommand": "pnpm --filter pos build",
-  "outputDirectory": "apps/pos/dist",
+  "buildCommand": "pnpm --filter web build",
+  "outputDirectory": "apps/web/.next",
   "installCommand": "pnpm install",
-  "framework": null
+  "framework": "nextjs"
 }
