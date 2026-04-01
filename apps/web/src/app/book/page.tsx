@@ -1,8 +1,134 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+
+// ── Nominatim autocomplete ─────────────────────────────────────────────────
+interface NominatimResult {
+  place_id: number;
+  display_name: string;
+  lat: string;
+  lon: string;
+  address: {
+    road?: string;
+    suburb?: string;
+    city?: string;
+    town?: string;
+    municipality?: string;
+    state?: string;
+    postcode?: string;
+    house_number?: string;
+  };
+}
+
+function AddressAutocomplete({
+  value,
+  onChange,
+  onSelect,
+  placeholder,
+  hasError,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onSelect: (result: NominatimResult) => void;
+  placeholder?: string;
+  hasError?: boolean;
+}) {
+  const [suggestions, setSuggestions] = useState<NominatimResult[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const fetchSuggestions = useCallback(async (query: string) => {
+    if (query.trim().length < 3) { setSuggestions([]); setShowDropdown(false); return; }
+    setLoading(true);
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&countrycodes=ph&format=json&limit=5&addressdetails=1`;
+      const res = await fetch(url, { headers: { "Accept-Language": "en" } });
+      const data: NominatimResult[] = await res.json();
+      setSuggestions(data);
+      setShowDropdown(data.length > 0);
+    } catch {
+      setSuggestions([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  function handleInput(v: string) {
+    onChange(v);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => fetchSuggestions(v), 400);
+  }
+
+  function handleSelect(r: NominatimResult) {
+    onChange(r.display_name.split(",")[0].trim());
+    setSuggestions([]);
+    setShowDropdown(false);
+    onSelect(r);
+  }
+
+  // Close on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div className="relative">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => handleInput(e.target.value)}
+          onFocus={() => suggestions.length > 0 && setShowDropdown(true)}
+          placeholder={placeholder}
+          className={`w-full border bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none transition-colors ${
+            hasError ? "border-red-300 focus:border-red-400" : "border-gray-200 focus:border-[#0ABAB5]"
+          }`}
+        />
+        {loading && (
+          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#0ABAB5] border-t-transparent" />
+          </div>
+        )}
+      </div>
+      {showDropdown && suggestions.length > 0 && (
+        <ul className="absolute z-50 mt-1 w-full rounded-sm border border-gray-200 bg-white shadow-lg overflow-hidden">
+          {suggestions.map((r) => {
+            const parts = r.display_name.split(",");
+            const primary = parts.slice(0, 2).join(",").trim();
+            const secondary = parts.slice(2, 5).join(",").trim();
+            return (
+              <li key={r.place_id}>
+                <button
+                  type="button"
+                  onMouseDown={(e) => { e.preventDefault(); handleSelect(r); }}
+                  className="w-full text-left px-4 py-3 hover:bg-[#0ABAB5]/5 transition-colors border-b border-gray-50 last:border-0"
+                >
+                  <div className="flex items-start gap-2">
+                    <span className="mt-0.5 text-[#0ABAB5] flex-shrink-0">📍</span>
+                    <div>
+                      <div className="text-sm font-medium text-gray-900 leading-tight">{primary}</div>
+                      {secondary && <div className="text-xs text-gray-400 mt-0.5">{secondary}</div>}
+                    </div>
+                  </div>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 // ── Map pin component (Leaflet) ────────────────────────────────────────────
 interface LatLng { lat: number; lng: number; }
@@ -509,14 +635,36 @@ export default function BookPage() {
             <div className="space-y-5">
               <div>
                 <label className="mb-2 block text-xs font-medium tracking-widest text-gray-500 uppercase">Street / Unit / House No.</label>
-                <input
-                  type="text"
+                <AddressAutocomplete
                   value={addressFields.street}
-                  onChange={(e) => { setAddressFields((f) => ({ ...f, street: e.target.value })); setAddressErrors((e2) => ({ ...e2, street: "" })); }}
+                  onChange={(v) => { setAddressFields((f) => ({ ...f, street: v })); setAddressErrors((e2) => ({ ...e2, street: "" })); }}
+                  onSelect={(result) => {
+                    const addr = result.address;
+                    // Fill street with house number + road if available
+                    const streetVal = [addr.house_number, addr.road].filter(Boolean).join(" ") || result.display_name.split(",")[0].trim();
+                    // Auto-fill city and province from result
+                    const cityVal = addr.city || addr.town || addr.municipality || "";
+                    const provinceVal = addr.state || "";
+                    const postalVal = addr.postcode || "";
+                    const barangayVal = addr.suburb || "";
+                    setAddressFields((f) => ({
+                      ...f,
+                      street: streetVal,
+                      ...(cityVal && { city: cityVal }),
+                      ...(provinceVal && { province: provinceVal }),
+                      ...(postalVal && { postalCode: postalVal }),
+                      ...(barangayVal && !f.barangay && { barangay: barangayVal }),
+                    }));
+                    setAddressErrors({});
+                    // Set map pin to selected location
+                    const ll = { lat: parseFloat(result.lat), lng: parseFloat(result.lon) };
+                    setPinLatLng(ll);
+                  }}
                   placeholder="123 Sampaguita St., Unit 4B"
-                  className={`w-full border bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none transition-colors ${addressErrors.street ? "border-red-300" : "border-gray-200 focus:border-[#0ABAB5]"}`}
+                  hasError={!!addressErrors.street}
                 />
                 {addressErrors.street && <p className="mt-1 text-xs text-red-500">{addressErrors.street}</p>}
+                <p className="mt-1.5 text-xs text-gray-400">Start typing to see suggestions, or enter manually</p>
               </div>
 
               <div>
@@ -570,26 +718,34 @@ export default function BookPage() {
               </div>
 
               {/* Map pin */}
-              <div className="border border-dashed border-gray-200 p-4 rounded-sm">
+              <div className={`border p-4 rounded-sm transition-colors ${pinLatLng ? "border-[#0ABAB5]/30 bg-[#0ABAB5]/5" : "border-dashed border-gray-200"}`}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Pin Your Location</p>
-                    <p className="text-xs text-gray-400 mt-0.5">Help our driver find you exactly</p>
+                    <p className="text-sm font-medium text-gray-700">Pin Your Exact Location</p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {pinLatLng
+                        ? "Drag the pin to adjust your exact pickup point"
+                        : "Help our driver find your exact gate or unit"}
+                    </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => {
-                      const ll = pinLatLng ?? { lat: 10.3157, lng: 123.8854 };
+                      const ll = pinLatLng ?? { lat: 14.5547, lng: 121.0244 };
                       setPinLatLng(ll);
                       setShowMapModal(true);
                     }}
-                    className="rounded-sm border border-[#0ABAB5] px-3 py-1.5 text-xs font-medium text-[#0ABAB5] hover:bg-[#0ABAB5]/5 transition-colors"
+                    className={`rounded-sm border px-3 py-1.5 text-xs font-medium transition-colors ${
+                      pinLatLng
+                        ? "border-[#0ABAB5] bg-[#0ABAB5] text-white hover:bg-[#089e9a]"
+                        : "border-[#0ABAB5] text-[#0ABAB5] hover:bg-[#0ABAB5]/5"
+                    }`}
                   >
-                    {pinLatLng ? "📍 Update Pin" : "📍 Pin Location"}
+                    {pinLatLng ? "📍 Adjust Pin" : "📍 Pin Location"}
                   </button>
                 </div>
                 {pinLatLng && (
-                  <p className="mt-2 text-xs text-[#0ABAB5]">Location pinned ✓</p>
+                  <p className="mt-2 text-xs text-[#0ABAB5] font-medium">✓ Location pinned — tap Adjust Pin to fine-tune</p>
                 )}
               </div>
 
