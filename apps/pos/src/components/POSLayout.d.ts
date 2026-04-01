@@ -1,2 +1,2 @@
-export declare function POSLayout(): import("react/jsx-runtime").JSX.Element;
+export declare function POSLayout(): any;
 //# sourceMappingURL=POSLayout.d.ts.map

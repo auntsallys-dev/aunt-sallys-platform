@@ -123,6 +123,78 @@ export declare const api: {
             }>;
         };
     };
+    adminServices: {
+        list: () => Promise<{
+            success: boolean;
+            data: any[];
+        }>;
+        create: (data: {
+            name: string;
+            category: string;
+            basePrice: number;
+            priceUnit: string;
+            estimatedHours?: number;
+            description?: string;
+        }) => Promise<{
+            success: boolean;
+            data: any;
+        }>;
+        update: (id: string, data: Partial<{
+            name: string;
+            category: string;
+            basePrice: number;
+            priceUnit: string;
+            estimatedHours: number;
+            description: string;
+            isActive: boolean;
+        }>) => Promise<{
+            success: boolean;
+            data: any;
+        }>;
+        delete: (id: string) => Promise<{
+            success: boolean;
+            data: any;
+        }>;
+    };
+    adminBranches: {
+        list: () => Promise<{
+            success: boolean;
+            data: any[];
+        }>;
+        create: (data: {
+            name: string;
+            slug: string;
+            address?: string;
+            phone?: string;
+            email?: string;
+            lat?: number;
+            lng?: number;
+        }) => Promise<{
+            success: boolean;
+            data: any;
+        }>;
+        update: (id: string, data: Partial<{
+            name: string;
+            slug: string;
+            address: string;
+            phone: string;
+            email: string;
+            isActive: boolean;
+            lat: number;
+            lng: number;
+        }>) => Promise<{
+            success: boolean;
+            data: any;
+        }>;
+        delete: (id: string) => Promise<{
+            success: boolean;
+            data: any;
+        }>;
+    };
+    assignDriver: (orderId: string, driverId: string) => Promise<{
+        success: boolean;
+        data: any;
+    }>;
     driver: {
         getOrders: (branchId?: string) => Promise<{
             success: boolean;

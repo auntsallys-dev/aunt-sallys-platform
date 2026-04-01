@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../contexts/AuthContext";
 
-type OrderStatus = "pending" | "confirmed" | "processing" | "ready" | "completed" | "cancelled";
+type OrderStatus = "pending" | "confirmed" | "assigned_for_pickup" | "processing" | "ready" | "completed" | "cancelled";
 
 const STATUS_COLORS: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-700",
   confirmed: "bg-blue-100 text-blue-700",
+  assigned_for_pickup: "bg-indigo-100 text-indigo-700",
   processing: "bg-purple-100 text-purple-700",
   ready: "bg-teal-100 text-teal-700",
   completed: "bg-green-100 text-green-700",
@@ -15,7 +16,7 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: "bg-red-100 text-red-700",
 };
 
-const STATUSES: (OrderStatus | "all")[] = ["all", "pending", "confirmed", "processing", "ready", "completed", "cancelled"];
+const STATUSES: (OrderStatus | "all")[] = ["all", "pending", "confirmed", "assigned_for_pickup", "processing", "ready", "completed", "cancelled"];
 
 const CAN_ASSIGN_DRIVER = ["confirmed", "processing", "ready", "out_for_delivery"];
 
@@ -33,7 +34,43 @@ function OrderDetailPanel({ order, onClose, onDriverAssigned }: {
   const [assignSuccess, setAssignSuccess] = useState("");
   const [showDriverDropdown, setShowDriverDropdown] = useState(false);
 
+  // Transfer to branch
+  const [branchesList, setBranchesList] = useState<any[]>([]);
+  const [showTransfer, setShowTransfer] = useState(false);
+  const [selectedBranchId, setSelectedBranchId] = useState("");
+  const [transferring, setTransferring] = useState(false);
+  const [transferError, setTransferError] = useState("");
+  const [transferSuccess, setTransferSuccess] = useState("");
+
   const canAssign = CAN_ASSIGN_DRIVER.includes(order.status);
+  const canTransfer = !["completed", "delivered", "cancelled"].includes(order.status);
+
+  function handleShowTransfer() {
+    setShowTransfer(true);
+    if (branchesList.length === 0) {
+      api.adminBranches.list()
+        .then((res) => setBranchesList((res.data ?? []).filter((b: any) => b.id !== order.branchId)))
+        .catch(() => {});
+    }
+  }
+
+  async function handleTransferBranch() {
+    if (!selectedBranchId) return;
+    setTransferring(true);
+    setTransferError("");
+    setTransferSuccess("");
+    try {
+      await api.transferBranch(order.id, selectedBranchId);
+      const branch = branchesList.find((b: any) => b.id === selectedBranchId);
+      setTransferSuccess(`Transferred to ${branch?.name ?? "new branch"}`);
+      setShowTransfer(false);
+      setTimeout(() => { onDriverAssigned(order.id); onClose(); }, 800);
+    } catch (err: any) {
+      setTransferError(err.message ?? "Failed to transfer order");
+    } finally {
+      setTransferring(false);
+    }
+  }
 
   function loadDrivers() {
     if (!user?.branchId) return;
@@ -162,6 +199,57 @@ function OrderDetailPanel({ order, onClose, onDriverAssigned }: {
               </span>
             </div>
           </div>
+
+          {/* Transfer to Branch */}
+          {canTransfer && (
+            <div>
+              <div className="mb-2 text-xs font-semibold tracking-widest text-gray-400 uppercase">Branch Transfer</div>
+              <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 space-y-3">
+                {transferSuccess && (
+                  <div className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">{transferSuccess}</div>
+                )}
+                {transferError && (
+                  <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{transferError}</div>
+                )}
+                {!showTransfer ? (
+                  <button
+                    onClick={handleShowTransfer}
+                    className="w-full rounded-xl border border-gray-300 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+                  >
+                    🔀 Transfer to Branch
+                  </button>
+                ) : (
+                  <div className="space-y-2">
+                    <select
+                      value={selectedBranchId}
+                      onChange={(e) => setSelectedBranchId(e.target.value)}
+                      className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
+                    >
+                      <option value="">Select target branch…</option>
+                      {branchesList.map((b: any) => (
+                        <option key={b.id} value={b.id}>{b.name}</option>
+                      ))}
+                    </select>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setShowTransfer(false)}
+                        className="flex-1 rounded-xl border border-gray-200 py-2 text-sm text-gray-500 hover:bg-gray-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleTransferBranch}
+                        disabled={!selectedBranchId || transferring}
+                        className="flex-1 rounded-xl bg-gray-700 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-40"
+                      >
+                        {transferring ? "Transferring…" : "Confirm Transfer"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Driver Assignment */}
           {canAssign && (

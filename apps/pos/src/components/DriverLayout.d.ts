@@ -1,2 +1,2 @@
-export declare function DriverLayout(): import("react/jsx-runtime").JSX.Element;
+export declare function DriverLayout(): any;
 //# sourceMappingURL=DriverLayout.d.ts.map

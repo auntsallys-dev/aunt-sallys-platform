@@ -1,2 +1,2 @@
-export declare function AnalyticsPage(): import("react/jsx-runtime").JSX.Element;
+export declare function AnalyticsPage(): any;
 //# sourceMappingURL=Analytics.d.ts.map

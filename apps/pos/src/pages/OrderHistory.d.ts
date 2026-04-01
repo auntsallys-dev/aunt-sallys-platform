@@ -1,2 +1,2 @@
-export declare function OrderHistoryPage(): import("react/jsx-runtime").JSX.Element;
+export declare function OrderHistoryPage(): any;
 //# sourceMappingURL=OrderHistory.d.ts.map

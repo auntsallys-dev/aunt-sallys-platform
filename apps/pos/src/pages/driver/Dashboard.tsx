@@ -4,11 +4,12 @@ import { api } from "../../lib/api";
 import { useAuth } from "../../contexts/AuthContext";
 
 const STATUS_COLORS: Record<string, string> = {
-  pending:          "bg-yellow-100 text-yellow-700",
-  confirmed:        "bg-blue-100 text-blue-700",
-  processing:       "bg-purple-100 text-purple-700",
-  ready:            "bg-teal-100 text-teal-700",
-  out_for_delivery: "bg-indigo-100 text-indigo-700",
+  pending:              "bg-yellow-100 text-yellow-700",
+  confirmed:            "bg-blue-100 text-blue-700",
+  assigned_for_pickup:  "bg-indigo-100 text-indigo-700",
+  processing:           "bg-purple-100 text-purple-700",
+  ready:                "bg-teal-100 text-teal-700",
+  out_for_delivery:     "bg-indigo-100 text-indigo-700",
 };
 
 export function DriverDashboardPage() {
@@ -20,12 +21,36 @@ export function DriverDashboardPage() {
   const [tracking, setTracking] = useState(false);
   const [gpsStatus, setGpsStatus] = useState<"idle" | "active" | "error">("idle");
   const gpsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [claimingId, setClaimingId] = useState<string | null>(null);
+
+  // "Are you delivering?" prompt state
+  const [deliveryPrompt, setDeliveryPrompt] = useState<any | null>(null);
+  const prevOrdersRef = useRef<any[]>([]);
 
   async function fetchOrders() {
     try {
       const branchId = user?.branchId ?? undefined;
       const res = await api.driver.getOrders(branchId);
-      setOrders(res.data);
+      const newOrders = res.data;
+
+      // Check if any order flipped to out_for_delivery since last fetch
+      const prev = prevOrdersRef.current;
+      if (prev.length > 0) {
+        for (const newOrder of newOrders) {
+          const oldOrder = prev.find((o) => o.id === newOrder.id);
+          if (
+            newOrder.status === "out_for_delivery" &&
+            oldOrder?.status !== "out_for_delivery" &&
+            newOrder.isAssignedToMe
+          ) {
+            // Show prompt only if not already showing one
+            setDeliveryPrompt((curr: any) => curr ?? newOrder);
+          }
+        }
+      }
+
+      prevOrdersRef.current = newOrders;
+      setOrders(newOrders);
     } catch (err: any) {
       setError(err.message ?? "Failed to load orders");
     } finally {
@@ -64,6 +89,32 @@ export function DriverDashboardPage() {
       sendLocation(branchId);
       gpsIntervalRef.current = setInterval(() => sendLocation(branchId), 10_000);
       setTracking(true);
+    }
+  }
+
+  function startDeliveryTracking(order: any) {
+    const branchId = user?.branchId;
+    if (!branchId) return;
+    // Start GPS tracking for this specific order
+    sendLocation(branchId, order.id);
+    if (!tracking) {
+      gpsIntervalRef.current = setInterval(() => sendLocation(branchId, order.id), 10_000);
+      setTracking(true);
+    }
+    setDeliveryPrompt(null);
+    navigate(`/driver/orders/${order.id}`);
+  }
+
+  async function handleClaimOrder(order: any, e: React.MouseEvent) {
+    e.stopPropagation();
+    setClaimingId(order.id);
+    try {
+      await api.driver.selfAssign(order.id);
+      await fetchOrders();
+    } catch (err: any) {
+      setError(err.message ?? "Failed to claim order");
+    } finally {
+      setClaimingId(null);
     }
   }
 
@@ -149,7 +200,12 @@ export function DriverDashboardPage() {
               className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-100 active:bg-gray-50 cursor-pointer transition-colors"
             >
               <div className="mb-2 flex items-center justify-between">
-                <span className="font-mono text-sm font-semibold text-gray-900">{order.orderNumber}</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-sm font-semibold text-gray-900">{order.orderNumber}</span>
+                  {order.isAssignedToMe && (
+                    <span className="rounded-full bg-brand-100 px-2 py-0.5 text-xs font-medium text-brand-700">Assigned</span>
+                  )}
+                </div>
                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATUS_COLORS[order.status] ?? "bg-gray-100 text-gray-600"}`}>
                   {order.status.replace(/_/g, " ")}
                 </span>
@@ -168,10 +224,49 @@ export function DriverDashboardPage() {
                 {order.items?.length ?? 0} item{order.items?.length !== 1 ? "s" : ""}
                 {" · "}₱{parseFloat(order.total).toFixed(2)}
               </div>
+
+              {/* Self-assign / Claim button for unassigned orders */}
+              {!order.isAssignedToMe && (
+                <button
+                  onClick={(e) => handleClaimOrder(order, e)}
+                  disabled={claimingId === order.id}
+                  className="mt-3 w-full rounded-xl bg-brand-600 py-2 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-60 transition-colors"
+                >
+                  {claimingId === order.id ? "Claiming…" : "🙋 Claim this Order"}
+                </button>
+              )}
             </div>
           ))}
         </div>
       </div>
+
+      {/* "Are you now delivering?" prompt */}
+      {deliveryPrompt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl p-6 text-center">
+            <div className="text-4xl mb-3">🚚</div>
+            <h2 className="text-lg font-bold text-gray-900 mb-2">Ready for Delivery!</h2>
+            <p className="text-sm text-gray-500 mb-6">
+              Order <strong>{deliveryPrompt.orderNumber}</strong> is ready for delivery.
+              Are you now delivering?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeliveryPrompt(null)}
+                className="flex-1 rounded-xl border border-gray-200 py-3 text-sm text-gray-500 hover:bg-gray-50"
+              >
+                Not Yet
+              </button>
+              <button
+                onClick={() => startDeliveryTracking(deliveryPrompt)}
+                className="flex-1 rounded-xl bg-green-600 py-3 text-sm font-bold text-white hover:bg-green-700"
+              >
+                ✅ Yes, Start Delivery
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

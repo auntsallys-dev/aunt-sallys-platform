@@ -9,6 +9,6 @@ interface AddressInputProps {
     placeholder?: string;
     className?: string;
 }
-export declare function AddressInput({ value, onChange, placeholder, className }: AddressInputProps): import("react/jsx-runtime").JSX.Element;
+export declare function AddressInput({ value, onChange, placeholder, className }: AddressInputProps): any;
 export {};
 //# sourceMappingURL=AddressInput.d.ts.map

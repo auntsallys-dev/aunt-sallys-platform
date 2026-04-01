@@ -1,2 +1,2 @@
-export declare function OrderDetailPage(): import("react/jsx-runtime").JSX.Element | null;
+export declare function OrderDetailPage(): any;
 //# sourceMappingURL=OrderDetail.d.ts.map

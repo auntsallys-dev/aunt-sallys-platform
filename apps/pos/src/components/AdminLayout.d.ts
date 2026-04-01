@@ -1,2 +1,2 @@
-export declare function AdminLayout(): import("react/jsx-runtime").JSX.Element;
+export declare function AdminLayout(): any;
 //# sourceMappingURL=AdminLayout.d.ts.map

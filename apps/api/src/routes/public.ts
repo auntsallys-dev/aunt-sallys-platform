@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq, ilike } from "drizzle-orm";
+import { eq, ilike, and, desc } from "drizzle-orm";
 import {
   db,
   orders,
@@ -11,6 +11,7 @@ import {
   organizations,
   customerAddresses,
   deliveries,
+  driverLocations,
 } from "@aunt-sallys/db";
 import { formatOrderNumber } from "@aunt-sallys/shared";
 
@@ -137,6 +138,24 @@ publicRoutes.post("/bookings", async (c) => {
     });
   }
 
+  // Auto-add logistics fee if not already included
+  const [logisticsSvc] = await db.select().from(services)
+    .where(and(eq(services.category, "logistics"), eq(services.isActive, true)))
+    .limit(1);
+
+  const hasLogistics = logisticsSvc ? itemsToInsert.some((i) => i.serviceId === logisticsSvc.id) : false;
+  if (logisticsSvc && !hasLogistics) {
+    const logisticsPrice = parseFloat(logisticsSvc.basePrice as string);
+    itemsToInsert.push({
+      serviceId: logisticsSvc.id,
+      quantity: "1",
+      unitPrice: String(logisticsPrice),
+      totalPrice: String(logisticsPrice),
+      notes: "Auto-added: website delivery booking",
+    });
+    subtotal += logisticsPrice;
+  }
+
   // Generate order number
   const count = await db.$count(orders);
   const year = new Date().getFullYear();
@@ -154,7 +173,7 @@ publicRoutes.post("/bookings", async (c) => {
       orderType: "pickup",
       subtotal: String(subtotal),
       deliveryFee: "0",
-      total: String(subtotal),
+      total: String(subtotal), // subtotal already includes logistics if auto-added
       notes: notesLines.join("\n"),
       pickupAddressId: addressId,
     })
@@ -174,6 +193,45 @@ publicRoutes.post("/bookings", async (c) => {
   });
 
   return c.json({ success: true, data: { trackingCode: order.orderNumber, orderId: order.id } }, 201);
+});
+
+// GET /api/v1/public/driver-location/:orderId
+publicRoutes.get("/driver-location/:orderId", async (c) => {
+  const orderId = c.req.param("orderId");
+
+  const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+  if (!order) return c.json({ success: false, error: "Order not found" }, 404);
+
+  if (order.status !== "out_for_delivery") {
+    return c.json({ success: true, data: null });
+  }
+
+  // Get the delivery record to find the driver
+  const [delivery] = await db.select().from(deliveries)
+    .where(eq(deliveries.orderId, orderId))
+    .limit(1);
+
+  if (!delivery?.driverId) {
+    return c.json({ success: true, data: null });
+  }
+
+  // Find latest driver location entry for this driver+order
+  const [loc] = await db.select().from(driverLocations)
+    .where(and(eq(driverLocations.driverId, delivery.driverId), eq(driverLocations.orderId, orderId)))
+    .orderBy(desc(driverLocations.createdAt))
+    .limit(1);
+
+  if (!loc) {
+    // Fallback: latest location for driver regardless of order
+    const [anyLoc] = await db.select().from(driverLocations)
+      .where(eq(driverLocations.driverId, delivery.driverId))
+      .orderBy(desc(driverLocations.createdAt))
+      .limit(1);
+    if (!anyLoc) return c.json({ success: true, data: null });
+    return c.json({ success: true, data: { lat: parseFloat(anyLoc.lat as string), lng: parseFloat(anyLoc.lng as string), updatedAt: anyLoc.createdAt } });
+  }
+
+  return c.json({ success: true, data: { lat: parseFloat(loc.lat as string), lng: parseFloat(loc.lng as string), updatedAt: loc.createdAt } });
 });
 
 // GET /api/v1/public/track/:code

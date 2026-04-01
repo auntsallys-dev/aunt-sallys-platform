@@ -1,2 +1,2 @@
-export declare function AdminDashboardPage(): import("react/jsx-runtime").JSX.Element;
+export declare function AdminDashboardPage(): any;
 //# sourceMappingURL=Dashboard.d.ts.map

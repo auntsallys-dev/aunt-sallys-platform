@@ -67,6 +67,19 @@ export const api = {
             locations: (branchId) => request("GET", `/admin/drivers/locations?branchId=${branchId}`),
         },
     },
+    adminServices: {
+        list: () => request("GET", "/services"),
+        create: (data) => request("POST", "/services", data),
+        update: (id, data) => request("PATCH", `/services/${id}`, data),
+        delete: (id) => request("DELETE", `/services/${id}`),
+    },
+    adminBranches: {
+        list: () => request("GET", "/branches?all=true"),
+        create: (data) => request("POST", "/branches", data),
+        update: (id, data) => request("PATCH", `/branches/${id}`, data),
+        delete: (id) => request("DELETE", `/branches/${id}`),
+    },
+    assignDriver: (orderId, driverId) => request("PATCH", `/orders/${orderId}/assign-driver`, { driverId }),
     driver: {
         getOrders: (branchId) => {
             const qs = branchId ? `?branchId=${branchId}` : "";

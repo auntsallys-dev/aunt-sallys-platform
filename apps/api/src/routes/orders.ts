@@ -283,7 +283,8 @@ ordersRoutes.patch("/:id/assign-driver", authenticate, async (c) => {
   let body: any;
   try { body = await c.req.json(); } catch { return c.json({ success: false, error: "Invalid JSON" }, 400); }
 
-  const { driverId } = body;
+  const authUser = c.get("authUser");
+  const driverId: string = body.driverId ?? authUser.id;
   if (!driverId) return c.json({ success: false, error: "driverId is required" }, 400);
 
   const [order] = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
@@ -323,8 +324,18 @@ ordersRoutes.patch("/:id/assign-driver", authenticate, async (c) => {
   }
 
   // Advance order status if appropriate
-  const authUser = c.get("authUser");
-  if (["processing", "ready", "confirmed"].includes(order.status)) {
+  // Accept driverId from body for self-assign (driver claims their own orders)
+  if (["confirmed", "processing"].includes(order.status)) {
+    await db.update(orders)
+      .set({ status: "assigned_for_pickup", updatedAt: new Date() })
+      .where(eq(orders.id, id));
+    await db.insert(orderStatusHistory).values({
+      orderId: id,
+      status: "assigned_for_pickup",
+      notes: `Driver assigned: ${driver.firstName} ${driver.lastName}`,
+      changedBy: authUser.id,
+    });
+  } else if (order.status === "ready") {
     await db.update(orders)
       .set({ status: "out_for_delivery", updatedAt: new Date() })
       .where(eq(orders.id, id));
@@ -337,6 +348,41 @@ ordersRoutes.patch("/:id/assign-driver", authenticate, async (c) => {
   }
 
   return c.json({ success: true, data: { delivery, driverName: `${driver.firstName} ${driver.lastName}` } });
+});
+
+// PATCH /api/v1/orders/:id/transfer-branch
+ordersRoutes.patch("/:id/transfer-branch", authenticate, async (c) => {
+  const id = c.req.param("id") as string;
+  let body: any;
+  try { body = await c.req.json(); } catch { return c.json({ success: false, error: "Invalid JSON" }, 400); }
+
+  const { branchId: newBranchId, notes } = body;
+  if (!newBranchId) return c.json({ success: false, error: "branchId is required" }, 400);
+
+  const [order] = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
+  if (!order) return c.json({ success: false, error: "Order not found" }, 404);
+
+  if (["completed", "delivered", "cancelled"].includes(order.status)) {
+    return c.json({ success: false, error: "Cannot transfer a completed, delivered, or cancelled order" }, 400);
+  }
+
+  const [newBranch] = await db.select().from(branches).where(eq(branches.id, newBranchId)).limit(1);
+  if (!newBranch) return c.json({ success: false, error: "Target branch not found" }, 404);
+
+  const authUser = c.get("authUser");
+  const [updatedOrder] = await db.update(orders)
+    .set({ branchId: newBranchId, updatedAt: new Date() })
+    .where(eq(orders.id, id))
+    .returning();
+
+  await db.insert(orderStatusHistory).values({
+    orderId: id,
+    status: "transferred",
+    notes: notes ?? `Transferred to ${newBranch.name}`,
+    changedBy: authUser.id,
+  });
+
+  return c.json({ success: true, data: updatedOrder });
 });
 
 // PATCH /api/v1/orders/:id/status

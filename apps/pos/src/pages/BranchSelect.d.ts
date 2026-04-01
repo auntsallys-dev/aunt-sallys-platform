@@ -1,2 +1,2 @@
-export declare function BranchSelectPage(): import("react/jsx-runtime").JSX.Element;
+export declare function BranchSelectPage(): any;
 //# sourceMappingURL=BranchSelect.d.ts.map

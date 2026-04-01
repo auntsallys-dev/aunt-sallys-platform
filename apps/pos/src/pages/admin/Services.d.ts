@@ -1,2 +1,2 @@
-export declare function AdminServicesPage(): import("react/jsx-runtime").JSX.Element;
+export declare function AdminServicesPage(): any;
 //# sourceMappingURL=Services.d.ts.map

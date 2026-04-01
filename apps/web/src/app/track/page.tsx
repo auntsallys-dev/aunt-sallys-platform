@@ -148,29 +148,57 @@ function TrackPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Subscribe to driver location via WebSocket when order is out for delivery
+  // Subscribe to driver location via WebSocket + HTTP polling fallback when out for delivery
   useEffect(() => {
     if (!data?.orderId || data.status !== "out_for_delivery") {
       if (wsRef.current) { wsRef.current.close(); wsRef.current = null; }
       return;
     }
 
-    const ws = new WebSocket(`${WS_URL}/api/v1/ws/order:${data.orderId}:driver`);
-    ws.onmessage = (event) => {
+    // Try WebSocket first
+    let wsConnected = false;
+    try {
+      const ws = new WebSocket(`${WS_URL}/api/v1/ws/order:${data.orderId}:driver`);
+      ws.onopen = () => { wsConnected = true; };
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === "driver_location") {
+            setDriverPosition({
+              lat: msg.lat,
+              lng: msg.lng,
+              updatedAt: msg.timestamp,
+            });
+          }
+        } catch {}
+      };
+      wsRef.current = ws;
+    } catch {}
+
+    // HTTP polling every 15s as reliable fallback
+    async function pollDriverLocation() {
       try {
-        const msg = JSON.parse(event.data);
-        if (msg.type === "driver_location") {
+        const res = await fetch(`${API}/api/v1/public/driver-location/${data!.orderId}`);
+        if (!res.ok) return;
+        const json = await res.json();
+        if (json.success && json.data) {
           setDriverPosition({
-            lat: msg.lat,
-            lng: msg.lng,
-            updatedAt: msg.timestamp,
+            lat: json.data.lat,
+            lng: json.data.lng,
+            updatedAt: json.data.updatedAt,
           });
         }
       } catch {}
-    };
-    wsRef.current = ws;
+    }
 
-    return () => { ws.close(); };
+    // Poll immediately and then every 15s
+    pollDriverLocation();
+    const pollInterval = setInterval(pollDriverLocation, 15_000);
+
+    return () => {
+      if (wsRef.current) { wsRef.current.close(); wsRef.current = null; }
+      clearInterval(pollInterval);
+    };
   }, [data?.orderId, data?.status]);
 
   async function fetchTracking(trackingCode: string) {
@@ -286,9 +314,15 @@ function TrackPageInner() {
               {/* Live driver location (when out for delivery) */}
               {data.status === "out_for_delivery" && (
                 <div className="mb-8 border border-[#0ABAB5]/20 bg-white p-4">
-                  <p className="mb-3 text-xs font-medium tracking-widest text-[#0ABAB5] uppercase">
-                    Live Driver Location
-                  </p>
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0ABAB5] opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-[#0ABAB5]"></span>
+                    </span>
+                    <p className="text-xs font-medium tracking-widest text-[#0ABAB5] uppercase">
+                      Driver is on the way
+                    </p>
+                  </div>
                   {driverPosition ? (
                     <>
                       <DriverMap position={driverPosition} />

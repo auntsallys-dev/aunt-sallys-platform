@@ -1,2 +1,2 @@
-export declare function DriverDashboardPage(): import("react/jsx-runtime").JSX.Element;
+export declare function DriverDashboardPage(): any;
 //# sourceMappingURL=Dashboard.d.ts.map

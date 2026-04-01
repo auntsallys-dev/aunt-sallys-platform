@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { eq, desc } from "drizzle-orm";
-import { db, driverLocations, orders, orderItems, services, customers, deliveries, branches } from "@aunt-sallys/db";
+import { db, driverLocations, orders, orderItems, orderStatusHistory, services, customers, deliveries, branches, customerAddresses } from "@aunt-sallys/db";
 import { authenticate } from "../middleware/auth.js";
 import { wsManager } from "../ws-manager.js";
 
@@ -118,12 +118,56 @@ driversRoutes.get("/orders", async (c) => {
       .orderBy(desc(deliveries.createdAt))
       .limit(1);
 
+    // Enrich delivery with address details
+    let enrichedDelivery: any = delivery ?? null;
+    if (delivery?.addressId) {
+      const [addr] = await db.select().from(customerAddresses)
+        .where(eq(customerAddresses.id, delivery.addressId))
+        .limit(1);
+      if (addr) {
+        enrichedDelivery = {
+          ...delivery,
+          addressLine: addr.addressLine,
+          lat: addr.lat ?? null,
+          lng: addr.lng ?? null,
+        };
+      }
+    }
+
     const isAssignedToMe = assignedOrderIds.includes(order.id);
 
-    return { ...order, customerName, customerPhone, items, delivery: delivery ?? null, isAssignedToMe };
+    return { ...order, customerName, customerPhone, items, delivery: enrichedDelivery, isAssignedToMe };
   }));
 
   return c.json({ success: true, data: enriched });
+});
+
+// PATCH /api/v1/drivers/orders/:id/collect-payment
+driversRoutes.patch("/orders/:id/collect-payment", async (c) => {
+  const orderId = c.req.param("id");
+  const authUser = c.get("authUser");
+  let body: any;
+  try { body = await c.req.json(); } catch { return c.json({ success: false, error: "Invalid JSON" }, 400); }
+
+  const { paymentMethod } = body;
+  if (!paymentMethod) return c.json({ success: false, error: "paymentMethod is required" }, 400);
+
+  const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+  if (!order) return c.json({ success: false, error: "Order not found" }, 404);
+
+  const [updatedOrder] = await db.update(orders)
+    .set({ paymentStatus: "paid", paymentMethod, updatedAt: new Date() })
+    .where(eq(orders.id, orderId))
+    .returning();
+
+  await db.insert(orderStatusHistory).values({
+    orderId,
+    status: order.status,
+    notes: `Payment collected via ${paymentMethod}`,
+    changedBy: authUser.id,
+  });
+
+  return c.json({ success: true, data: updatedOrder });
 });
 
 // PATCH /api/v1/drivers/orders/:id/deliver — mark order as delivered

@@ -1,0 +1,2763 @@
+<!DOCTYPE html>
+<html lang="fil">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aunt Sally's Laundry — Manwal para sa mga Kawani</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal: #0ABAB5;
+    --teal-dark: #089A96;
+    --teal-light: #E6FAFA;
+    --teal-mid: #B2EFED;
+    --gray-100: #F7F8FA;
+    --gray-200: #EAECF0;
+    --gray-400: #9AA5B4;
+    --gray-600: #52606D;
+    --gray-800: #1F2933;
+    --white: #FFFFFF;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+    --success: #10B981;
+    --pending: #F59E0B;
+    --confirmed: #3B82F6;
+    --processing: #8B5CF6;
+    --ready: #10B981;
+    --delivered: #0ABAB5;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--white);
+    color: var(--gray-800);
+    font-size: 11pt;
+    line-height: 1.6;
+  }
+
+  /* ===== PAGE BREAKS ===== */
+  .page-break { page-break-after: always; break-after: page; }
+  .no-break { page-break-inside: avoid; break-inside: avoid; }
+
+  @media print {
+    body { font-size: 10pt; }
+    .page-break { page-break-after: always; }
+    .no-break { page-break-inside: avoid; }
+  }
+
+  /* ===== COVER PAGE ===== */
+  .cover {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(160deg, var(--teal) 0%, var(--teal-dark) 100%);
+    color: white;
+    text-align: center;
+    padding: 60px 40px;
+    position: relative;
+  }
+
+  .cover-logo {
+    font-size: 52pt;
+    font-weight: 900;
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .cover-logo span {
+    display: block;
+    font-size: 18pt;
+    font-weight: 400;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    opacity: 0.85;
+    margin-top: 4px;
+  }
+
+  .cover-divider {
+    width: 80px;
+    height: 4px;
+    background: rgba(255,255,255,0.5);
+    margin: 32px auto;
+    border-radius: 2px;
+  }
+
+  .cover-title {
+    font-size: 26pt;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .cover-subtitle {
+    font-size: 13pt;
+    font-weight: 400;
+    opacity: 0.8;
+    margin-bottom: 8px;
+  }
+
+  .cover-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    border: 1.5px solid rgba(255,255,255,0.4);
+    border-radius: 50px;
+    padding: 6px 20px;
+    font-size: 10pt;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 20px;
+  }
+
+  .cover-version {
+    position: absolute;
+    bottom: 36px;
+    font-size: 9pt;
+    opacity: 0.6;
+  }
+
+  .cover-wave {
+    width: 120px;
+    height: 8px;
+    background: repeating-linear-gradient(90deg, rgba(255,255,255,0.5) 0, rgba(255,255,255,0.5) 6px, transparent 6px, transparent 12px);
+    margin: 24px auto 0;
+    border-radius: 4px;
+  }
+
+  /* ===== TABLE OF CONTENTS ===== */
+  .toc-page {
+    padding: 60px 60px;
+    min-height: 100vh;
+  }
+
+  .toc-header {
+    font-size: 22pt;
+    font-weight: 800;
+    color: var(--teal);
+    margin-bottom: 8px;
+  }
+
+  .toc-subheader {
+    font-size: 10pt;
+    color: var(--gray-400);
+    margin-bottom: 40px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .toc-section {
+    margin-bottom: 28px;
+  }
+
+  .toc-part {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 10px;
+  }
+
+  .toc-part-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--teal);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .toc-part-label {
+    font-size: 13pt;
+    font-weight: 700;
+    color: var(--gray-800);
+  }
+
+  .toc-part-sublabel {
+    font-size: 9.5pt;
+    color: var(--gray-400);
+    font-weight: 400;
+  }
+
+  .toc-items {
+    margin-left: 56px;
+    border-left: 2px solid var(--gray-200);
+    padding-left: 20px;
+  }
+
+  .toc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    font-size: 10.5pt;
+    color: var(--gray-600);
+    border-bottom: 1px dotted var(--gray-200);
+  }
+
+  .toc-item:last-child { border-bottom: none; }
+
+  .toc-dots { flex: 1; border-bottom: 1px dotted var(--gray-400); margin: 0 8px; }
+
+  /* ===== CONTENT PAGES ===== */
+  .content-page {
+    padding: 52px 60px;
+  }
+
+  /* ===== PART HEADER ===== */
+  .part-header {
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+    color: white;
+    padding: 40px 50px;
+    border-radius: 16px;
+    margin-bottom: 36px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .part-header-icon {
+    font-size: 40px;
+    line-height: 1;
+  }
+
+  .part-number {
+    font-size: 10pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0.75;
+    margin-bottom: 4px;
+  }
+
+  .part-title {
+    font-size: 22pt;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 6px;
+  }
+
+  .part-desc {
+    font-size: 11pt;
+    opacity: 0.85;
+    font-weight: 400;
+  }
+
+  /* ===== SECTION HEADERS ===== */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 36px 0 20px;
+  }
+
+  .section-header-bar {
+    width: 5px;
+    height: 28px;
+    background: var(--teal);
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-size: 15pt;
+    font-weight: 700;
+    color: var(--gray-800);
+  }
+
+  /* ===== STEPS ===== */
+  .steps {
+    counter-reset: step-counter;
+    margin: 20px 0;
+  }
+
+  .step {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    counter-increment: step-counter;
+    page-break-inside: avoid;
+  }
+
+  .step-number {
+    width: 32px;
+    height: 32px;
+    background: var(--teal);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .step-content {
+    flex: 1;
+    padding-top: 6px;
+  }
+
+  .step-title {
+    font-weight: 700;
+    font-size: 11.5pt;
+    color: var(--gray-800);
+    margin-bottom: 4px;
+  }
+
+  .step-desc {
+    color: var(--gray-600);
+    font-size: 10.5pt;
+    line-height: 1.55;
+  }
+
+  /* ===== CALLOUTS ===== */
+  .callout {
+    display: flex;
+    gap: 12px;
+    padding: 14px 18px;
+    border-radius: 10px;
+    margin: 16px 0;
+    page-break-inside: avoid;
+  }
+
+  .callout-tip {
+    background: var(--teal-light);
+    border-left: 4px solid var(--teal);
+  }
+
+  .callout-warning {
+    background: #FFFBEB;
+    border-left: 4px solid var(--warning);
+  }
+
+  .callout-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .callout-text {
+    font-size: 10.5pt;
+    line-height: 1.55;
+    color: var(--gray-700);
+  }
+
+  .callout-text strong {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 10.5pt;
+  }
+
+  /* ===== SCREEN MOCKUPS ===== */
+  .mockup-container {
+    margin: 24px 0;
+    page-break-inside: avoid;
+  }
+
+  .mockup-label {
+    font-size: 9pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--gray-400);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .mockup-label::before {
+    content: '';
+    display: inline-block;
+    width: 14px;
+    height: 2px;
+    background: var(--gray-400);
+  }
+
+  /* Login screen mockup */
+  .mockup-screen {
+    border: 2px solid var(--gray-200);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    background: var(--white);
+  }
+
+  .mockup-topbar {
+    background: var(--teal);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+    font-size: 10pt;
+    font-weight: 600;
+  }
+
+  .mockup-topbar-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.5);
+  }
+
+  .mockup-body {
+    padding: 20px;
+  }
+
+  .mockup-field {
+    border: 1.5px solid var(--gray-200);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    font-size: 10pt;
+    color: var(--gray-600);
+    background: var(--gray-100);
+  }
+
+  .mockup-field-label {
+    font-size: 8.5pt;
+    font-weight: 600;
+    color: var(--gray-400);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .mockup-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 10pt;
+    font-weight: 600;
+    cursor: default;
+  }
+
+  .mockup-btn-primary {
+    background: var(--teal);
+    color: white;
+    width: 100%;
+    text-align: center;
+    margin-top: 6px;
+  }
+
+  .mockup-btn-secondary {
+    background: var(--gray-200);
+    color: var(--gray-600);
+  }
+
+  .mockup-btn-success {
+    background: var(--success);
+    color: white;
+  }
+
+  .mockup-btn-outline {
+    border: 1.5px solid var(--teal);
+    color: var(--teal);
+    background: white;
+  }
+
+  /* POS Mockup */
+  .pos-mockup {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 0;
+    border: 2px solid var(--gray-200);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    min-height: 380px;
+  }
+
+  .pos-sidebar {
+    background: var(--gray-100);
+    border-right: 1px solid var(--gray-200);
+  }
+
+  .pos-sidebar-header {
+    background: var(--teal);
+    color: white;
+    padding: 14px 16px;
+    font-size: 10pt;
+    font-weight: 700;
+  }
+
+  .pos-tab-bar {
+    display: flex;
+    border-bottom: 1px solid var(--gray-200);
+    background: white;
+  }
+
+  .pos-tab {
+    flex: 1;
+    padding: 10px 6px;
+    font-size: 8.5pt;
+    font-weight: 600;
+    text-align: center;
+    color: var(--gray-400);
+    border-bottom: 2px solid transparent;
+  }
+
+  .pos-tab.active {
+    color: var(--teal);
+    border-bottom-color: var(--teal);
+  }
+
+  .pos-tiles {
+    padding: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .pos-tile {
+    border-radius: 10px;
+    padding: 12px 10px;
+    font-size: 8.5pt;
+    font-weight: 600;
+    color: white;
+    position: relative;
+    min-height: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  .pos-tile-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    background: #EF4444;
+    color: white;
+    border-radius: 50%;
+    font-size: 8pt;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pos-tile-price {
+    font-size: 7.5pt;
+    opacity: 0.8;
+    font-weight: 400;
+    margin-bottom: 2px;
+  }
+
+  .pos-order-panel {
+    background: white;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .pos-order-header {
+    background: var(--gray-800);
+    color: white;
+    padding: 14px 16px;
+    font-size: 10pt;
+    font-weight: 700;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .pos-order-header-btn {
+    font-size: 8.5pt;
+    background: rgba(255,255,255,0.15);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+
+  .pos-order-items {
+    flex: 1;
+    padding: 12px 16px;
+  }
+
+  .pos-order-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--gray-200);
+    font-size: 9.5pt;
+  }
+
+  .pos-order-item-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 9pt;
+    color: var(--gray-600);
+  }
+
+  .qty-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--gray-200);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--gray-600);
+  }
+
+  .pos-order-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--gray-200);
+    background: var(--gray-100);
+  }
+
+  .pos-total-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11pt;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: var(--gray-800);
+  }
+
+  .pos-footer-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .pos-footer-btn {
+    flex: 1;
+    padding: 8px;
+    border-radius: 7px;
+    font-size: 8.5pt;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  /* STATUS BADGES */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 8.5pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-pending { background: #FEF3C7; color: #92400E; }
+  .badge-confirmed { background: #DBEAFE; color: #1E40AF; }
+  .badge-processing { background: #EDE9FE; color: #5B21B6; }
+  .badge-ready { background: #D1FAE5; color: #065F46; }
+  .badge-delivered { background: #CCFBF1; color: #134E4A; }
+  .badge-completed { background: #F3F4F6; color: #374151; }
+  .badge-paid { background: #D1FAE5; color: #065F46; }
+  .badge-unpaid { background: #FEE2E2; color: #991B1B; }
+  .badge-new { background: var(--teal); color: white; }
+
+  /* ORDER QUEUE MOCKUP */
+  .queue-mockup {
+    border: 2px solid var(--gray-200);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  }
+
+  .queue-topbar {
+    background: var(--gray-800);
+    color: white;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11pt;
+    font-weight: 700;
+  }
+
+  .queue-filter-tabs {
+    display: flex;
+    background: var(--gray-100);
+    padding: 8px 16px;
+    gap: 6px;
+    border-bottom: 1px solid var(--gray-200);
+    overflow: hidden;
+  }
+
+  .queue-tab {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 8.5pt;
+    font-weight: 600;
+    color: var(--gray-600);
+    background: white;
+    border: 1.5px solid var(--gray-200);
+    white-space: nowrap;
+  }
+
+  .queue-tab.active {
+    background: var(--teal);
+    color: white;
+    border-color: var(--teal);
+  }
+
+  .queue-body {
+    padding: 14px 16px;
+    background: white;
+  }
+
+  .order-card {
+    border: 1.5px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    page-break-inside: avoid;
+  }
+
+  .order-card-left { flex: 1; }
+
+  .order-card-num {
+    font-size: 10.5pt;
+    font-weight: 700;
+    color: var(--teal);
+    margin-bottom: 3px;
+  }
+
+  .order-card-name {
+    font-size: 10pt;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: 2px;
+  }
+
+  .order-card-services {
+    font-size: 9pt;
+    color: var(--gray-400);
+  }
+
+  .order-card-right {
+    text-align: right;
+    flex-shrink: 0;
+    margin-left: 12px;
+  }
+
+  .order-card-total {
+    font-size: 11pt;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin-bottom: 6px;
+  }
+
+  .order-card-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .order-card-btn {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 8.5pt;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  /* STATUS FLOW */
+  .status-flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 24px 0;
+    page-break-inside: avoid;
+    flex-wrap: wrap;
+  }
+
+  .status-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    flex: 1;
+    min-width: 80px;
+  }
+
+  .status-circle {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+
+  .status-label {
+    font-size: 8.5pt;
+    font-weight: 600;
+    color: var(--gray-600);
+  }
+
+  .status-arrow {
+    font-size: 18px;
+    color: var(--gray-400);
+    margin: 0 4px;
+    flex-shrink: 0;
+    padding-bottom: 22px;
+  }
+
+  /* QUICK REFERENCE BOX */
+  .quick-ref {
+    background: var(--gray-800);
+    color: white;
+    border-radius: 14px;
+    padding: 28px 32px;
+    margin-top: 32px;
+    page-break-inside: avoid;
+  }
+
+  .quick-ref-title {
+    font-size: 13pt;
+    font-weight: 800;
+    color: var(--teal);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .quick-ref-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .quick-ref-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .quick-ref-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .quick-ref-text {
+    font-size: 9.5pt;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.85);
+  }
+
+  .quick-ref-text strong {
+    display: block;
+    color: white;
+    font-size: 10pt;
+    margin-bottom: 2px;
+  }
+
+  /* PRICING TABLE */
+  .price-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 10pt;
+    page-break-inside: avoid;
+  }
+
+  .price-table thead tr {
+    background: var(--teal);
+    color: white;
+  }
+
+  .price-table thead th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 10pt;
+    font-weight: 600;
+  }
+
+  .price-table tbody tr:nth-child(even) {
+    background: var(--gray-100);
+  }
+
+  .price-table tbody tr:hover {
+    background: var(--teal-light);
+  }
+
+  .price-table tbody td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--gray-200);
+    color: var(--gray-700);
+  }
+
+  .price-table tbody td:last-child {
+    font-weight: 700;
+    color: var(--teal-dark);
+  }
+
+  .price-category {
+    background: var(--teal-light) !important;
+    font-weight: 700;
+    color: var(--teal-dark) !important;
+    font-size: 10.5pt;
+  }
+
+  /* DRIVER MOCKUP */
+  .driver-mockup {
+    border: 2px solid var(--gray-200);
+    border-radius: 22px;
+    overflow: hidden;
+    max-width: 320px;
+    margin: 0 auto;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  }
+
+  .driver-statusbar {
+    background: var(--gray-800);
+    color: white;
+    padding: 8px 18px;
+    font-size: 8.5pt;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .driver-topbar {
+    background: var(--teal);
+    color: white;
+    padding: 16px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .driver-topbar-title {
+    font-size: 13pt;
+    font-weight: 700;
+  }
+
+  .tracking-btn {
+    font-size: 8.5pt;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.2);
+    border: 1.5px solid rgba(255,255,255,0.5);
+    color: white;
+  }
+
+  .tracking-btn.on {
+    background: var(--success);
+    border-color: var(--success);
+  }
+
+  .driver-body {
+    background: var(--gray-100);
+    padding: 14px;
+    min-height: 300px;
+  }
+
+  .driver-card {
+    background: white;
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 10px;
+    border: 1.5px solid var(--gray-200);
+    page-break-inside: avoid;
+  }
+
+  .driver-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+
+  .driver-card-num {
+    font-size: 10pt;
+    font-weight: 700;
+    color: var(--teal);
+  }
+
+  .driver-card-name {
+    font-size: 11pt;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin-bottom: 2px;
+  }
+
+  .driver-card-phone {
+    font-size: 9pt;
+    color: var(--teal);
+    margin-bottom: 4px;
+  }
+
+  .driver-card-notes {
+    font-size: 9pt;
+    color: var(--gray-600);
+    font-style: italic;
+  }
+
+  /* MAP MOCKUP */
+  .map-mockup {
+    background: linear-gradient(145deg, #E8F5E9 0%, #C8E6C9 50%, #A5D6A7 100%);
+    border-radius: 10px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin: 12px 0;
+    overflow: hidden;
+  }
+
+  .map-grid {
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.3) 0, rgba(255,255,255,0.3) 1px, transparent 1px, transparent 30px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.3) 0, rgba(255,255,255,0.3) 1px, transparent 1px, transparent 40px);
+  }
+
+  .map-pin {
+    font-size: 28px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .map-label {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    background: white;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 8.5pt;
+    font-weight: 600;
+    color: var(--gray-700);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+
+  /* ADMIN MOCKUP */
+  .admin-mockup {
+    border: 2px solid var(--gray-200);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    display: grid;
+    grid-template-columns: 200px 1fr;
+  }
+
+  .admin-sidebar {
+    background: var(--gray-800);
+    padding: 20px 0;
+    min-height: 340px;
+  }
+
+  .admin-logo {
+    padding: 0 20px 20px;
+    color: var(--teal);
+    font-size: 13pt;
+    font-weight: 800;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 16px;
+  }
+
+  .admin-nav-item {
+    padding: 10px 20px;
+    font-size: 9.5pt;
+    color: rgba(255,255,255,0.6);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+  }
+
+  .admin-nav-item.active {
+    background: rgba(10,186,181,0.15);
+    color: var(--teal);
+    border-right: 3px solid var(--teal);
+  }
+
+  .admin-content {
+    background: var(--gray-100);
+    padding: 20px;
+  }
+
+  .stat-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 14px;
+    border: 1.5px solid var(--gray-200);
+    page-break-inside: avoid;
+  }
+
+  .stat-label {
+    font-size: 8pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray-400);
+    margin-bottom: 6px;
+  }
+
+  .stat-value {
+    font-size: 20pt;
+    font-weight: 800;
+    color: var(--gray-800);
+    line-height: 1;
+  }
+
+  .stat-sub {
+    font-size: 8.5pt;
+    color: var(--teal);
+    margin-top: 4px;
+    font-weight: 500;
+  }
+
+  /* RECEIPT MOCKUP */
+  .receipt-mockup {
+    background: white;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 12px;
+    max-width: 300px;
+    margin: 0 auto;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+
+  .receipt-header {
+    background: var(--teal);
+    color: white;
+    padding: 18px;
+    text-align: center;
+  }
+
+  .receipt-logo {
+    font-size: 14pt;
+    font-weight: 800;
+    margin-bottom: 2px;
+  }
+
+  .receipt-subtitle {
+    font-size: 8.5pt;
+    opacity: 0.8;
+  }
+
+  .receipt-body {
+    padding: 16px;
+  }
+
+  .receipt-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9.5pt;
+    padding: 5px 0;
+    border-bottom: 1px dashed var(--gray-200);
+    color: var(--gray-600);
+  }
+
+  .receipt-row:last-child { border-bottom: none; }
+
+  .receipt-total {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13pt;
+    font-weight: 800;
+    padding: 12px 16px;
+    background: var(--teal-light);
+    color: var(--teal-dark);
+    margin-top: 4px;
+  }
+
+  .receipt-actions {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid var(--gray-200);
+  }
+
+  /* BACK PAGE */
+  .back-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray-100);
+    padding: 60px;
+    text-align: center;
+  }
+
+  .back-logo {
+    font-size: 32pt;
+    font-weight: 900;
+    color: var(--teal);
+    margin-bottom: 8px;
+  }
+
+  .back-tagline {
+    font-size: 12pt;
+    color: var(--gray-400);
+    margin-bottom: 48px;
+  }
+
+  .support-box {
+    background: white;
+    border-radius: 16px;
+    padding: 36px 48px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    max-width: 520px;
+    width: 100%;
+    margin-bottom: 36px;
+  }
+
+  .support-title {
+    font-size: 14pt;
+    font-weight: 800;
+    color: var(--gray-800);
+    margin-bottom: 20px;
+  }
+
+  .support-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gray-200);
+    text-align: left;
+  }
+
+  .support-item:last-child { border-bottom: none; }
+
+  .support-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .support-key {
+    font-size: 9.5pt;
+    font-weight: 600;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+  }
+
+  .support-val {
+    font-size: 11.5pt;
+    font-weight: 600;
+    color: var(--gray-800);
+  }
+
+  .back-footer {
+    font-size: 9pt;
+    color: var(--gray-400);
+  }
+
+  /* WEBSITE MOCKUP */
+  .website-mockup {
+    border: 2px solid var(--gray-200);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  }
+
+  .browser-bar {
+    background: var(--gray-200);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .browser-dots {
+    display: flex;
+    gap: 5px;
+  }
+
+  .browser-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  .browser-url {
+    flex: 1;
+    background: white;
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 9pt;
+    color: var(--gray-600);
+    border: 1px solid var(--gray-200);
+  }
+
+  .website-hero {
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+    color: white;
+    padding: 32px 30px;
+    text-align: center;
+  }
+
+  .website-hero-title {
+    font-size: 20pt;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+
+  .website-hero-sub {
+    font-size: 10.5pt;
+    opacity: 0.85;
+    margin-bottom: 20px;
+  }
+
+  .website-cta {
+    display: inline-block;
+    background: white;
+    color: var(--teal);
+    font-weight: 700;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-size: 11pt;
+  }
+
+  .website-features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    background: white;
+  }
+
+  .website-feature {
+    padding: 20px;
+    text-align: center;
+    border-right: 1px solid var(--gray-200);
+    border-top: 1px solid var(--gray-200);
+  }
+
+  .website-feature:last-child { border-right: none; }
+
+  .website-feature-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+  }
+
+  .website-feature-title {
+    font-size: 10pt;
+    font-weight: 700;
+    color: var(--gray-800);
+    margin-bottom: 4px;
+  }
+
+  .website-feature-text {
+    font-size: 8.5pt;
+    color: var(--gray-400);
+  }
+
+  /* Two-column grid for content */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin: 20px 0;
+  }
+
+  .info-box {
+    background: var(--teal-light);
+    border: 1.5px solid var(--teal-mid);
+    border-radius: 10px;
+    padding: 16px 20px;
+    page-break-inside: avoid;
+  }
+
+  .info-box-title {
+    font-size: 10.5pt;
+    font-weight: 700;
+    color: var(--teal-dark);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .info-box-item {
+    font-size: 9.5pt;
+    color: var(--gray-700);
+    padding: 4px 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .info-box-item::before {
+    content: '→';
+    color: var(--teal);
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+
+  /* Horizontal rule */
+  hr.section-rule {
+    border: none;
+    border-top: 2px solid var(--gray-200);
+    margin: 36px 0;
+  }
+
+  /* Page header (for inner pages) */
+  .page-running-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--gray-200);
+    margin-bottom: 32px;
+  }
+
+  .page-running-title {
+    font-size: 9pt;
+    font-weight: 600;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .page-running-logo {
+    font-size: 10pt;
+    font-weight: 800;
+    color: var(--teal);
+  }
+
+  /* List styles */
+  ul.custom-list {
+    list-style: none;
+    margin: 12px 0;
+    padding: 0;
+  }
+
+  ul.custom-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 5px 0;
+    font-size: 10.5pt;
+    color: var(--gray-700);
+    line-height: 1.5;
+  }
+
+  ul.custom-list li::before {
+    content: '•';
+    color: var(--teal);
+    font-weight: 900;
+    font-size: 14px;
+    flex-shrink: 0;
+    line-height: 1.5;
+  }
+
+  /* Inline code */
+  .button-ref {
+    display: inline-block;
+    background: var(--gray-200);
+    color: var(--gray-700);
+    padding: 1px 8px;
+    border-radius: 4px;
+    font-size: 9.5pt;
+    font-weight: 600;
+    border: 1px solid var(--gray-300);
+  }
+
+  .button-teal {
+    background: var(--teal-light);
+    color: var(--teal-dark);
+    border-color: var(--teal-mid);
+  }
+
+</style>
+
+<!-- ==================== COVER PAGE ==================== -->
+<div class="cover">
+  <div class="cover-logo">
+    🫧 Aunt Sally's
+    <span>Laundry Service</span>
+  </div>
+  <div class="cover-divider"></div>
+  <div class="cover-title">Manwal para sa mga Kawani</div>
+  <div class="cover-subtitle">Kumpletong Gabay para sa Staff, Drivers, at Managers</div>
+  <div class="cover-badge">🔒 Para sa Panloob na Gamit Lamang</div>
+  <div class="cover-wave"></div>
+  <div class="cover-version">Bersyon 1.0 &nbsp;|&nbsp; Marso 2026 &nbsp;|&nbsp; auntsallyslaundry.com</div>
+</div>
+<div class="page-break"></div>
+
+<!-- ==================== TABLE OF CONTENTS ==================== -->
+<div class="toc-page">
+  <div class="page-running-header">
+    <span class="page-running-title">Talaan ng Nilalaman</span>
+    <span class="page-running-logo">🫧 Aunt Sally's</span>
+  </div>
+
+  <div class="toc-header">Ano ang Nilalaman</div>
+  <div class="toc-subheader">Kumpletong gabay sa mga digital na kagamitan ng Aunt Sally's</div>
+
+  <div class="toc-section">
+    <div class="toc-part">
+      <div class="toc-part-icon">🖥️</div>
+      <div>
+        <div class="toc-part-label">Bahagi 1 — POS App</div>
+        <div class="toc-part-sublabel">Para sa mga Branch Staff</div>
+      </div>
+    </div>
+    <div class="toc-items">
+      <div class="toc-item"><span>1.1 Pag-login at Pagpili ng Branch</span><span class="toc-dots"></span><span>4</span></div>
+      <div class="toc-item"><span>1.2 Paggawa ng Bagong Order</span><span class="toc-dots"></span><span>5</span></div>
+      <div class="toc-item"><span>1.3 Pagdaragdag ng Customer at Diskwento</span><span class="toc-dots"></span><span>6</span></div>
+      <div class="toc-item"><span>1.4 Bayad at Resibo</span><span class="toc-dots"></span><span>7</span></div>
+      <div class="toc-item"><span>1.5 Pamamahala ng Order Queue</span><span class="toc-dots"></span><span>8</span></div>
+      <div class="toc-item"><span>1.6 Daloy ng Status ng Order</span><span class="toc-dots"></span><span>9</span></div>
+      <div class="toc-item"><span>1.7 Mabilis na Sanggunian — POS</span><span class="toc-dots"></span><span>10</span></div>
+    </div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-part">
+      <div class="toc-part-icon">🚗</div>
+      <div>
+        <div class="toc-part-label">Bahagi 2 — Driver App</div>
+        <div class="toc-part-sublabel">Para sa mga Delivery Driver</div>
+      </div>
+    </div>
+    <div class="toc-items">
+      <div class="toc-item"><span>2.1 Pag-login</span><span class="toc-dots"></span><span>11</span></div>
+      <div class="toc-item"><span>2.2 Pagtingin sa mga Na-assign na Order</span><span class="toc-dots"></span><span>12</span></div>
+      <div class="toc-item"><span>2.3 Pag-on ng GPS Tracking</span><span class="toc-dots"></span><span>12</span></div>
+      <div class="toc-item"><span>2.4 Pagkumpleto ng Delivery</span><span class="toc-dots"></span><span>13</span></div>
+      <div class="toc-item"><span>2.5 Mabilis na Sanggunian — Driver</span><span class="toc-dots"></span><span>14</span></div>
+    </div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-part">
+      <div class="toc-part-icon">📊</div>
+      <div>
+        <div class="toc-part-label">Bahagi 3 — Admin Dashboard</div>
+        <div class="toc-part-sublabel">Para sa mga May-ari at Manager</div>
+      </div>
+    </div>
+    <div class="toc-items">
+      <div class="toc-item"><span>3.1 Pangkalahatang-tanaw ng Dashboard</span><span class="toc-dots"></span><span>15</span></div>
+      <div class="toc-item"><span>3.2 Pamamahala ng Orders at Pag-assign ng Driver</span><span class="toc-dots"></span><span>16</span></div>
+      <div class="toc-item"><span>3.3 Services, Branches, at Customers</span><span class="toc-dots"></span><span>17</span></div>
+      <div class="toc-item"><span>3.4 Analytics</span><span class="toc-dots"></span><span>17</span></div>
+      <div class="toc-item"><span>3.5 Mabilis na Sanggunian — Admin</span><span class="toc-dots"></span><span>18</span></div>
+    </div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-part">
+      <div class="toc-part-icon">🌐</div>
+      <div>
+        <div class="toc-part-label">Bahagi 4 — Website ng Customer</div>
+        <div class="toc-part-sublabel">auntsallyslaundry.com</div>
+      </div>
+    </div>
+    <div class="toc-items">
+      <div class="toc-item"><span>4.1 Pangkalahatang-tanaw at mga Feature</span><span class="toc-dots"></span><span>19</span></div>
+      <div class="toc-item"><span>4.2 Listahan ng Serbisyo at Presyo</span><span class="toc-dots"></span><span>19</span></div>
+    </div>
+  </div>
+
+  <div style="margin-top: 36px; padding: 20px; background: var(--teal-light); border-radius: 10px; border-left: 4px solid var(--teal);">
+    <div style="font-size: 10.5pt; font-weight: 700; color: var(--teal-dark); margin-bottom: 6px;">📌 Bago Magsimula</div>
+    <div style="font-size: 10pt; color: var(--gray-600); line-height: 1.6;">
+      Sinasaklaw ng manwal na ito ang tatlong app: ang <strong>POS App</strong> (para sa branch staff), ang <strong>Driver App</strong> (para sa mga delivery driver), at ang <strong>Admin Dashboard</strong> (para sa mga manager). Bawat bahagi ay may kulay at hiwalay — basahin lamang ang seksyon na angkop sa inyong trabaho.
+    </div>
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- ==================== BAHAGI 1: POS APP ==================== -->
+<div class="content-page">
+  <div class="page-running-header">
+    <span class="page-running-title">Bahagi 1 — POS App</span>
+    <span class="page-running-logo">🫧 Aunt Sally's</span>
+  </div>
+
+  <div class="part-header">
+    <div class="part-header-icon">🖥️</div>
+    <div>
+      <div class="part-number">Bahagi 1</div>
+      <div class="part-title">POS App</div>
+      <div class="part-desc">Para sa Branch Staff — Paggawa ng orders, pamamahala ng queue, at pagproseso ng bayad</div>
+    </div>
+  </div>
+
+  <!-- 1.1 LOGIN -->
+  <div class="section-header">
+    <div class="section-header-bar"></div>
+    <div class="section-title">1.1 Pag-login at Pagpili ng Branch</div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <div class="step-title">Buksan ang POS App</div>
+            <div class="step-desc">Pumunta sa POS URL sa inyong tablet o computer browser. I-bookmark ito para madaling mahanap sa susunod.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <div class="step-title">Ilagay ang Email at Password</div>
+            <div class="step-desc">I-type ang inyong email address at password, tapos i-tap ang <span class="button-ref">Login</span>.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <div class="step-title">Piliin ang Inyong Branch</div>
+            <div class="step-desc">Sa Branch Select screen, i-tap ang pangalan ng inyong branch. Ito ang magiging branch ninyo para sa araw na iyon.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <div class="step-title">Nasa loob na kayo!</div>
+            <div class="step-desc">Ang staff ay didiretso sa <strong>Order Queue</strong>. Ang mga driver ay sa <strong>Driver Dashboard</strong>. Ang mga admin ay sa <strong>Admin Dashboard</strong>.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-tip">
+        <div class="callout-icon">✅</div>
+        <div class="callout-text"><strong>Paalala</strong> Siguraduhing tama ang branch na pinili ninyo bago gumawa ng orders.</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="mockup-label">Screen · Login</div>
+      <div class="mockup-screen">
+        <div class="mockup-topbar">
+          <div class="mockup-topbar-dot"></div>
+          <div class="mockup-topbar-dot"></div>
+          <div class="mockup-topbar-dot"></div>
+          <span style="margin-left: 8px; font-size: 9pt;">auntsallyslaundry.com/pos</span>
+        </div>
+        <div class="mockup-body" style="text-align:center; padding: 24px;">
+          <div style="font-size: 20pt; margin-bottom: 4px;">🫧</div>
+          <div style="font-weight: 800; font-size: 14pt; color: var(--teal); margin-bottom: 4px;">Aunt Sally's</div>
+          <div style="font-size: 9pt; color: var(--gray-400); margin-bottom: 20px;">POS System</div>
+          <div class="mockup-field-label">Email Address</div>
+          <div class="mockup-field">staff@auntsallys.com</div>
+          <div class="mockup-field-label">Password</div>
+          <div class="mockup-field">••••••••</div>
+          <div class="mockup-btn mockup-btn-primary">Login</div>
+        </div>
+      </div>
+      <div style="margin-top: 14px;">
+        <div class="mockup-label">Screen · Pagpili ng Branch</div>
+        <div class="mockup-screen">
+          <div class="mockup-body" style="padding: 16px;">
+            <div style="font-size: 10pt; font-weight: 700; margin-bottom: 12px; color: var(--gray-700);">Piliin ang Inyong Branch</div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <div style="padding: 12px 16px; border-radius: 8px; background: var(--teal); color: white; font-weight: 700; font-size: 10pt;">🏪 Quezon City Branch</div>
+              <div style="padding: 12px 16px; border-radius: 8px; background: var(--gray-100); border: 1.5px solid var(--gray-200); font-weight: 600; font-size: 10pt; color: var(--gray-700);">🏪 Makati Branch</div>
+              <div style="padding: 12px 16px; border-radius: 8px; background: var(--gray-100); border: 1.5px solid var(--gray-200); font-weight: 600; font-size: 10pt; color: var(--gray-700);">🏪 Pasig Branch</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- 1.2 BAGONG ORDER -->
+<div class="content-page">
+  <div class="page-running-header">
+    <span class="page-running-title">Bahagi 1 — POS App</span>
+    <span class="page-running-logo">🫧 Aunt Sally's</span>
+  </div>
+
+  <div class="section-header">
+    <div class="section-header-bar"></div>
+    <div class="section-title">1.2 Paggawa ng Bagong Order</div>
+  </div>
+
+  <div class="mockup-label">Screen · New Order — POS App</div>
+  <div class="pos-mockup" style="margin-bottom: 24px;">
+    <div class="pos-sidebar">
+      <div class="pos-sidebar-header">🧺 Bagong Order</div>
+      <div class="pos-tab-bar">
+        <div class="pos-tab active">Laundry</div>
+        <div class="pos-tab">Dryclean</div>
+        <div class="pos-tab">Add ons</div>
+      </div>
+      <div class="pos-tiles">
+        <div class="pos-tile" style="background: #0ABAB5;">
+          <div class="pos-tile-badge">2</div>
+          <div class="pos-tile-price">mula ₱400</div>
+          Wash Dry Fold
+        </div>
+        <div class="pos-tile" style="background: #6366F1;">
+          <div class="pos-tile-price">mula ₱1,120</div>
+          Wash Dry Press
+        </div>
+        <div class="pos-tile" style="background: #F59E0B;">
+          <div class="pos-tile-price">mula ₱240</div>
+          Dry Only
+        </div>
+        <div class="pos-tile" style="background: #EF4444;">
+          <div class="pos-tile-price">mula ₱780</div>
+          Heavy Wash
+        </div>
+        <div class="pos-tile" style="background: #8B5CF6;">
+          <div class="pos-tile-price">mula ₱500</div>
+          Comforter
+        </div>
+        <div class="pos-tile" style="background: #374151; border: 2px dashed #6B7280; min-height: 60px;">
+          <div style="font-size: 18px; margin-bottom: 2px;">+</div>
+          <div style="font-size: 7.5pt;">Custom Service</div>
+        </div>
+      </div>
+    </div>
+    <div class="pos-order-panel">
+      <div class="pos-order-header">
+        📋 Order Summary
+        <div class="pos-order-header-btn">+ Add Customer</div>
+      </div>
+      <div class="pos-order-items">
+        <div class="pos-order-item">
+          <div>
+            <div style="font-weight: 600; font-size: 10pt;">Wash Dry Fold - Regular</div>
+            <div style="font-size: 8.5pt; color: var(--gray-400);">₱400 bawat isa</div>
+          </div>
+          <div class="pos-order-item-controls">
+            <div class="qty-btn">−</div>
+            <span style="font-weight: 700;">2</span>
+            <div class="qty-btn">+</div>
+            <span style="color: #EF4444; font-size: 14px; margin-left: 4px;">×</span>
+          </div>
+        </div>
+        <div class="pos-order-item">
+          <div>
+            <div style="font-weight: 600; font-size: 10pt;">Comforter - Double/Queen</div>
+            <div style="font-size: 8.5pt; color: var(--gray-400);">₱560 bawat isa</div>
+          </div>
+          <div class="pos-order-item-controls">
+            <div class="qty-btn">−</div>
+            <span style="font-weight: 700;">1</span>
+            <div class="qty-btn">+</div>
+            <span style="color: #EF4444; font-size: 14px; margin-left: 4px;">×</span>
+          </div>
+        </div>
+      </div>
+      <div class="pos-order-footer">
+        <div class="pos-total-row">
+          <span>Kabuuan</span>
+          <span>₱1,360</span>
+        </div>
+        <div class="pos-footer-actions">
+          <div class="pos-footer-btn" style="background: var(--gray-200); color: var(--gray-600);">💰 Discount</div>
+          <div class="pos-footer-btn" style="background: var(--gray-200); color: var(--gray-600);">💳 Cash ▾</div>
+        </div>
+        <div class="pos-footer-btn" style="background: var(--teal); color: white; text-align:center; border-radius: 8px; padding: 12px; font-size: 11pt; font-weight: 700;">Place Order</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-number">1</div>
+      <div class="step-content">
+        <div class="step-title">Pumili ng Serbisyo mula sa Kaliwang Panel</div>
+        <div class="step-desc">Ang kaliwang bahagi ay may tatlong tab: <span class="button-ref">Laundry service</span>, <span class="button-ref">Dryclean/Toys</span>, at <span class="button-ref">Add ons</span>. I-tap ang isang kulay na tile para idagdag ang serbisyo. I-tap ulit para dagdagan — ang pulang numero ay nagpapakita kung ilang beses na ito na-add.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-number">2</div>
+      <div class="step-content">
+        <div class="step-title">I-adjust ang Dami sa Order Summary</div>
+        <div class="step-desc">Ang kanang panel ay nagpapakita ng lahat ng piniling serbisyo. Gamitin ang <span class="button-ref">+</span> at <span class="button-ref">−</span> para baguhin ang dami. I-tap ang <span class="button-ref">×</span> para tanggalin ang isang item.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-number">3</div>
+      <div class="step-content">
+        <div class="step-title">Magdagdag ng Custom Service (Opsyonal)</div>
+        <div class="step-desc">I-tap ang madilim na gray na <span class="button-ref">Custom Service</span> tile (may naka-dash na border) para ilagay ang anumang serbisyong hindi nasa listahan — i-type ang pangalan at presyo.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-tip">
+    <div class="callout-icon">✅</div>
+    <div class="callout-text"><strong>Tip — Mga Service Tab</strong> Ang "Laundry service" tab ay may mga pangunahing serbisyo sa paghuhugas. Ang "Dryclean/Toys" ay para sa dry cleaning. Ang "Add ons" ay para sa mga dagdag na serbisyo.</div>
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- 1.3 CUSTOMERS AT DISKWENTO -->
+<div class="content-page">
+  <div class="page-running-header">
+    <span class="page-running-title">Bahagi 1 — POS App</span>
+    <span class="page-running-logo">🫧 Aunt Sally's</span>
+  </div>
+
+  <div class="section-header">
+    <div class="section-header-bar"></div>
+    <div class="section-title">1.3 Pagdaragdag ng Customer at Pag-apply ng Diskwento</div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div style="font-size: 11pt; font-weight: 700; color: var(--gray-700); margin-bottom: 12px;">👤 Pagdaragdag ng Customer</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <div class="step-title">I-tap ang "Add Customer"</div>
+            <div class="step-desc">Makikita ito sa itaas ng Order Summary panel.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <div class="step-title">Maghanap o Gumawa ng Bago</div>
+            <div class="step-desc">I-type ang numero o pangalan ng customer para hanapin siya. Kung bago, i-tap ang <span class="button-ref">Create New Customer</span>.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <div class="step-title">Punan ang Detalye</div>
+            <div class="step-desc"><strong>Ang first name ay kailangan.</strong> Ang last name at phone number ay opsyonal ngunit makakatulong para sa susunod na paghahanap.</div>
+          </div>
+        </div>
+      </div>
+      <div class="callout callout-warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-text"><strong>Paalala</strong> Kung mayroon nang account ang customer, maghanap muna para maiwasan ang pagdodoble ng record.</div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size: 11pt; font-weight: 700; color: var(--gray-700); margin-bottom: 12px;">💰 Pag-apply ng Diskwento</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <div class="step-title">I-tap ang "Discount"</div>
+            <div class="step-desc">Makikita ito sa ibabang bahagi ng Order Summary.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <div class="step-title">Piliin ang Uri ng Diskwento</div>
+            <div class="step-desc">Pumili ng <strong>Peso Amount</strong> (hal. ₱50 off) o <strong>Percentage</strong> (hal. 10% off).</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <div class="step-title">Ilagay ang Halaga at I-confirm</div>
+            <div class="step-desc">Makikita ang diskwento sa Order Summary at ibabawas sa kabuuan.</div>
+          </div>
+        </div>
+      </div>
+      <div class="callout callout-warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-text"><strong>Babala</strong> Hindi na mababago ang diskwento pagkatapos i-place ang order. I-double check bago pindutin ang Place Order.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup-label" style="margin-top: 20px;">Screen · Add Customer</div>
+  <div class="mockup-screen" style="max-width: 380px;">
+    <div class="mockup-topbar">
+      <span>👤 Magdagdag ng Customer sa Order</span>
+    </div>
+    <div class="mockup-body">
+      <div class="mockup-field-label">Hanapin sa Pangalan o Telepono</div>
+      <div class="mockup-field">🔍  Hanapin ang customer...</div>
+      <div style="margin: 10px 0; padding: 10px 14px; background: var(--teal-light); border-radius: 8px; border: 1.5px solid var(--teal-mid);">
+        <div style="font-size: 10pt; font-weight: 700; color: var(--gray-800);">Maria Santos</div>
+        <div style="font-size: 9pt; color: var(--gray-400);">📞 0917-123-4567</div>
+      </div>
+      <div style="text-align: center; padding: 8px 0; font-size: 9.5pt; color: var(--gray-400);">— o —</div>
+      <div class="mockup-btn mockup-btn-outline" style="width: 100%; text-align: center; display: block;">+ Gumawa ng Bagong Customer</div>
+    </div>
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- 1.4 BAYAD AT RESIBO -->
+<div class="content-page">
+  <div class="page-running-header">
+    <span class="page-running-title">Bahagi 1 — POS App</span>
+    <span class="page-running-logo">🫧 Aunt Sally's</span>
+  </div>
+
+  <div class="section-header">
+    <div class="section-header-bar"></div>
+    <div class="section-title">1.4 Pagterminong Bayad at Resibo</div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div style="font-size: 11pt; font-weight: 700; color: var(--gray-700); margin-bottom: 16px;">💳 Pagtanggap ng Bayad</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <div class="step-title">Piliin ang Paraan ng Bayad</div>
+            <div class="step-desc">I-tap ang payment dropdown sa ibabang bar. Pumili mula sa: <strong>Cash</strong>, <strong>GCash</strong>, <strong>Maya</strong>, <strong>Card</strong>, o <strong>Bank Transfer</strong>.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <div class="step-title">Suriin ang Kabuuan</div>
+            <div class="step-desc">Tingnan kung tama ang kabuuan kasama ang anumang diskwento bago magpatuloy.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <div class="step-title">I-tap ang "Place Order"</div>
+            <div class="step-desc">Ang malaking teal na button sa ibaba. Ito ay gagawa ng order at magbubukas ng resibo screen.</div>
+          </div>
+        </div>
+      </div>
+      <div class="info-box" style="margin-top: 16px;">
+        <div class="info-box-title">💳 Mga Paraan ng Bayad</div>
+        <div class="info-box-item">Cash — pisikal na bayad</div>
+        <div class="info-box-item">GCash — e-wallet transfer</div>
+        <div class="info-box-item">Maya — e-wallet transfer</div>
+        <div class="info-box-item">Card — debit o credit card</div>
+        <div class="info-box-item">Bank Transfer — direktang banko</div>
+      </div>
+    </div>
+    <div>
+      <div class="mockup-label">Screen · Resibo</div>
+      <div class="receipt-mockup">
+        <div class="receipt-header">
+          <div class="receipt-logo">🫧 Aunt Sally's</div>
+          <div class="receipt-subtitle">Quezon City Branch</div>
+        </div>
+        <div class="receipt-body">
+          <div class="receipt-row"><span>Order #</span><span style="font-weight:700; color: var(--teal);">#ORD-00142</span></div>
+          <div class="receipt-row"><span>Petsa</span><span>Marso 30, 2026</span></div>
+          <div class="receipt-row"><span>Oras</span><span>10:24 AM</span></div>
+          <div class="receipt-row"><span>Customer</span><span>Maria Santos</span></div>
+          <div class="receipt-row"><span>Bayad</span><span>GCash</span></div>
+          <div style="border-top: 1.5px solid var(--gray-200); margin: 10px 0;"></div>
+          <div class="receipt-row"><span>Wash Dry Fold - Reg × 2</span><span>₱800</span></div>
+          <div class="receipt-row"><span>Comforter - Dbl/Queen × 1</span><span>₱560</span></div>
+        </div>
+        <div class="receipt-total"><span>KABUUAN</span><span>₱1,360</span></div>
+        <div class="receipt-actions">
+          <div class="mockup-btn mockup-btn-outline" style="flex:1; text-align:center; font-size:9.5pt;">New Order</div>
+          <div class="mockup-btn mockup-btn-primary" style="flex:1; text-align:center; font-size:9.5pt; margin:0;">View Queue</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="callout callout-tip" style="margin-top: 16px;">
+    <div class="callout-icon">✅</div>
+    <div class="callout-text"><strong>Pagkatapos mag-place ng order</strong> — I-tap ang <span class="button-ref button-teal">New Order</span> para magsimula ng bagong order agad, o ang <span class="button-ref button-teal">View Queue</span> para tingnan ang mga order ngayon.</div>
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- 1.5 ORDER QUEUE -->
+<div class="content-page">
+  <div class="page-running-header">
+    <span class="page-running-title">Bahagi 1 — POS App</span>
+    <span class="page-running-logo">🫧 Aunt Sally's</span>
+  </div>
+
+  <div class="section-header">
+    <div class="section-header-bar"></div>
+    <div class="section-title">1.5 Pamamahala ng Order Queue</div>
+  </div>
+
+  <p style="color: var(--gray-600); margin-bottom: 20px; font-size: 10.5pt;">Ipinapakita ng Order Queue ang lahat ng orders ngayon sa inyong branch. Maaari kayong mag-filter, subaybayan ang status, at i-advance ang mga order dito.</p>
+
+  <div class="mockup-label">Screen · Order Queue</div>
+  <div class="queue-mockup" style="margin-bottom: 24px;">
+    <div class="queue-topbar">
+      <span>📋 Order Queue — QC Branch</span>
+      <span style="font-size: 8.5pt; font-weight: 400; opacity: 0.6;">Nag-a-auto refresh tuwing 15 segundo</span>
+    </div>
+    <div class="queue-filter-tabs">
+      <div class="queue-tab active">Active</div>
+      <div class="queue-tab">Pending</div>
+      <div class="queue-tab">Confirmed</div>
+      <div class="queue-tab">Processing</div>
+      <div class="queue-tab">Ready</div>
+      <div class="queue-tab">Completed</div>
+      <div class="queue-tab">All</div>
+    </div>
+    <div class="queue-body">
+      <div class="order-card">
+        <div class="order-card-left">
+          <div class="order-card-num">#ORD-00142</div>
+          <div class="order-card-name">Maria Santos</div>
+          <div class="order-card-services">Wash Dry Fold × 2 · Comforter × 1</div>
+          <div class="order-card-actions">
+            <div class="order-card-btn" style="background: var(--teal); color: white;">✓ Confirm</div>
+            <div class="order-card-btn" style="background: var(--gray-200); color: var(--gray-600);">Details</div>
+          </div>
+        </div>
+        <div class="order-card-right">
+          <div class="order-card-total">₱1,360</div>
+          <div><span class="badge badge-pending">Pending</span></div>
+          <div style="font-size: 8.5pt; color: var(--gray-400); margin-top: 6px;">5 minuto na ang nakalipas</div>
+          <div><span class="badge badge-paid">Paid</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="info-box">
+        <div class="info-box-title">📌 Mga Feature ng Queue</div>
+        <div class="info-box-item">Nag-a-auto refresh tuwing 15 segundo — hindi na kailangang i-reload</div>
+        <div class="info-box-item">Ang mga filter tab ay nagpapaliit ng listahan ng orders</div>
+        <div class="info-box-item">Ipinapakita ng bawat card ang order number, customer, serbisyo, kabuuan, oras, at status ng bayad</div>
+        <div class="info-box-item">I-tap ang <strong>Details</strong> para buksan ang buong view ng order</div>
+      </div>
+    </div>
+    <div>
+      <div class="info-box">
+        <div class="info-box-title">⚡ Pag-advance ng Order</div>
+        <div class="info-box-item">Pending → i-tap ang <strong>Confirm</strong></div>
+        <div class="info-box-item">Confirmed → i-tap ang <strong>Start Processing</strong></div>
+        <div class="info-box-item">Processing → i-tap ang <strong>Mark Ready</strong></div>
+        <div class="info-box-item">Ready → i-tap ang <strong>Complete</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- 1.6 STATUS FLOW -->
+<div class="content-page">
+  <div class="page-running-header">
+    <span class="page-running-title">Bahagi 1 — POS App</span>
+    <span class="page-running-logo">🫧 Aunt Sally's</span>
+  </div>
+
+  <div class="section-header">
+    <div class="section-header-bar"></div>
+    <div class="section-title">1.6 Daloy ng Status ng Order</div>
+  </div>
+
+  <p style="color: var(--gray-600); margin-bottom: 24px; font-size: 10.5pt;">Ang bawat order ay dumadaan sa mga yugtong ito. Ini-advance ninyo ang status mula sa Order Queue gamit ang button sa bawat order card.</p>
+
+  <div class="status-flow">
+    <div class="status-node">
+      <div class="status-circle" style="background: #FEF3C7; color: #92400E;">📋</div>
+      <div class="status-label">Pending</div>
+      <div style="font-size: 7.5pt; color: var(--gray-400); margin-top: 2px;">Na-place na ang order</div>
+    </div>
+    <div class="status-arrow">→</div>
+    <div class="status-node">
+      <div class="status-circle" style="background: #DBEAFE; color: #1E40AF;">✅</div>
+      <div class="status-label">Confirmed</div>
+      <div style="font-size: 7.5pt; color: var(--gray-400); margin-top: 2px;">Tinanggap ng branch</div>
+    </div>
+    <div class="status-arrow">→</div>
+    <div class="status-node">
+      <div class="status-circle" style="background: #EDE9FE; color: #5B21B6;">🫧</div>
+      <div class="status-label">Processing</div>
+      <div style="font-size: 7.5pt; color: var(--gray-400); margin-top: 2px;">Nilalabhan na</div>
+    </div>
+    <div class="status-arrow">→</div>
+    <div class="status-node">
+      <div class="status-circle" style="background: #D1FAE5; color: #065F46;">📦</div>
+      <div class="status-label">Ready</div>
+      <div style="font-size: 7.5pt; color: var(--gray-400); margin-top: 2px;">Tapos at nakapack na</div>
+    </div>
+    <div class="status-arrow">→</div>
+    <div class="status-node">
+      <div class="status-circle" style="background: #CCFBF1; color: #134E4A;">🚗</div>
+      <div class="status-label">Out for Delivery</div>
+      <div style="font-size: 7.5pt; color: var(--gray-400); margin-top: 2px;">Kasama na ng driver</div>
+    </div>
+    <div class="status-arrow">→</div>
+    <div class="status-node">
+      <div class="status-circle" style="background: #F3F4F6; color: #374151;">🏁</div>
+      <div class="status-label">Completed</div>
+      <div style="font-size: 7.5pt; color: var(--gray-400); margin-top: 2px;">Na-deliver na</div>
+    </div>
+  </div>
+
+  <div style="overflow-x: auto; margin: 24px 0;">
+    <table class="price-table" style="margin: 0;">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Kahulugan</th>
+          <th>Sino ang Gumagawa</th>
+          <th>Pangalan ng Button</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="badge badge-pending">Pending</span></td><td>Bagong order, naghihintay ng confirmation</td><td>Awtomatiko — kapag na-place ang order</td><td>—</td></tr>
+        <tr><td><span class="badge badge-confirmed">Confirmed</span></td><td>Tinanggap ng branch ang order</td><td>Branch Staff</td><td><span class="button-ref">Confirm</span></td></tr>
+        <tr><td><span class="badge badge-processing">Processing</span></td><td>Nilalabhan/nini-iron na ang damit</td><td>Branch Staff</td><td><span class="button-ref">Start Processing</span></td></tr>
+        <tr><td><span class="badge badge-ready">Ready</span></td><td>Tapos na, nakapack at handa na</td><td>Branch Staff</td><td><span class="button-ref">Mark Ready</span></td></tr>
+        <tr><td><span class="badge badge-delivered">Out for Delivery</span></td><td>Kasama na ng driver, papunta na sa customer</td><td>Driver (sa Driver App)</td><td>—</td></tr>
+        <tr><td><span class="badge badge-completed">Completed</span></td><td>Na-deliver o na-pick up na</td><td>Driver o Staff</td><td><span class="button-ref">Complete</span> / <span class="button-ref">Mark Delivered</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout callout-tip">
+    <div class="callout-icon">✅</div>
+    <div class="callout-text"><strong>Order History</strong> — Kapag nakumpleto na ang isang order, napupunta ito sa Order History. Makukuha ito sa sidebar para tingnan ang mga nakaraang order. Ang <strong>Analytics</strong> ay makukuha rin para sa mga basic na ulat sa kita at bilang ng order.</div>
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- 1.7 MABILIS NA SANGGUNIAN - POS -->
+<div class="content-page">
+  <div class="page-running-header">
+    <span class="page-running-title">Bahagi 1 — POS App</span>
+    <span class="page-running-logo">🫧 Aunt Sally's</span>
+  </div>
+
+  <div class="section-header">
+    <div class="section-header-bar"></div>
+    <div class="section-title">1.7 Mabilis na Sanggunian — POS App</div>
+  </div>
+
+  <div class="quick-ref">
+    <div class="quick-ref-title">⚡ POS Quick Reference Card</div>
+    <div class="quick-ref-grid">
+      <div class="quick-ref-item">
+        <div class="quick-ref-icon">🔑</div>
+        <div class="quick-ref-text"><strong>Login</strong> Email + Password → Pumili ng Branch → Nasa loob na</div>
+      </div>
+      <div class="quick-ref-item">
+        <div class="quick-ref-icon">🧺</div>
+        <div class="quick-ref-text"><strong>Bagong Order</strong> I-tap ang kulay na tiles → I-adjust ang dami → Place Order</div>
+      </div>
+      <div class="quick-ref-item">
+        <div class="quick-ref-icon">👤</div>
+        <div class="quick-ref-text"><strong>Dagdag ng Customer</strong> Maghanap sa telepono/pangalan → o gumawa ng bago (kailangan ang first name)</div>
+      </div>
+      <div class="quick-ref-item">
+        <div class="quick-ref-icon">💰</div>
+        <div class="quick-ref-text"><strong>Diskwento</strong> I-tap ang Discount → Peso o % → Ilagay ang halaga → Ibabawas sa kabuuan</div>
+      </div>
+      <div class="quick-ref-item">
+        <div class="quick-ref-icon">💳</div>
+        <div class="quick-ref-text"><strong>Paraan ng Bayad</strong> Cash · GCash · Maya · Card · Bank Transfer</div>
+      </div>
+      <div class="quick-ref-item">
+        <div class="quick-ref-icon">📋</div>
+        <div class="quick-ref-text"><strong>Order Queue</strong> Mga order ngayon · Mag-filter sa status · Nag-a-auto refresh tuwing 15 segundo</div>
+      </div>
+      <div class="quick-ref-item">
+        <div class="quick-ref-icon">⚡</div>
+        <div class="quick-ref-text"><strong>Daloy ng Status</strong> Pending → Confirmed → Processing → Ready → Completed</div>
+      </div>
+      <div class="quick-ref-item">
+        <div class="quick-ref-icon">➕</div>
+        <div class="quick-ref-text"><strong>Custom Service</strong> Madilim na gray dashed tile → Ilagay ang pangalan + presyo → Idagdag sa order</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-warning" style="margin-top: 24px;">
+    <div class="callout-icon">⚠️</div>
+    <div class="callout-text"><strong>Mga Dapat Tandaan</strong> — Palaging siguraduhing tama ang branch na pinili pagkatapos mag-login. Hindi na mababago ang diskwento pagkatapos i-place ang order. Maghanap muna ng existing customer bago gumawa ng bago.</div>
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- ==================== BAHAGI 2: DRIVER APP ==================== -->
+<div class="content-page">
+  <div class="page-running-header">
+    <span class="page-running-title">Bahagi 2 — Driver App</span>
+    <span class="page-running-logo">🫧 Aunt Sally's</span>
+  </div>
+
+  <div class="part-header">
+    <div class="part-header-icon">🚗</div>
+    <div>
+      <div class="part-number">Bahagi 2</div>
+      <div class="part-title">Driver App</div>
+      <div class="part-desc">Para sa mga Delivery Driver — Pagtingin sa mga na-assign na order, GPS tracking, at pagmamarka ng delivery bilang kumpleto</div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-header-bar"></div>
+    <div class="section-title">2.1 Pag-login</div>
+  </div>
+
+  <div class="callout callout-tip" style="margin-bottom: 20px;">
+    <div class="callout-icon">📱</div>
+    <div class="callout-text"><strong>Parehong URL ng POS</strong> — Pumunta sa parehong POS web address sa inyong telepono. Kapag nag-login kayo gamit ang driver account, awtomatiko kayong didiretso sa Driver Dashboard. Hindi na kailangang mag-download ng hiwalay na app.</div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-number">1</div>
+      <div class="step-content">
+        <div class="step-title">Buksan ang URL sa Inyong Telepono</div>
+        <div class="step-desc">Pumunta sa POS URL sa browser ng inyong telepono. I-save ito bilang bookmark sa inyong home screen para sa mabilis na access.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-number">2</div>
+      <div class="step-content">
+        <div class="step-title">Ilagay ang Inyong Driver Email at Password</div>
+        <div class="step-desc">Gamitin ang email at password na ibinigay ng inyong manager. I-tap ang <span class="button-ref">Login</span>.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-number">3</div>
+      <div class="step-content">
+        <div class="step-title">Didiretso Kayo sa Driver Dashboard</div>
+        <div class="step-desc">Bilang driver, lalaktawan ninyo ang Branch Select screen at direkta kayong mapupunta sa inyong listahan ng delivery.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-header-bar"></div>
+    <div class="section-title">2.2 Pagtingin sa mga Na-assign na Order at GPS Tracking</div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="mockup-label">Screen · Driver Dashboard</div>
+      <div class="driver-mockup">
+        <div class="driver-statusbar"><span>9:41 AM</span><span>📶 🔋</span></div>
+        <div class="driver-topbar">
+          <div class="driver-topbar-title">🚗 Mga Delivery Ko</div>
+          <div class="tracking-btn on">📍 Tracking On</div>
+        </div>
+        <div class="driver-body">
+          <div class="driver-card">
+            <div class="driver-card-top">
+              <div>
+                <div class="driver-card-num">#ORD-00142 <span class="badge badge-new" style="font-size:7pt;">BAGO</span></div>
+                <div class="driver-card-name">Maria Santos</div>
+                <div class="driver-card-phone">📞 0917-123-4567</div>
+                <div class="driver-card-notes">📍 I-deliver sa gate 3, tawagan sa pagdating</div>
+              </div>
+              <div style="text-align:right; font-size:9.5pt; font-weight:700; color: var(--teal);">₱1,360</div>
+            </div>
+            <div style="font-size: 8.5pt; color: var(--gray-400); border-top: 1px solid var(--gray-200); padding-top: 6px;">2 item · <span class="badge badge-ready">Ready</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size: 11pt; font-weight: 700; color: var(--gray-700); margin-bottom: 14px;">📍 Pag-on ng GPS Tracking</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <div class="step-title">I-tap ang "Start Tracking" (kanang sulok sa itaas)</div>
+            <div class="step-desc">Ang button ay nasa kanang sulok sa itaas ng Driver Dashboard.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <div class="step-title">Payagan ang Location Access</div>
+            <div class="step-desc">Maaaring magtanong ang inyong browser ng permiso. I-tap ang <strong>Allow</strong> para paganahin ang GPS sharing.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <div class="step-title">Nagiging Berde ang Button</div>
+            <div class="step-desc">Kapag naka-on na ang tracking, nagiging berde ang button at nagpapakita ng <span class="button-ref" style="background: var(--success); color: white; border: none;">📍 Tracking On</span>. Ipinapadala ang inyong lokasyon tuwing 10 segundo.</div>
+          </div>
+        </div>
+      </div>
+      <div class="callout callout-warning">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-text"><strong>Panatilihing Naka-on ang Tracking</strong> — Palaging i-on ang tracking kapag kayo ay naglalabas ng delivery. Nakakatulong ito sa manager at sa customer para malaman ang inyong lokasyon.</div>
+      </div>
+      <div class="info-box" style="margin-top: 16px;">
+        <div class="info-box-title">📱 Mga Feature ng Dashboard</div>
+        <div class="info-box-item">Ipinapakita ang lahat ng na-assign na delivery sa inyo</div>
+        <div class="info-box-item"><span class="badge badge-new" style="font-size:7pt;">BAGO</span> badge ay lumalabas sa mga order na na-assign sa loob ng 5 minuto</div>
+        <div class="info-box-item">Nag-a-auto refresh tuwing 30 segundo</div>
+        <div class="info-box-item">I-tap ang anumang order card para buksan ang delivery details</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- 2.4 PAGKUMPLETO NG DELIVERY -->
+<div class="content-page">
+  <div class="page-running-header">
+    <span class="page-running-title">Bahagi 2 — Driver App</span>
+    <span class="page-running-logo">🫧 Aunt Sally's</span>
+  </div>
+
+  <div class="section-header">
+    <div class="section-header-bar"></div>
+    <div class="section-title">2.4 Pagkumpleto ng Delivery</div>
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <div class="step-title">I-tap ang Order Card</div>
+            <div class="step-desc">Mula sa Driver Dashboard, i-tap ang order na ide-deliver ninyo para buksan ang Delivery Detail screen.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <div class="step-title">Suriin ang Impormasyon ng Customer</div>
+            <div class="step-desc">Ipinapakita ng screen ang pangalan ng customer, numero ng telepono (i-tap para tumawag agad), at anumang delivery notes.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <div class="step-title">Tingnan ang Mapa</div>
+            <div class="step-desc">Ipinapakita ng mapa ang delivery address ng customer. Gamitin ito para mag-navigate.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <div class="step-title">Ibigay ang Labada sa Customer</div>
+            <div class="step-desc">Kapag naibigay na ninyo ang labada sa customer, i-tap ang berdeng <span class="button-ref" style="background: var(--success); color:white; border:none;">Mark as Delivered</span> button.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">5</div>
+          <div class="step-content">
+            <div class="step-title">I-tap ang "Back to Dashboard"</div>
+            <div class="step-desc">Lalabas ang confirmation screen. I-tap ang <span class="button-ref">Back to Dashboard</span> para bumalik sa inyong listahan ng delivery.</div>
+          </div>
+        </div>
+      </div>
+      <div class="callout callout-tip">
+        <div class="callout-icon">📞</div>
+        <div class="callout-text"><strong>Pagtawag sa Customer</strong> — Sa delivery detail screen, ang numero ng telepono ng customer ay may tap-to-call link. I-tap ito para tumawag sa kanila nang direkta mula sa inyong telepono.</div>
+      </div>
+    </div>
+    <div>
+      <div class="mockup-label">Screen · Order Delivery Detail</div>
+      <div class="driver-mockup">
+        <div class="driver-statusbar"><span>9:58 AM</span><span>📶 🔋</span></div>
+        <div class="driver-topbar">
+          <div style="font-size: 11pt; font-weight: 700;">← #ORD-00142</div>
+          <div style="font-size: 8.5pt; opacity: 0.8;">Delivery Detail</div>
+        </div>
+        <div class="driver-body" style="padding: 16px;">
+          <div style="font-size: 12pt; font-weight: 800; color: var(--gray-800); margin-bottom: 4px;">Maria Santos</div>
+          <div style="font-size: 10pt; color: var(--teal); margin-bottom: 4px; font-weight: 600;">📞 0917-123-4567</div>
+          <div style="font-size: 9pt; color: var(--gray-600); margin-bottom: 12px; font-style:italic;">📍 I-deliver sa gate 3, tawagan sa pagdating</div>
+          <div class="map-mockup">
+            <div class="map-grid"></div>
+            <div class="map-label">📍 Delivery Address</div>
+            <div class="map-pin">📍</div>
+          </div>
+          <div style="margin: 12px 0; border: 1.5px solid var(--gray-200); border-radius: 8px; overflow: hidden;">
+            <div style="background: var(--gray-100); padding: 8px 12px; font-size: 8.5pt; font-weight: 700; color: var(--gray-600); text-transform: uppercase;">Mga Item</div>
+            <div style="padding: 10px 12px;">
+              <div style="display: flex; justify-content: space-between; font-size: 9.5pt; padding: 4px 0; border-bottom: 1px solid var(--gray-200);"><span>Wash Dry Fold - Reg × 2</span><span style="font-weight:700;">₱800</span></div>
+              <div style="display: flex; justify-content: space-between; font-size: 9.5pt; padding: 4px 0;"><span>Comforter - Dbl/Queen × 1</span><span style="font-weight:700;">₱560</span></div>
+            </div>
+            <div style="background: var(--teal-light); padding: 8px 12px; display:flex; justify-content:space-between; font-size:10.5pt; font-weight:800; color: var(--teal-dark);">
+              <span>KABUUAN</span><span>₱1,360</span>
+            </div>
+          </div>
+          <div class="mockup-btn mockup-btn-success" style="width:100%; text-align:center; display:block; padding:12px; font-size:11pt;">✓ Mark as Delivered</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-header-bar"></div>
+    <div class="section-title">2.5 Mabilis na Sanggunian — Driver App</div>
+  </div>
+
+  <div class="quick-ref">
+    <div class="quick-ref-title">⚡ Driver Quick Reference Card</div>
+    <div class="quick-ref-grid">
+      <div class="quick-ref-item">
+        <div class="quick-ref-icon">🔑</div>
+        <div class="quick-ref-text"><strong>Login</strong> Parehong URL ng POS → driver account awtomatikong napupunta sa Driver Dashboard</div>
+      </div>
+      <div class="quick-ref-item">
+        <div class="quick-ref-icon">📍</div>
+        <div class="quick-ref-text"><strong>I-on ang Tracking</strong> I-tap ang "Start Tracking" (kanang itaas) → Payagan ang location → Nagiging berde ang button</div>
+      </div>
+      <div class="quick-ref-item">
+        <div class="quick-ref-icon">📦</div>
+        <div class="quick-ref-text"><strong>Tingnan ang Orders</strong> Ipinapakita ng Dashboard ang lahat ng na-assign na delivery · BAGO badge = na-assign sa loob ng 5 minuto</div>
+      </div>
+      <div class="quick-ref-item">
+        <div class="quick-ref-icon">📞</div>
+        <div class="quick-ref-text"><strong>Tawagan ang Customer</strong> I-tap ang numero ng telepono sa Delivery Detail screen para tumawag nang direkta</div>
+      </div>
+      <div class="quick-ref-item">
+        <div class="quick-ref-icon">✅</div>
+        <div class="quick-ref-text"><strong>Kumpletuhin ang Delivery</strong> Ibigay ang labada → I-tap ang berdeng "Mark as Delivered" → Back to Dashboard</div>
+      </div>
+      <div class="quick-ref-item">
+        <div class="quick-ref-icon">🔄</div>
+        <div class="quick-ref-text"><strong>Auto-refresh</strong> Awtomatikong nag-a-update ang Dashboard tuwing 30 segundo</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- ==================== BAHAGI 3: ADMIN ==================== -->
+<div class="content-page">
+  <div class="page-running-header">
+    <span class="page-running-title">Bahagi 3 — Admin Dashboard</span>
+    <span class="page-running-logo">🫧 Aunt Sally's</span>
+  </div>
+
+  <div class="part-header">
+    <div class="part-header-icon">📊</div>
+    <div>
+      <div class="part-number">Bahagi 3</div>
+      <div class="part-title">Admin Dashboard</div>
+      <div class="part-desc">Para sa mga May-ari at Manager — Pangkalahatang-tanaw ng negosyo, pamamahala ng order, at pag-assign ng driver</div>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-header-bar"></div>
+    <div class="section-title">3.1 Pangkalahatang-tanaw ng Dashboard</div>
+  </div>
+
+  <p style="color: var(--gray-600); margin-bottom: 20px; font-size: 10.5pt;">Ang mga admin ay nag-a-access sa parehong POS URL. Pagkatapos mag-login, awtomatiko kayong didiretso sa Admin Dashboard — hindi na kailangang pumili ng branch.</p>
+
+  <div class="mockup-label">Screen · Admin Dashboard</div>
+  <div class="admin-mockup" style="margin-bottom: 24px;">
+    <div class="admin-sidebar">
+      <div class="admin-logo">🫧 Aunt Sally's</div>
+      <div class="admin-nav-item active">📊 Dashboard</div>
+      <div class="admin-nav-item">📋 Orders</div>
+      <div class="admin-nav-item">🛎️ Services</div>
+      <div class="admin-nav-item">🚗 Drivers</div>
+      <div class="admin-nav-item">👥 Customers</div>
+      <div class="admin-nav-item">🏪 Branches</div>
+      <div class="admin-nav-item">📈 Analytics</div>
+    </div>
+    <div class="admin-content">
+      <div class="stat-cards">
+        <div class="stat-card"><div class="stat-label">Mga Order Ngayon</div><div class="stat-value">24</div><div class="stat-sub">↑ 3 kumpara kahapon</div></div>
+        <div class="stat-card"><div class="stat-label">Kita Ngayon</div><div class="stat-value" style="font-size: 16pt;">₱18,420</div><div class="stat-sub">↑ ₱2,100 kumpara kahapon</div></div>
+        <div class="stat-card"><div class="stat-label">Active na Orders</div><div class="stat-value">8</div><div class="stat-sub">Sa 3 branches</div></div>
+        <div class="stat-card"><div class="stat-label">Mga Branch</div><div class="stat-value">3</div><div class="stat-sub">Lahat ay online</div></div>
+      </div>
+      <div style="background: white; border-radius: 10px; border: 1.5px solid var(--gray-200); overflow: hidden;">
+        <div style="padding: 10px 14px; background: var(--gray-100); font-size: 8.5pt; font-weight: 700; color: var(--gray-600); text-transform: uppercase;">Mga Pinakabagong Order</div>
+        <div style="padding: 0 14px;">
+          <div style="display:grid; grid-template-columns: 80px 1fr 80px 70px 80px; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--gray-200); font-size: 8pt; font-weight: 600; color: var(--gray-400); text-transform: uppercase;"><span>Order #</span><span>Customer</span><span>Branch</span><span>Halaga</span><span>Status</span></div>
+          <div style="display:grid; grid-template-columns: 80px 1fr 80px 70px 80px; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--gray-200); font-size: 9pt; align-items:center;"><span style="font-weight:700; color:var(--teal);">#00142</span><span>Maria Santos</span><span style="color:var(--gray-400);">QC Branch</span><span style="font-weight:700;">₱1,360</span><span><span class="badge badge-pending">Pending</span></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="info-box">
+      <div class="info-box-title">📊 4 Stat Cards sa Isang Tingin</div>
+      <div class="info-box-item"><strong>Mga Order Ngayon</strong> — kabuuang orders sa lahat ng branches</div>
+      <div class="info-box-item"><strong>Kita Ngayon</strong> — kabuuang kita mula sa lahat ng branches</div>
+      <div class="info-box-item"><strong>Active na Orders</strong> — mga order na kasalukuyang pinoproseso</div>
+      <div class="info-box-item"><strong>Mga Branch</strong> — bilang ng aktibong branches</div>
+    </div>
+    <div class="info-box">
+      <div class="info-box-title">🗂️ Admin Navigation</div>
+      <div class="info-box-item"><strong>Dashboard</strong> — pangkalahatang-tanaw at pinakabagong aktibidad</div>
+      <div class="info-box-item"><strong>Orders</strong> — buong listahan ng order, pag-assign ng driver</div>
+      <div class="info-box-item"><strong>Services</strong> — pamahalaan ang presyo bawat branch</div>
+      <div class="info-box-item"><strong>Drivers</strong> — pamahalaan ang mga driver account</div>
+      <div class="info-box-item"><strong>Customers</strong> — tingnan ang mga talaan ng customer</div>
+      <div class="info-box-item"><strong>Branches</strong> — pamahalaan ang mga lokasyon ng branch</div>
+      <div class="info-box-item"><strong>Analytics</strong> — mga chart ng kita at performance</div>
+    </div>
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- 3.2 ORDERS AT PAGS-ASSIGN NG DRIVER -->
+<div class="content-page">
+  <div class="page-running-header">
+    <span class="page-running-title">Bahagi 3 — Admin Dashboard</span>
+    <span class="page-running-logo">🫧 Aunt Sally's</span>
+  </div>
+
+  <div class="section-header">
+    <div class="section-header-bar"></div>
+    <div class="section-title">3.2 Pamamahala ng Orders at Pag-assign ng Driver</div>
+  </div>
+
+  <p style="color: var(--gray-600); margin-bottom: 20px; font-size: 10.5pt;">Mula sa <strong>Admin Orders</strong> page, makikita ninyo ang lahat ng orders sa bawat branch at maaari kayong mag-assign ng driver para sa delivery.</p>
+
+  <div class="two-col">
+    <div>
+      <div style="font-size: 11pt; font-weight: 700; color: var(--gray-700); margin-bottom: 12px;">📋 Pagtingin ng mga Order</div>
+      <ul class="custom-list">
+        <li>Pumunta sa <strong>Orders</strong> sa sidebar</li>
+        <li>Ipinapakita ang lahat ng orders mula sa lahat ng branches sa iisang listahan</li>
+        <li>Mag-filter sa status: All, Pending, Confirmed, Processing, Ready, Completed, Cancelled</li>
+        <li>Mag-click ng anumang order row para buksan ang Order Detail Panel sa kanan</li>
+        <li>Ipinapakita ng Order Detail ang: lahat ng items, impormasyon ng customer, branch, history ng status, at assignment ng driver</li>
+      </ul>
+
+      <div style="margin-top: 20px; font-size: 11pt; font-weight: 700; color: var(--gray-700); margin-bottom: 12px;">🚗 Pag-assign ng Driver</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <div class="step-title">Buksan ang Order Detail</div>
+            <div class="step-desc">Mag-click ng order mula sa listahan ng Orders. Bubuksan ang detail panel sa kanang bahagi.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <div class="step-title">Hanapin ang "Assign Driver" Button</div>
+            <div class="step-desc">Ang button na ito ay lumalabas para sa mga order na may status: <span class="badge badge-confirmed">Confirmed</span>, <span class="badge badge-processing">Processing</span>, <span class="badge badge-ready">Ready</span>, o <span class="badge badge-delivered">Out for Delivery</span>.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <div class="step-title">Pumili ng Driver mula sa Dropdown</div>
+            <div class="step-desc">Ipinapakita ng dropdown ang mga driver na available sa branch. Piliin ang driver.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <div class="step-title">I-tap ang "Assign"</div>
+            <div class="step-desc">Na-assign na ang order. Makikita ng driver ito sa kanilang Driver App na may <span class="badge badge-new">BAGO</span> badge.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="mockup-label">Screen · Order Detail na may Driver Assignment</div>
+      <div class="mockup-screen">
+        <div class="mockup-topbar"><span>📋 Order #ORD-00142 — Detail</span></div>
+        <div class="mockup-body" style="padding: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <div style="font-size: 12pt; font-weight: 800; color: var(--teal);">#ORD-00142</div>
+            <span class="badge badge-ready">Ready</span>
+          </div>
+          <div style="font-size: 9.5pt; color: var(--gray-600); margin-bottom: 4px;">👤 Maria Santos &nbsp;|&nbsp; 📞 0917-123-4567</div>
+          <div style="font-size: 9.5pt; color: var(--gray-600); margin-bottom: 12px;">🏪 QC Branch &nbsp;|&nbsp; Marso 30, 2026</div>
+          <div style="background: var(--gray-100); border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+            <div style="font-size: 8.5pt; font-weight: 700; color: var(--gray-400); text-transform: uppercase; margin-bottom: 6px;">Mga Item</div>
+            <div style="font-size: 9.5pt; padding: 4px 0; border-bottom: 1px solid var(--gray-200);">Wash Dry Fold - Regular × 2 — ₱800</div>
+            <div style="font-size: 9.5pt; padding: 4px 0;">Comforter - Dbl/Queen × 1 — ₱560</div>
+            <div style="font-size: 10.5pt; font-weight: 700; color: var(--teal-dark); margin-top: 8px; text-align: right;">Kabuuan: ₱1,360</div>
+          </div>
+          <div style="border: 1.5px solid var(--teal-mid); border-radius: 8px; padding: 12px; background: var(--teal-light);">
+            <div style="font-size: 8.5pt; font-weight: 700; color: var(--teal-dark); text-transform: uppercase; margin-bottom: 8px;">🚗 Mag-assign ng Driver</div>
+            <div class="mockup-field" style="margin-bottom: 8px; background: white;">Pumili ng driver mula sa QC Branch ▾</div>
+            <div class="mockup-btn mockup-btn-primary" style="padding: 8px 16px; width: auto; display: inline-block;">Assign Driver</div>
+          </div>
+        </div>
+      </div>
+      <div class="callout callout-tip" style="margin-top: 14px;">
+        <div class="callout-icon">✅</div>
+        <div class="callout-text"><strong>Tip</strong> Tanging ang mga driver mula sa parehong branch ng order lamang ang lalabas sa dropdown.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-header"><div class="section-header-bar"></div><div class="section-title">3.3 Iba pang Admin Tools</div></div>
+
+  <div class="two-col">
+    <div class="info-box"><div class="info-box-title">🛎️ Services</div><div class="info-box-item">Tingnan at pamahalaan ang mga serbisyo at presyo bawat branch</div><div class="info-box-item">Magdagdag ng bagong serbisyo, i-update ang presyo, at tanggalin ang discontinued na serbisyo</div></div>
+    <div class="info-box"><div class="info-box-title">🏪 Branches</div><div class="info-box-item">Tingnan ang lahat ng lokasyon ng branch</div><div class="info-box-item">Pamahalaan ang mga detalye at setting ng branch</div></div>
+  </div>
+  <div class="two-col" style="margin-top: 12px;">
+    <div class="info-box"><div class="info-box-title">🚗 Drivers</div><div class="info-box-item">Tingnan ang lahat ng driver account</div><div class="info-box-item">Pamahalaan ang mga profile ng driver at assignment sa branch</div></div>
+    <div class="info-box"><div class="info-box-title">👥 Customers at 📈 Analytics</div><div class="info-box-item">Mga rekord ng customer: tingnan ang lahat ng nagrehistro</div><div class="info-box-item">Analytics: mga chart ng kita, bilang ng order, at performance ng branch</div></div>
+  </div>
+
+  <div class="quick-ref" style="margin-top: 28px;">
+    <div class="quick-ref-title">⚡ Admin Quick Reference Card</div>
+    <div class="quick-ref-grid">
+      <div class="quick-ref-item"><div class="quick-ref-icon">🔑</div><div class="quick-ref-text"><strong>Login</strong> Parehong URL ng POS → admin account awtomatikong napupunta sa Admin Dashboard</div></div>
+      <div class="quick-ref-item"><div class="quick-ref-icon">📊</div><div class="quick-ref-text"><strong>Dashboard</strong> 4 stat cards: Mga Order Ngayon, Kita, Active na Orders, Mga Branch</div></div>
+      <div class="quick-ref-item"><div class="quick-ref-icon">🚗</div><div class="quick-ref-text"><strong>Mag-assign ng Driver</strong> Orders → I-click ang order → Assign Driver → Pumili ng driver → I-tap ang Assign</div></div>
+      <div class="quick-ref-item"><div class="quick-ref-icon">📋</div><div class="quick-ref-text"><strong>Mag-filter ng Orders</strong> All · Pending · Confirmed · Processing · Ready · Completed · Cancelled</div></div>
+      <div class="quick-ref-item"><div class="quick-ref-icon">🛎️</div><div class="quick-ref-text"><strong>Services</strong> Pamahalaan ang mga serbisyo at presyo bawat branch mula sa Services section</div></div>
+      <div class="quick-ref-item"><div class="quick-ref-icon">📈</div><div class="quick-ref-text"><strong>Analytics</strong> Mga chart ng kita, bilang ng order, at ulat ng performance ng branch</div></div>
+    </div>
+  </div>
+</div>
+<div class="page-break"></div>
+
+<!-- ==================== BAHAGI 4: WEBSITE ==================== -->
+<div class="content-page">
+  <div class="page-running-header">
+    <span class="page-running-title">Bahagi 4 — Website ng Customer</span>
+    <span class="page-running-logo">🫧 Aunt Sally's</span>
+  </div>
+
+  <div class="part-header">
+    <div class="part-header-icon">🌐</div>
+    <div>
+      <div class="part-number">Bahagi 4</div>
+      <div class="part-title">Website ng Customer</div>
+      <div class="part-desc">auntsallyslaundry.com — Paano nagbu-book, nagta-track ng orders, at tinitingnan ng mga customer ang mga serbisyo</div>
+    </div>
+  </div>
+
+  <div class="section-header"><div class="section-header-bar"></div><div class="section-title">4.1 Pangkalahatang-tanaw at mga Feature</div></div>
+
+  <div class="mockup-label">Screen · auntsallyslaundry.com</div>
+  <div class="website-mockup" style="margin-bottom: 24px;">
+    <div class="browser-bar">
+      <div class="browser-dots"><div class="browser-dot" style="background:#EF4444;"></div><div class="browser-dot" style="background:#F59E0B;"></div><div class="browser-dot" style="background:#10B981;"></div></div>
+      <div class="browser-url">🔒 auntsallyslaundry.com</div>
+    </div>
+    <div class="website-hero">
+      <div class="website-hero-title">🫧 Aunt Sally's Laundry</div>
+      <div class="website-hero-sub">Pinagkakatiwalaang laundry service sa Metro Manila. Malinis na damit, dini-deliver sa inyong pintuan.</div>
+      <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+        <div class="website-cta">📅 Mag-book Ngayon</div>
+        <div class="website-cta" style="background: rgba(255,255,255,0.2); color: white; border: 2px solid rgba(255,255,255,0.5);">🔍 Track ang Order</div>
+      </div>
+    </div>
+    <div class="website-features">
+      <div class="website-feature"><div class="website-feature-icon">📋</div><div class="website-feature-title">Tingnan ang Serbisyo</div><div class="website-feature-text">Buong listahan ng presyo</div></div>
+      <div class="website-feature"><div class="website-feature-icon">📅</div><div class="website-feature-title">Mag-book Online</div><div class="website-feature-text">Punan ang detalye, i-pin ang address, pumili ng oras</div></div>
+      <div class="website-feature"><div class="website-feature-icon">🔍</div><div class="website-feature-title">I-track ang Order</div><div class="website-feature-text">Ilagay ang order number para tingnan ang live status</div></div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="info-box">
+      <div class="info-box-title">📅 Paano Nagbu-book Online ang mga Customer</div>
+      <div class="info-box-item">Pumunta sa auntsallyslaundry.com at i-tap ang <strong>Book Now</strong></div>
+      <div class="info-box-item">Punan: Pangalan, Numero ng Telepono, Address (na may map pin)</div>
+      <div class="info-box-item">Pumili ng serbisyo, magdagdag ng notes, pumili ng preferred na oras ng pickup</div>
+      <div class="info-box-item">I-submit — lalabas ang order sa POS Order Queue bilang <span class="badge badge-pending">Pending</span></div>
+    </div>
+    <div class="info-box">
+      <div class="info-box-title">🔍 Order Tracking para sa mga Customer</div>
+      <div class="info-box-item">I-tap ng customer ang <strong>Track Order</strong> sa website</div>
+      <div class="info-box-item">Ilagay ang kanilang order number (hal. #ORD-00142)</div>
+      <div class="info-box-item">Makikita ang kasalukuyang status ng kanilang labada sa real-time</div>
+      <div class="info-box-item">Ang mga status ay kapareho ng makikita sa POS: Pending → Completed</div>
+    </div>
+  </div>
+
+  <div class="section-header"><div class="section-header-bar"></div><div class="section-title">4.2 Listahan ng Serbisyo at Presyo</div></div>
+
+  <table class="price-table">
+    <thead><tr><th>Serbisyo</th><th>Uri</th><th>Presyo</th></tr></thead>
+    <tbody>
+      <tr class="price-category"><td colspan="3">🫧 Wash, Dry &amp; Fold</td></tr>
+      <tr><td>Wash Dry Fold</td><td>Regular Bag 1–5kg</td><td>₱400</td></tr>
+      <tr><td>Wash Dry Fold</td><td>Large Bag 6kg+</td><td>₱500</td></tr>
+      <tr class="price-category"><td colspan="3">👔 Wash, Dry &amp; Press</td></tr>
+      <tr><td>Wash Dry Press</td><td>Regular (12 piraso na ini-iron)</td><td>₱1,120</td></tr>
+      <tr><td>Wash Dry Press</td><td>Large (24 piraso na ini-iron)</td><td>₱1,680</td></tr>
+      <tr class="price-category"><td colspan="3">💨 Dry Only</td></tr>
+      <tr><td>Dry Only</td><td>1–5kg</td><td>₱240</td></tr>
+      <tr><td>Dry Only</td><td>6–10kg</td><td>₱340</td></tr>
+      <tr class="price-category"><td colspan="3">🛏️ Heavy Wash</td></tr>
+      <tr><td>Heavy Wash</td><td>Kumot/Unan/Tuwalya hanggang 8kg</td><td>₱780</td></tr>
+      <tr><td>Heavy Wash</td><td>Upuan/Kurtina hanggang 8kg</td><td>₱890</td></tr>
+      <tr class="price-category"><td colspan="3">🛌 Comforter</td></tr>
+      <tr><td>Comforter</td><td>Single/Twin</td><td>₱500</td></tr>
+      <tr><td>Comforter</td><td>Double/Queen</td><td>₱560</td></tr>
+      <tr><td>Comforter</td><td>King</td><td>₱670</td></tr>
+      <tr class="price-category"><td colspan="3">✨ Dry Clean</td></tr>
+      <tr><td>Dry Clean</td><td>Barong (Matatanda)</td><td>₱670</td></tr>
+      <tr><td>Dry Clean</td><td>Amerikana / Jacket</td><td>₱560</td></tr>
+      <tr><td>Dry Clean</td><td>Dress</td><td>₱670</td></tr>
+      <tr><td>Dry Clean</td><td>Wedding Gown</td><td>₱2,800+</td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="page-break"></div>
+
+<!-- ==================== BACK PAGE ==================== -->
+<div class="back-page">
+  <div class="back-logo">🫧 Aunt Sally's</div>
+  <div class="back-tagline">Malinis na damit. Masayang pamilya. Sa bawat oras.</div>
+
+  <div class="support-box">
+    <div class="support-title">📞 Suporta at Pakikipag-ugnayan</div>
+    <div class="support-item">
+      <div class="support-icon">📱</div>
+      <div><div class="support-key">Hotline / Viber</div><div class="support-val">[Ilagay ang Numero ng Telepono]</div></div>
+    </div>
+    <div class="support-item">
+      <div class="support-icon">📧</div>
+      <div><div class="support-key">Email</div><div class="support-val">[Ilagay ang Email Address]</div></div>
+    </div>
+    <div class="support-item">
+      <div class="support-icon">🌐</div>
+      <div><div class="support-key">Website</div><div class="support-val">auntsallyslaundry.com</div></div>
+    </div>
+    <div class="support-item">
+      <div class="support-icon">📍</div>
+      <div><div class="support-key">Head Office</div><div class="support-val">[Ilagay ang Address]</div></div>
+    </div>
+    <div class="support-item">
+      <div class="support-icon">🕐</div>
+      <div><div class="support-key">Oras ng Negosyo</div><div class="support-val">[Ilagay ang Oras ng Operasyon]</div></div>
+    </div>
+  </div>
+
+  <div class="back-footer">
+    Aunt Sally's Laundry Service &nbsp;|&nbsp; Manwal para sa mga Kawani v1.0 &nbsp;|&nbsp; Marso 2026<br>
+    Para sa panloob na gamit lamang. Huwag ipamahagi sa labas ng organisasyon.
+  </div>
+</div>
+
+</body>
+</html>

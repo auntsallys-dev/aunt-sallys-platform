@@ -1,2 +1,2 @@
-export declare function QueuePage(): import("react/jsx-runtime").JSX.Element;
+export declare function QueuePage(): any;
 //# sourceMappingURL=Queue.d.ts.map

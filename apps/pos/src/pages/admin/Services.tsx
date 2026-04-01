@@ -201,6 +201,8 @@ export function AdminServicesPage() {
   const [showModal, setShowModal] = useState(false);
   const [editTarget, setEditTarget] = useState<any | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<any | null>(null);
 
   function fetchServices() {
     setLoading(true);
@@ -250,6 +252,19 @@ export function AdminServicesPage() {
   function openAdd() {
     setEditTarget(null);
     setShowModal(true);
+  }
+
+  async function handleDelete(service: any) {
+    setDeletingId(service.id);
+    setDeleteConfirm(null);
+    try {
+      await api.adminServices.delete(service.id);
+      fetchServices();
+    } catch (err: any) {
+      setError(err.message ?? "Failed to delete service");
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   return (
@@ -322,6 +337,13 @@ export function AdminServicesPage() {
                     >
                       {togglingId === service.id ? "…" : service.isActive ? "Disable" : "Enable"}
                     </button>
+                    <button
+                      onClick={() => setDeleteConfirm(service)}
+                      disabled={deletingId === service.id}
+                      className="text-xs text-red-500 hover:underline disabled:opacity-40"
+                    >
+                      {deletingId === service.id ? "…" : "Delete"}
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -336,6 +358,31 @@ export function AdminServicesPage() {
           onSave={handleSave}
           onClose={() => { setShowModal(false); setEditTarget(null); }}
         />
+      )}
+
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-2">Delete Service?</h2>
+            <p className="text-sm text-gray-500 mb-6">
+              Delete <strong>{deleteConfirm.name}</strong>? This will remove it from all branches.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm text-gray-500 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(deleteConfirm)}
+                className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-medium text-white hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
