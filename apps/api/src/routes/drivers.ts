@@ -75,7 +75,7 @@ driversRoutes.get("/orders", async (c) => {
     .orderBy(desc(orders.createdAt));
 
   const activeDeliveryOrders = allBranchOrders.filter((o) =>
-    o.orderType === "delivery" &&
+    (o.orderType === "delivery" || o.orderType === "pickup") &&
     !["completed", "cancelled", "delivered"].includes(o.status)
   );
 

@@ -46,7 +46,7 @@ servicesRoutes.get("/", async (c) => {
 
 // GET /api/v1/services/:id
 servicesRoutes.get("/:id", async (c) => {
-  const id = c.req.param("id");
+  const id = c.req.param("id") as string;
   const [service] = await db.select().from(services).where(eq(services.id, id)).limit(1);
   if (!service) return c.json({ success: false, error: "Service not found" }, 404);
   return c.json({ success: true, data: service });
@@ -95,7 +95,7 @@ servicesRoutes.post("/", authenticate, adminOnly, async (c) => {
 
 // PATCH /api/v1/services/:id — update a service
 servicesRoutes.patch("/:id", authenticate, adminOnly, async (c) => {
-  const id = c.req.param("id");
+  const id = c.req.param("id") as string;
   let body: any;
   try { body = await c.req.json(); } catch { return c.json({ success: false, error: "Invalid JSON" }, 400); }
 
@@ -118,7 +118,7 @@ servicesRoutes.patch("/:id", authenticate, adminOnly, async (c) => {
 
 // DELETE /api/v1/services/:id — soft delete
 servicesRoutes.delete("/:id", authenticate, adminOnly, async (c) => {
-  const id = c.req.param("id");
+  const id = c.req.param("id") as string;
   const [existing] = await db.select().from(services).where(eq(services.id, id)).limit(1);
   if (!existing) return c.json({ success: false, error: "Service not found" }, 404);
 

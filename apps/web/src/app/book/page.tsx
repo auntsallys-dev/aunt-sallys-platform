@@ -45,9 +45,10 @@ function AddressAutocomplete({
     if (query.trim().length < 3) { setSuggestions([]); setShowDropdown(false); return; }
     setLoading(true);
     try {
-      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&countrycodes=ph&format=json&limit=5&addressdetails=1`;
-      const res = await fetch(url, { headers: { "Accept-Language": "en" } });
-      const data: NominatimResult[] = await res.json();
+      const API_BASE = "https://aunt-sallys-pos.onrender.com";
+      const res = await fetch(`${API_BASE}/api/v1/public/geocode?q=${encodeURIComponent(query)}`);
+      const json = await res.json();
+      const data: NominatimResult[] = json.data ?? [];
       setSuggestions(data);
       setShowDropdown(data.length > 0);
     } catch {
@@ -292,7 +293,8 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 const CATEGORY_ORDER = [
   "wash_dry_fold", "wash_dry_press", "dry_only", "heavy_wash",
-  "comforter", "dry_clean", "addon", "logistics",
+  "comforter", "dry_clean", "addon",
+  // "logistics" excluded — automatically added by server for website bookings
 ];
 
 function groupServices(list: Service[]) {
@@ -965,9 +967,13 @@ export default function BookPage() {
                       <span className="text-gray-900">₱{(i.quantity * i.unitPrice).toLocaleString()}</span>
                     </div>
                   ))}
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Pick-up &amp; Delivery (auto-added)</span>
+                    <span className="text-gray-900">₱180</span>
+                  </div>
                   <div className="flex justify-between border-t border-gray-100 pt-3 font-medium">
-                    <span className="text-gray-900">Total</span>
-                    <span style={{ color: "#0ABAB5" }}>₱{subtotal.toLocaleString()}</span>
+                    <span className="text-gray-900">Estimated Total</span>
+                    <span style={{ color: "#0ABAB5" }}>₱{(subtotal + 180).toLocaleString()}</span>
                   </div>
                 </div>
               </div>

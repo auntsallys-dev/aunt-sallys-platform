@@ -170,7 +170,7 @@ publicRoutes.post("/bookings", async (c) => {
       orderNumber,
       branchId,
       customerId: customer.id,
-      orderType: "pickup",
+      orderType: "delivery",
       subtotal: String(subtotal),
       deliveryFee: "0",
       total: String(subtotal), // subtotal already includes logistics if auto-added
@@ -274,4 +274,23 @@ publicRoutes.get("/track/:code", async (c) => {
       history: history.map((h) => ({ status: h.status, createdAt: h.createdAt, notes: h.notes })),
     },
   });
+});
+
+// GET /api/v1/public/geocode?q=... — proxy Nominatim to avoid browser CORS
+publicRoutes.get("/geocode", async (c) => {
+  const q = c.req.query("q");
+  if (!q || q.trim().length < 3) return c.json({ success: true, data: [] });
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&countrycodes=ph&format=json&limit=5&addressdetails=1`;
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "AuntSallysLaundry/1.0 (auntsallyslaundry.com)",
+        "Accept-Language": "en",
+      },
+    });
+    const data = await res.json();
+    return c.json({ success: true, data });
+  } catch {
+    return c.json({ success: true, data: [] });
+  }
 });

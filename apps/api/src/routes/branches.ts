@@ -61,7 +61,7 @@ branchesRoutes.post("/", authenticate, adminOnly, async (c) => {
 
 // PATCH /api/v1/branches/:id — update branch
 branchesRoutes.patch("/:id", authenticate, adminOnly, async (c) => {
-  const id = c.req.param("id");
+  const id = c.req.param("id") as string;
   let body: any;
   try { body = await c.req.json(); } catch { return c.json({ success: false, error: "Invalid JSON" }, 400); }
 
@@ -84,7 +84,7 @@ branchesRoutes.patch("/:id", authenticate, adminOnly, async (c) => {
 
 // DELETE /api/v1/branches/:id — soft delete
 branchesRoutes.delete("/:id", authenticate, adminOnly, async (c) => {
-  const id = c.req.param("id");
+  const id = c.req.param("id") as string;
   const [existing] = await db.select().from(branches).where(eq(branches.id, id)).limit(1);
   if (!existing) return c.json({ success: false, error: "Branch not found" }, 404);
 
