@@ -59,7 +59,7 @@ export const api = {
     updateStatus: (id: string, status: string, notes?: string) =>
       request<{ success: boolean; data: any }>("PATCH", `/orders/${id}/status`, { status, notes }),
     cancel: (id: string) =>
-      request<{ success: boolean; data: any }>("PATCH", `/orders/${id}`, { status: "cancelled" }),
+      request<{ success: boolean; data: any }>("PATCH", `/orders/${id}/status`, { status: "cancelled" }),
   },
   payments: {
     create: (data: { orderId: string; amount: number; method: string; reference?: string }) =>
