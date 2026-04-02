@@ -110,7 +110,7 @@ export const api = {
   driver: {
     getOrders: (branchId?: string) => {
       const qs = branchId ? `?branchId=${branchId}` : "";
-      return request<{ success: boolean; data: any[] }>("GET", `/drivers/orders${qs}`);
+      return request<{ success: boolean; data: any }>("GET", `/drivers/orders${qs}`);
     },
     postLocation: (lat: number, lng: number, branchId: string, orderId?: string) =>
       request<{ success: boolean; data: any }>("POST", "/drivers/location", { lat, lng, branchId, orderId }),
@@ -119,6 +119,8 @@ export const api = {
     collectPayment: (orderId: string, paymentMethod: "cash" | "gcash" | "maya") =>
       request<{ success: boolean; data: any }>("PATCH", `/drivers/orders/${orderId}/collect-payment`, { paymentMethod }),
     selfAssign: (orderId: string) =>
-      request<{ success: boolean; data: any }>("PATCH", `/orders/${orderId}/assign-driver`, {}),
+      request<{ success: boolean; data: any }>("PATCH", `/drivers/orders/${orderId}/self-assign`, {}),
+    markPickedUp: (orderId: string) =>
+      request<{ success: boolean; data: any }>("PATCH", `/drivers/orders/${orderId}/mark-picked-up`, {}),
   },
 };

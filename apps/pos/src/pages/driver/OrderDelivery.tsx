@@ -27,9 +27,20 @@ export function DriverOrderDeliveryPage() {
 
   async function fetchOrder() {
     try {
-      const branchId = user?.branchId ?? undefined;
-      const res = await api.driver.getOrders(branchId);
-      const found = res.data.find((o: any) => o.id === id);
+      const res = await api.driver.getOrders(user?.branchId ?? undefined);
+      // Handle both new shape { available_pickup, available_delivery, my_orders } and old flat array
+      let allOrders: any[];
+      if (Array.isArray(res.data)) {
+        allOrders = res.data as any[];
+      } else {
+        const d = res.data as any;
+        allOrders = [
+          ...(d.available_pickup ?? []),
+          ...(d.available_delivery ?? []),
+          ...(d.my_orders ?? []),
+        ];
+      }
+      const found = allOrders.find((o: any) => o.id === id);
       if (found) {
         setOrder(found);
         if (found.paymentStatus === "paid") setPaymentCollected(true);
