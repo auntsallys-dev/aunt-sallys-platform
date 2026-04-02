@@ -134,6 +134,12 @@ function AddressAutocomplete({
 // ── Map pin component (Leaflet) ────────────────────────────────────────────
 interface LatLng { lat: number; lng: number; }
 
+// SVG pin icon for Leaflet (avoids broken default marker image URLs)
+const SVG_PIN_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="42" viewBox="0 0 32 42">
+  <path d="M16 0C7.163 0 0 7.163 0 16c0 10.5 16 26 16 26S32 26.5 32 16C32 7.163 24.837 0 16 0z" fill="#0ABAB5"/>
+  <circle cx="16" cy="16" r="7" fill="white"/>
+</svg>`;
+
 function MapPinModal({
   initialLatLng,
   onConfirm,
@@ -150,17 +156,27 @@ function MapPinModal({
 
   useEffect(() => {
     if (!mapDivRef.current || mapRef.current) return;
+    // Load Leaflet CSS dynamically to ensure it's available before map init
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+    document.head.appendChild(link);
+
     import("leaflet").then((m) => {
       const L = m.default ?? m;
-      (L.Icon.Default.prototype as any)._getIconUrl = undefined;
-      L.Icon.Default.mergeOptions({
-        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-        iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-      });
       const map = L.map(mapDivRef.current!, { center: [initialLatLng.lat, initialLatLng.lng], zoom: 17 });
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap" }).addTo(map);
-      const marker = L.marker([initialLatLng.lat, initialLatLng.lng], { draggable: true }).addTo(map);
+
+      // Use SVG divIcon — no external image dependencies
+      const icon = L.divIcon({
+        html: SVG_PIN_ICON,
+        className: "",
+        iconSize: [32, 42],
+        iconAnchor: [16, 42],
+        popupAnchor: [0, -42],
+      });
+
+      const marker = L.marker([initialLatLng.lat, initialLatLng.lng], { draggable: true, icon }).addTo(map);
       marker.on("dragend", () => {
         const p = marker.getLatLng();
         setPinLatLng({ lat: p.lat, lng: p.lng });
@@ -175,7 +191,6 @@ function MapPinModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
       <div className="w-full max-w-md rounded-lg bg-white shadow-2xl overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-100">
           <p className="font-medium text-gray-900 text-sm">Confirm exact location</p>
@@ -269,7 +284,15 @@ interface AddressFields {
   postalCode: string;
 }
 
-const EMPTY_ADDRESS: AddressFields = { street: "", barangay: "", city: "", province: "", postalCode: "" };
+const EMPTY_ADDRESS: AddressFields = { street: "", barangay: "", city: "", province: "Metro Manila", postalCode: "" };
+
+// Hardcoded branch coordinates for nearest-branch calculation
+const BRANCH_COORDS: Record<string, { lat: number; lng: number }> = {
+  "f9437afe-d70e-49df-b33a-f86f11742078": { lat: 14.632216231184879, lng: 121.07551760144263 }, // Arton Rockwell
+  "601c564b-ce8e-48f0-b7b2-f48e2fefb884": { lat: 14.580401046904841, lng: 121.06478171994054 }, // Ayala 30th
+  "93084732-fcd9-4cd0-95d8-45342fa70743": { lat: 14.586343706805547, lng: 121.07843234113705 }, // Tiendesitas
+  "c8a3216c-a340-4103-898b-e000699beb52": { lat: 14.635859971943153, lng: 121.06777910492383 }, // Xavierville
+};
 
 const STEP_LABELS: Record<Step, string> = {
   info:     "Your Info",
@@ -338,6 +361,9 @@ export default function BookPage() {
   // Step 3 — branch
   const [branchId, setBranchId] = useState("");
   const [nearestBranchId, setNearestBranchId] = useState("");
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsError, setGpsError] = useState("");
+  const [manualMode, setManualMode] = useState(false);
 
   // Step 4 — services
   const [items, setItems] = useState<SelectedItem[]>([]);
@@ -371,21 +397,47 @@ export default function BookPage() {
     load();
   }, []);
 
-  // Auto-select nearest branch when we have pin coords
+  // Auto-select nearest branch from pin coords (fallback)
   useEffect(() => {
-    if (!pinLatLng || branches.length === 0) return;
+    if (!pinLatLng || branches.length === 0 || nearestBranchId) return;
+    findNearestBranch(pinLatLng.lat, pinLatLng.lng);
+  }, [pinLatLng, branches]);
+
+  function findNearestBranch(lat: number, lng: number) {
     let nearestId = "";
     let nearestDist = Infinity;
     for (const b of branches) {
-      if (!b.lat || !b.lng) continue;
-      const d = haversineKm(pinLatLng.lat, pinLatLng.lng, parseFloat(b.lat), parseFloat(b.lng));
+      const coords = BRANCH_COORDS[b.id];
+      if (!coords) continue;
+      const d = haversineKm(lat, lng, coords.lat, coords.lng);
       if (d < nearestDist) { nearestDist = d; nearestId = b.id; }
     }
     if (nearestId) {
       setNearestBranchId(nearestId);
-      setBranchId((prev) => prev || nearestId); // only auto-set if not manually chosen
+      setBranchId((prev) => (!prev || !manualMode) ? nearestId : prev);
     }
-  }, [pinLatLng, branches]);
+  }
+
+  function requestGPS() {
+    if (!navigator.geolocation) {
+      setGpsError("Geolocation is not supported by your browser.");
+      return;
+    }
+    setGpsLoading(true);
+    setGpsError("");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGpsLoading(false);
+        findNearestBranch(pos.coords.latitude, pos.coords.longitude);
+      },
+      () => {
+        setGpsLoading(false);
+        setGpsError("Could not get your location. Please select a branch manually.");
+        setManualMode(true);
+      },
+      { timeout: 8000, maximumAge: 60000 }
+    );
+  }
 
   // ── Step validation ──────────────────────────────────────────────────────
 
@@ -411,7 +463,7 @@ export default function BookPage() {
     if (!addressFields.street.trim()) errs.street = "Required";
     if (!addressFields.barangay.trim()) errs.barangay = "Required";
     if (!addressFields.city.trim()) errs.city = "Required";
-    if (!addressFields.province.trim()) errs.province = "Required";
+    // province is always "Metro Manila" — no validation needed
     if (!addressFields.postalCode.trim()) errs.postalCode = "Required";
     else if (!/^\d+$/.test(addressFields.postalCode.trim())) errs.postalCode = "Postal code must be numeric";
     setAddressErrors(errs);
@@ -423,7 +475,11 @@ export default function BookPage() {
   }
 
   function handleAddressContinue() {
-    if (validateAddress()) setStep("branch");
+    if (validateAddress()) {
+      setStep("branch");
+      // Auto-trigger GPS on entering branch step if no nearest branch yet
+      if (!nearestBranchId) requestGPS();
+    }
   }
 
   // ── Services logic ───────────────────────────────────────────────────────
@@ -652,8 +708,8 @@ export default function BookPage() {
                     setAddressFields((f) => ({
                       ...f,
                       street: streetVal,
+                      province: "Metro Manila", // always locked
                       ...(cityVal && { city: cityVal }),
-                      ...(provinceVal && { province: provinceVal }),
                       ...(postalVal && { postalCode: postalVal }),
                       ...(barangayVal && !f.barangay && { barangay: barangayVal }),
                     }));
@@ -695,14 +751,21 @@ export default function BookPage() {
                 </div>
                 <div>
                   <label className="mb-2 block text-xs font-medium tracking-widest text-gray-500 uppercase">Province</label>
-                  <input
-                    type="text"
-                    value={addressFields.province}
-                    onChange={(e) => { setAddressFields((f) => ({ ...f, province: e.target.value })); setAddressErrors((e2) => ({ ...e2, province: "" })); }}
-                    placeholder="Cebu"
-                    className={`w-full border bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:outline-none transition-colors ${addressErrors.province ? "border-red-300" : "border-gray-200 focus:border-[#0ABAB5]"}`}
-                  />
-                  {addressErrors.province && <p className="mt-1 text-xs text-red-500">{addressErrors.province}</p>}
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value="Metro Manila"
+                      readOnly
+                      className="w-full border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-400 cursor-not-allowed select-none focus:outline-none"
+                      onFocus={(e) => e.target.blur()}
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300">
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m0 0v2m0-2h2m-2 0H10m9-9a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-400">Aunt Sally's is only currently available in Metro Manila</p>
                 </div>
               </div>
 
@@ -782,19 +845,63 @@ export default function BookPage() {
           {/* ── Step 3: Branch Selection ─────────────────────────────── */}
           {step === "branch" && (
             <div className="space-y-4">
-              <p className="text-sm text-gray-500">
-                {nearestBranchId
-                  ? "We found your nearest branch. You can change it if you prefer."
-                  : "Select your preferred Aunt Sally\u2019s branch."}
-              </p>
+
+              {/* GPS loading state */}
+              {gpsLoading && (
+                <div className="flex items-center gap-3 rounded-sm border border-[#0ABAB5]/20 bg-[#0ABAB5]/5 px-4 py-3">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#0ABAB5] border-t-transparent flex-shrink-0" />
+                  <p className="text-sm text-[#0ABAB5]">Finding your nearest branch…</p>
+                </div>
+              )}
+
+              {/* Recommended branch banner */}
+              {!gpsLoading && nearestBranchId && !manualMode && (
+                <div className="rounded-sm border border-[#0ABAB5]/30 bg-[#0ABAB5]/5 px-4 py-3">
+                  <p className="text-sm font-medium text-[#0ABAB5]">
+                    📍 {branches.find(b => b.id === nearestBranchId)?.name} is recommended — it&apos;s the closest branch to you.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => { setManualMode(true); }}
+                    className="mt-1.5 text-xs text-gray-400 hover:text-gray-600 underline transition-colors"
+                  >
+                    Manually select your preferred Aunt Sally&apos;s branch
+                  </button>
+                </div>
+              )}
+
+              {/* GPS error */}
+              {gpsError && (
+                <div className="rounded-sm border border-amber-200 bg-amber-50 px-4 py-3">
+                  <p className="text-sm text-amber-700">{gpsError}</p>
+                </div>
+              )}
+
+              {/* Manual mode header */}
+              {manualMode && !gpsLoading && (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-gray-500">Select your preferred Aunt Sally&apos;s branch.</p>
+                  {nearestBranchId && (
+                    <button
+                      type="button"
+                      onClick={() => { setManualMode(false); setBranchId(nearestBranchId); }}
+                      className="text-xs text-[#0ABAB5] hover:underline"
+                    >
+                      ← Use recommended
+                    </button>
+                  )}
+                </div>
+              )}
+
               {loadingData ? (
                 <div className="py-8 text-center text-sm text-gray-400">Loading branches…</div>
               ) : (
                 <div className="space-y-2">
-                  {branches.map((b) => (
+                  {/* Show only recommended branch unless in manual mode */}
+                  {(manualMode ? branches : branches.filter(b => b.id === nearestBranchId || !nearestBranchId)).map((b) => (
                     <button
                       key={b.id}
-                      onClick={() => setBranchId(b.id)}
+                      onClick={() => { setBranchId(b.id); if (manualMode) {} }}
                       className={`w-full text-left border p-5 transition-colors ${
                         branchId === b.id ? "border-[#0ABAB5] bg-[#0ABAB5]/5" : "border-gray-100 bg-white hover:border-gray-200"
                       }`}
@@ -821,6 +928,7 @@ export default function BookPage() {
                   ))}
                 </div>
               )}
+
               <div className="flex gap-3">
                 <button onClick={() => setStep("address")} className="flex-1 border border-gray-200 py-4 text-sm font-medium text-gray-500 hover:border-gray-300 transition-colors">
                   ← Back
