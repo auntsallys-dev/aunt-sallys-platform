@@ -195,6 +195,10 @@ export declare const api: {
         success: boolean;
         data: any;
     }>;
+    transferBranch: (orderId: string, branchId: string, notes?: string) => Promise<{
+        success: boolean;
+        data: any;
+    }>;
     driver: {
         getOrders: (branchId?: string) => Promise<{
             success: boolean;
@@ -205,6 +209,14 @@ export declare const api: {
             data: any;
         }>;
         markDelivered: (orderId: string) => Promise<{
+            success: boolean;
+            data: any;
+        }>;
+        collectPayment: (orderId: string, paymentMethod: "cash" | "gcash" | "maya") => Promise<{
+            success: boolean;
+            data: any;
+        }>;
+        selfAssign: (orderId: string) => Promise<{
             success: boolean;
             data: any;
         }>;

@@ -6,13 +6,15 @@ import { useAuth } from "../contexts/AuthContext";
 const STATUS_CONFIG = {
     pending: { label: "Pending", color: "bg-yellow-100 text-yellow-800", next: "confirmed", nextLabel: "Confirm" },
     confirmed: { label: "Confirmed", color: "bg-blue-100 text-blue-800", next: "processing", nextLabel: "Start Processing" },
+    assigned_for_pickup: { label: "Assigned for Pickup", color: "bg-indigo-100 text-indigo-800", next: "confirmed", nextLabel: "Confirm Pickup" },
     processing: { label: "Processing", color: "bg-purple-100 text-purple-800", next: "ready", nextLabel: "Mark Ready" },
     ready: { label: "Ready", color: "bg-green-100 text-green-800", next: "completed", nextLabel: "Complete" },
     out_for_delivery: { label: "Out for Delivery", color: "bg-indigo-100 text-indigo-800", next: "completed", nextLabel: "Mark Delivered" },
+    delivered: { label: "Delivered", color: "bg-green-100 text-green-800" },
     completed: { label: "Completed", color: "bg-gray-100 text-gray-800" },
     cancelled: { label: "Cancelled", color: "bg-red-100 text-red-800" },
 };
-const ACTIVE_STATUSES = ["pending", "confirmed", "processing", "ready", "out_for_delivery"];
+const ACTIVE_STATUSES = ["pending", "confirmed", "assigned_for_pickup", "processing", "ready", "out_for_delivery"];
 function timeAgo(dateStr) {
     const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);

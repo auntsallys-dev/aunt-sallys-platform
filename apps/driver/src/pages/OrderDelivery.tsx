@@ -18,7 +18,13 @@ export function OrderDeliveryPage() {
   async function fetchOrder() {
     try {
       const res = await api.driver.getOrders(user?.branchId);
-      const found = res.data.find((o: any) => o.id === id);
+      // data is now { available_pickup, available_delivery, my_orders }
+      const allOrders = [
+        ...(res.data.available_pickup ?? []),
+        ...(res.data.available_delivery ?? []),
+        ...(res.data.my_orders ?? []),
+      ];
+      const found = allOrders.find((o: any) => o.id === id);
       if (found) setOrder(found);
       else setError("Order not found");
     } catch (err: any) {

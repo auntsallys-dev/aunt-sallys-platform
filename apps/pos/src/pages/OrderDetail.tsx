@@ -3,15 +3,18 @@ import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 
-const STATUS_STEPS = ["pending", "confirmed", "processing", "ready", "completed"];
-const STATUS_CONFIG: Record<string, { label: string; color: string; next?: string; nextLabel?: string }> = {
-  pending: { label: "Pending", color: "bg-yellow-100 text-yellow-800", next: "confirmed", nextLabel: "Confirm Order" },
-  confirmed: { label: "Confirmed", color: "bg-blue-100 text-blue-800", next: "processing", nextLabel: "Start Processing" },
-  processing: { label: "Processing", color: "bg-purple-100 text-purple-800", next: "ready", nextLabel: "Mark Ready" },
-  ready: { label: "Ready for Pickup", color: "bg-green-100 text-green-800", next: "completed", nextLabel: "Complete Order" },
-  out_for_delivery: { label: "Out for Delivery", color: "bg-indigo-100 text-indigo-800", next: "completed", nextLabel: "Mark Delivered" },
-  completed: { label: "Completed", color: "bg-gray-100 text-gray-800" },
-  cancelled: { label: "Cancelled", color: "bg-red-100 text-red-800" },
+const STATUS_STEPS = ["pending", "confirmed", "out_for_pickup", "processing", "ready", "out_for_delivery", "delivered"];
+const STATUS_CONFIG: Record<string, { label: string; color: string; next?: string; nextLabel?: string; driverAssign?: "pickup" | "delivery"; readOnly?: boolean }> = {
+  pending:           { label: "Pending",               color: "bg-yellow-100 text-yellow-800", next: "confirmed",  nextLabel: "Confirm Order" },
+  confirmed:         { label: "Confirmed",             color: "bg-blue-100 text-blue-800",     driverAssign: "pickup" },
+  out_for_pickup:    { label: "Driver on the way for pickup", color: "bg-cyan-100 text-cyan-800", readOnly: true },
+  processing:        { label: "Processing",            color: "bg-purple-100 text-purple-800", next: "ready",      nextLabel: "Mark Ready" },
+  ready:             { label: "Ready for Delivery",    color: "bg-green-100 text-green-800",   driverAssign: "delivery" },
+  out_for_delivery:  { label: "Out for Delivery",      color: "bg-indigo-100 text-indigo-800", readOnly: true },
+  delivered:         { label: "Delivered",             color: "bg-emerald-100 text-emerald-800", readOnly: true },
+  completed:         { label: "Completed",             color: "bg-gray-100 text-gray-800" },
+  cancelled:         { label: "Cancelled",             color: "bg-red-100 text-red-800" },
+  assigned_for_pickup: { label: "Assigned for Pickup", color: "bg-blue-100 text-blue-800", readOnly: true },
 };
 
 const NON_EDITABLE = ["completed", "delivered", "cancelled"];
@@ -280,6 +283,10 @@ export function OrderDetailPage() {
   const [refundLoading, setRefundLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
+  // Driver assignment
+  const [drivers, setDrivers] = useState<any[]>([]);
+  const [selectedDriverId, setSelectedDriverId] = useState("");
+  const [assigningDriver, setAssigningDriver] = useState(false);
 
   async function fetchOrder() {
     if (!id) return;
@@ -293,7 +300,23 @@ export function OrderDetailPage() {
     }
   }
 
+  async function fetchDrivers(branchId: string) {
+    try {
+      const res = await api.admin.drivers.list(branchId);
+      setDrivers(res.data);
+    } catch {
+      // non-critical
+    }
+  }
+
   useEffect(() => { fetchOrder(); }, [id]);
+
+  useEffect(() => {
+    if (order && (order.status === "confirmed" || order.status === "ready")) {
+      const branchId = order.branchId ?? user?.branchId;
+      if (branchId) fetchDrivers(branchId);
+    }
+  }, [order?.status]);
 
   async function advanceStatus() {
     if (!order) return;
@@ -353,6 +376,21 @@ export function OrderDetailPage() {
       setError(err.message ?? "Failed to cancel order");
     } finally {
       setCancelLoading(false);
+    }
+  }
+
+  async function assignDriver() {
+    if (!order || !selectedDriverId) return;
+    setAssigningDriver(true);
+    setError("");
+    try {
+      await api.assignDriver(order.id, selectedDriverId);
+      setSelectedDriverId("");
+      await fetchOrder();
+    } catch (err: any) {
+      setError(err.message ?? "Failed to assign driver");
+    } finally {
+      setAssigningDriver(false);
     }
   }
 
@@ -507,6 +545,44 @@ export function OrderDetailPage() {
           </button>
         )}
       </div>
+
+      {/* Driver assignment panel */}
+      {config.driverAssign && (
+        <div className="mt-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <p className="mb-3 text-sm font-semibold text-gray-700">
+            {config.driverAssign === "pickup" ? "🚗 Assign Driver for Pickup" : "🚚 Assign Driver for Delivery"}
+          </p>
+          <div className="flex gap-2">
+            <select
+              value={selectedDriverId}
+              onChange={(e) => setSelectedDriverId(e.target.value)}
+              className="flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
+            >
+              <option value="">Select driver…</option>
+              {drivers.map((d: any) => (
+                <option key={d.id} value={d.id}>
+                  {d.firstName} {d.lastName}
+                  {d.phone ? ` · ${d.phone}` : ""}
+                </option>
+              ))}
+            </select>
+            <button
+              disabled={!selectedDriverId || assigningDriver}
+              onClick={assignDriver}
+              className="rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-40 transition-colors"
+            >
+              {assigningDriver ? "Assigning…" : "Assign"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Read-only status badges */}
+      {config.readOnly && (
+        <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-center text-sm font-medium text-gray-600">
+          {config.label}
+        </div>
+      )}
 
       {canCancel && (
         <div className="mt-3">

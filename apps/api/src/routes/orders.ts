@@ -294,58 +294,48 @@ ordersRoutes.patch("/:id/assign-driver", authenticate, async (c) => {
   const [driver] = await db.select().from(users).where(eq(users.id, driverId)).limit(1);
   if (!driver) return c.json({ success: false, error: "Driver not found" }, 404);
 
-  // Upsert delivery record
-  const [existingDelivery] = await db.select().from(deliveries).where(eq(deliveries.orderId, id)).limit(1);
+  // Determine leg type based on current order status
+  let legType: "pickup" | "delivery";
+  let newStatus: string;
 
-  let delivery;
-  if (existingDelivery) {
-    const [updated] = await db.update(deliveries)
-      .set({
-        driverId,
-        driverName: `${driver.firstName} ${driver.lastName}`.trim(),
-        driverPhone: driver.phone ?? null,
-        status: "assigned",
-        updatedAt: new Date(),
-      })
-      .where(eq(deliveries.orderId, id))
-      .returning();
-    delivery = updated;
-  } else {
-    const [created] = await db.insert(deliveries).values({
-      orderId: id,
-      branchId: order.branchId,
-      type: "delivery",
-      status: "assigned",
-      driverId,
-      driverName: `${driver.firstName} ${driver.lastName}`.trim(),
-      driverPhone: driver.phone ?? null,
-    }).returning();
-    delivery = created;
-  }
-
-  // Advance order status if appropriate
-  // Accept driverId from body for self-assign (driver claims their own orders)
-  if (["confirmed", "processing"].includes(order.status)) {
-    await db.update(orders)
-      .set({ status: "assigned_for_pickup", updatedAt: new Date() })
-      .where(eq(orders.id, id));
-    await db.insert(orderStatusHistory).values({
-      orderId: id,
-      status: "assigned_for_pickup",
-      notes: `Driver assigned: ${driver.firstName} ${driver.lastName}`,
-      changedBy: authUser.id,
-    });
+  if (order.status === "confirmed") {
+    legType = "pickup";
+    newStatus = "out_for_pickup";
   } else if (order.status === "ready") {
-    await db.update(orders)
-      .set({ status: "out_for_delivery", updatedAt: new Date() })
-      .where(eq(orders.id, id));
-    await db.insert(orderStatusHistory).values({
-      orderId: id,
-      status: "out_for_delivery",
-      notes: `Driver assigned: ${driver.firstName} ${driver.lastName}`,
-      changedBy: authUser.id,
-    });
+    legType = "delivery";
+    newStatus = "out_for_delivery";
+  } else {
+    return c.json({ success: false, error: `Cannot assign driver when order status is '${order.status}'` }, 400);
   }
+
+  // Guard against double-assign: check if a delivery record of this type already exists with a driverId
+  const existingLegs = await db.select().from(deliveries).where(eq(deliveries.orderId, id));
+  const alreadyAssigned = existingLegs.find((d) => d.type === legType && d.driverId !== null);
+  if (alreadyAssigned) {
+    return c.json({ success: false, error: `A driver is already assigned for the ${legType} leg of this order` }, 409);
+  }
+
+  // Insert new delivery leg record
+  const [delivery] = await db.insert(deliveries).values({
+    orderId: id,
+    branchId: order.branchId,
+    type: legType,
+    status: "assigned",
+    driverId,
+    driverName: `${driver.firstName} ${driver.lastName}`.trim(),
+    driverPhone: driver.phone ?? null,
+  }).returning();
+
+  // Advance order status
+  await db.update(orders)
+    .set({ status: newStatus, updatedAt: new Date() })
+    .where(eq(orders.id, id));
+  await db.insert(orderStatusHistory).values({
+    orderId: id,
+    status: newStatus,
+    notes: `Driver assigned for ${legType}: ${driver.firstName} ${driver.lastName}`,
+    changedBy: authUser.id,
+  });
 
   return c.json({ success: true, data: { delivery, driverName: `${driver.firstName} ${driver.lastName}` } });
 });

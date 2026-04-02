@@ -80,6 +80,7 @@ export const api = {
         delete: (id) => request("DELETE", `/branches/${id}`),
     },
     assignDriver: (orderId, driverId) => request("PATCH", `/orders/${orderId}/assign-driver`, { driverId }),
+    transferBranch: (orderId, branchId, notes) => request("PATCH", `/orders/${orderId}/transfer-branch`, { branchId, notes }),
     driver: {
         getOrders: (branchId) => {
             const qs = branchId ? `?branchId=${branchId}` : "";
@@ -87,6 +88,8 @@ export const api = {
         },
         postLocation: (lat, lng, branchId, orderId) => request("POST", "/drivers/location", { lat, lng, branchId, orderId }),
         markDelivered: (orderId) => request("PATCH", `/drivers/orders/${orderId}/deliver`, {}),
+        collectPayment: (orderId, paymentMethod) => request("PATCH", `/drivers/orders/${orderId}/collect-payment`, { paymentMethod }),
+        selfAssign: (orderId) => request("PATCH", `/orders/${orderId}/assign-driver`, {}),
     },
 };
 //# sourceMappingURL=api.js.map
