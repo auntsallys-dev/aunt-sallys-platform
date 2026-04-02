@@ -19,9 +19,9 @@ export function LoginPage() {
       const res = await api.auth.login(email.trim(), password);
       const user = res.data.user;
 
-      // Only allow staff and branch_admin roles
-      if (!["staff", "branch_admin", "org_admin", "superadmin"].includes(user.role)) {
-        setError("Access denied. Driver accounts must have staff or branch_admin role.");
+      // Only allow driver role
+      if (user.role !== "driver") {
+        setError("Access denied. This app is for drivers only.");
         return;
       }
 
