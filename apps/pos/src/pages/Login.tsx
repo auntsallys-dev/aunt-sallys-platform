@@ -38,7 +38,7 @@ export function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo / brand */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-2 flex items-center justify-center" style={{ width: 180, height: 90 }}>
+          <div className="mx-auto mb-2 flex items-center justify-center w-full" style={{ maxWidth: 480, height: 220 }}>
             <img
               src="/aunt-sallys-platform/logo.jpg"
               alt="Aunt Sally's Laundry"
