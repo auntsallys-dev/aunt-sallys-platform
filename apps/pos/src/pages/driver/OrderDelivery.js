@@ -24,9 +24,21 @@ export function DriverOrderDeliveryPage() {
     const leafletMap = useRef(null);
     async function fetchOrder() {
         try {
-            const branchId = user?.branchId ?? undefined;
-            const res = await api.driver.getOrders(branchId);
-            const found = res.data.find((o) => o.id === id);
+            const res = await api.driver.getOrders(user?.branchId ?? undefined);
+            // Handle both new shape { available_pickup, available_delivery, my_orders } and old flat array
+            let allOrders;
+            if (Array.isArray(res.data)) {
+                allOrders = res.data;
+            }
+            else {
+                const d = res.data;
+                allOrders = [
+                    ...(d.available_pickup ?? []),
+                    ...(d.available_delivery ?? []),
+                    ...(d.my_orders ?? []),
+                ];
+            }
+            const found = allOrders.find((o) => o.id === id);
             if (found) {
                 setOrder(found);
                 if (found.paymentStatus === "paid")

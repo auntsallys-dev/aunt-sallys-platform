@@ -202,7 +202,7 @@ export declare const api: {
     driver: {
         getOrders: (branchId?: string) => Promise<{
             success: boolean;
-            data: any[];
+            data: any;
         }>;
         postLocation: (lat: number, lng: number, branchId: string, orderId?: string) => Promise<{
             success: boolean;
@@ -217,6 +217,10 @@ export declare const api: {
             data: any;
         }>;
         selfAssign: (orderId: string) => Promise<{
+            success: boolean;
+            data: any;
+        }>;
+        markPickedUp: (orderId: string) => Promise<{
             success: boolean;
             data: any;
         }>;

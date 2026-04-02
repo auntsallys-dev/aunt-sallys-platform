@@ -46,7 +46,7 @@ export const api = {
         create: (data) => request("POST", "/orders", data),
         edit: (id, data) => request("PATCH", `/orders/${id}`, data),
         updateStatus: (id, status, notes) => request("PATCH", `/orders/${id}/status`, { status, notes }),
-        cancel: (id) => request("PATCH", `/orders/${id}`, { status: "cancelled" }),
+        cancel: (id) => request("PATCH", `/orders/${id}/status`, { status: "cancelled" }),
     },
     payments: {
         create: (data) => request("POST", "/payments", data),
@@ -89,7 +89,8 @@ export const api = {
         postLocation: (lat, lng, branchId, orderId) => request("POST", "/drivers/location", { lat, lng, branchId, orderId }),
         markDelivered: (orderId) => request("PATCH", `/drivers/orders/${orderId}/deliver`, {}),
         collectPayment: (orderId, paymentMethod) => request("PATCH", `/drivers/orders/${orderId}/collect-payment`, { paymentMethod }),
-        selfAssign: (orderId) => request("PATCH", `/orders/${orderId}/assign-driver`, {}),
+        selfAssign: (orderId) => request("PATCH", `/drivers/orders/${orderId}/self-assign`, {}),
+        markPickedUp: (orderId) => request("PATCH", `/drivers/orders/${orderId}/mark-picked-up`, {}),
     },
 };
 //# sourceMappingURL=api.js.map

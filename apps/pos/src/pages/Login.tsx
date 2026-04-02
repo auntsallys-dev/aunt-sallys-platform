@@ -38,11 +38,14 @@ export function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo / brand */}
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-600 shadow-lg">
-            <span className="text-2xl font-bold text-white">AS</span>
+          <div className="mx-auto mb-2 flex items-center justify-center" style={{ width: 180, height: 90 }}>
+            <img
+              src="/aunt-sallys-platform/logo.jpg"
+              alt="Aunt Sally's Laundry"
+              style={{ width: "100%", height: "100%", objectFit: "contain", mixBlendMode: "multiply" }}
+            />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Aunt Sally's Laundry</h1>
-          <p className="mt-1 text-sm text-gray-500">Point of Sale — Staff Login</p>
+          <p className="mt-1 text-sm text-gray-500">IBMS Portal</p>
         </div>
 
         <div className="rounded-2xl bg-white p-8 shadow-lg ring-1 ring-gray-200">
