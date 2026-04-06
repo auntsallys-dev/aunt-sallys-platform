@@ -289,6 +289,59 @@ export function OrderDetailPage() {
   const [selectedDriverId, setSelectedDriverId] = useState("");
   const [assigningDriver, setAssigningDriver] = useState(false);
 
+  function printReceipt(order: any) {
+    const items = order.items ?? [];
+    const branchName = order.branchName ?? "Aunt Sally's Laundry";
+    const date = new Date(order.createdAt).toLocaleString("en-PH", { timeZone: "Asia/Manila", dateStyle: "medium", timeStyle: "short" });
+    const itemRows = items.map((i: any) =>
+      `<tr><td>${i.serviceName ?? i.customName ?? "Service"}</td><td style="text-align:right">x${i.quantity}</td><td style="text-align:right">₱${parseFloat(i.totalPrice ?? i.unitPrice ?? "0").toFixed(2)}</td></tr>`
+    ).join("");
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>Receipt ${order.orderNumber}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; margin: 0 auto; padding: 8px; }
+  .center { text-align: center; }
+  .bold { font-weight: bold; }
+  .divider { border-top: 1px dashed #000; margin: 6px 0; }
+  h1 { font-size: 15px; text-align: center; margin-bottom: 2px; }
+  h2 { font-size: 11px; text-align: center; font-weight: normal; margin-bottom: 6px; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 2px 0; vertical-align: top; }
+  .total-row td { font-weight: bold; font-size: 13px; padding-top: 4px; }
+  .footer { text-align: center; margin-top: 10px; font-size: 11px; }
+  @media print { @page { margin: 0; size: 80mm auto; } }
+</style></head>
+<body>
+  <h1>Aunt Sally's Laundry</h1>
+  <h2>${branchName}</h2>
+  <div class="divider"></div>
+  <div><span class="bold">Order #:</span> ${order.orderNumber}</div>
+  <div><span class="bold">Customer:</span> ${order.customerName}</div>
+  <div><span class="bold">Date:</span> ${date}</div>
+  <div><span class="bold">Type:</span> ${order.orderType === "walk_in" ? "Walk-in" : order.returnMethod === "self_pickup" ? "Self Pickup" : "Pickup & Delivery"}</div>
+  <div class="divider"></div>
+  <table>
+    <tr><td><b>Service</b></td><td style="text-align:right"><b>Qty</b></td><td style="text-align:right"><b>Amount</b></td></tr>
+    ${itemRows}
+    <tr><td colspan="3"><div class="divider"></div></td></tr>
+    <tr class="total-row"><td colspan="2">TOTAL</td><td style="text-align:right">₱${parseFloat(order.total).toFixed(2)}</td></tr>
+    <tr><td colspan="2">Payment</td><td style="text-align:right">${order.paymentStatus === "paid" ? "PAID" : "UNPAID"}</td></tr>
+  </table>
+  <div class="divider"></div>
+  <div class="footer">
+    <div>Track: auntsallyslaundry.com/track</div>
+    <div>Code: ${order.trackingCode ?? ""}</div>
+    <div style="margin-top:6px">Thank you! 🫧</div>
+  </div>
+  <script>window.onload = function() { window.print(); window.onafterprint = function() { window.close(); }; }</script>
+</body></html>`;
+
+    const w = window.open("", "_blank", "width=350,height=600");
+    if (w) { w.document.write(html); w.document.close(); }
+  }
+
   async function fetchOrder() {
     if (!id) return;
     try {
@@ -548,6 +601,16 @@ export function OrderDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Print Receipt */}
+      {(order.paymentStatus === "paid" || ["delivered","collected"].includes(order.status)) && (
+        <button
+          onClick={() => printReceipt(order)}
+          className="w-full rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 mb-3"
+        >
+          🖨️ Print Receipt
+        </button>
+      )}
 
       {/* Actions */}
       <div className="flex gap-3">
