@@ -211,56 +211,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Subscription Plans */}
-      <section className="bg-gray-50 py-20 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-14">
-            <p className="text-xs tracking-[0.3em] uppercase mb-3" style={{ color: TEAL }}>
-              Save More
-            </p>
-            <h2 className="font-serif text-4xl font-light text-gray-900">Monthly Plans</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {PLANS.map((plan) => (
-              <div
-                key={plan.name}
-                className={`p-8 bg-white ${plan.popular ? "shadow-sm" : "border border-gray-100"}`}
-                style={plan.popular ? { border: `1px solid ${TEAL}` } : {}}
-              >
-                {plan.popular && (
-                  <p className="text-xs tracking-widest uppercase mb-3" style={{ color: TEAL }}>
-                    Most Popular
-                  </p>
-                )}
-                <h3 className="font-serif text-2xl font-light text-gray-900 mb-1">{plan.name}</h3>
-                <div className="flex items-end gap-1 mb-6">
-                  <span className="text-3xl font-medium" style={{ color: TEAL }}>{plan.price}</span>
-                  <span className="text-sm text-gray-400 pb-1">{plan.period}</span>
-                </div>
-                <ul className="space-y-2 mb-8">
-                  {plan.perks.map((p) => (
-                    <li key={p} className="flex items-center gap-2 text-sm text-gray-600">
-                      <span style={{ color: TEAL }}>✓</span>
-                      {p}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/book"
-                  className="block text-center py-2.5 text-sm tracking-widest uppercase transition-colors"
-                  style={
-                    plan.popular
-                      ? { backgroundColor: TEAL, color: "#fff" }
-                      : { border: "1px solid #d1d5db", color: "#374151" }
-                  }
-                >
-                  Get Started
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Subscription Plans — temporarily hidden until finalized */}
 
       {/* CTA */}
       <section className="py-20 px-4 text-center" style={{ backgroundColor: TEAL }}>
