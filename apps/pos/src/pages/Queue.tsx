@@ -14,6 +14,7 @@ interface QueueOrder {
   orderType: string;
   paymentStatus: string;
   createdAt: string;
+  needsClarification?: boolean;
   items: Array<{ serviceName: string; quantity: string; priceUnit: string }>;
 }
 
@@ -181,7 +182,17 @@ export function QueuePage() {
               <div key={order.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
                 <div className="mb-3 flex items-start justify-between">
                   <div>
-                    <div className="font-mono text-xs font-semibold text-gray-500">{order.orderNumber}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="font-mono text-xs font-semibold text-gray-500">{order.orderNumber}</div>
+                      {order.needsClarification && order.status === "pending" && (
+                        <span
+                          className="inline-flex items-center gap-0.5 rounded-full bg-red-50 px-1.5 py-0.5 text-xs font-semibold text-red-500 ring-1 ring-red-200"
+                          title="A customer with this name or number already exists. Verify identity before confirming."
+                        >
+                          ⚠️ clarify
+                        </span>
+                      )}
+                    </div>
                     <div className="font-bold text-gray-900">{order.customerName}</div>
                     <div className="mt-0.5 text-sm text-gray-500 line-clamp-1">{servicesSummary}</div>
                   </div>
