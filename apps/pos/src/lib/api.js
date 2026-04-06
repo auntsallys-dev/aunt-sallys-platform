@@ -53,6 +53,14 @@ export const api = {
     },
     analytics: {
         overview: (period) => request("GET", `/analytics/overview?period=${period}`),
+        dashboard: (params) => {
+            const qs = new URLSearchParams();
+            if (params.branchId && params.branchId !== "all")
+                qs.set("branchId", params.branchId);
+            qs.set("from", params.from);
+            qs.set("to", params.to);
+            return request("GET", `/admin/analytics?${qs}`);
+        },
     },
     admin: {
         customers: {

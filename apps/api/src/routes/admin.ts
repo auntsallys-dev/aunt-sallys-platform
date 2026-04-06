@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq, desc, sql, ilike, or } from "drizzle-orm";
+import { eq, desc, sql, ilike, or, gte, lte, and } from "drizzle-orm";
 import { db, customers, orders, orderItems, services, users, branches } from "@aunt-sallys/db";
 import { authenticate } from "../middleware/auth.js";
 
@@ -267,4 +267,182 @@ adminRoutes.get("/drivers/locations", async (c) => {
   `);
 
   return c.json({ success: true, data: Array.from(locations as any) });
+});
+
+// GET /api/v1/admin/analytics
+adminRoutes.get("/analytics", async (c) => {
+  const user = c.get("authUser");
+  if (user.role !== "superadmin" && user.role !== "org_admin") {
+    return c.json({ success: false, error: "Forbidden" }, 403);
+  }
+
+  const branchId = c.req.query("branchId") ?? null;
+  const fromStr = c.req.query("from");
+  const toStr = c.req.query("to");
+
+  if (!fromStr || !toStr) {
+    return c.json({ success: false, error: "Missing required params: from, to" }, 400);
+  }
+
+  // Build date range — treat from/to as PH local dates (UTC+8)
+  const fromDate = new Date(`${fromStr}T00:00:00+08:00`);
+  const toDate   = new Date(`${toStr}T23:59:59+08:00`);
+
+  // Build filter conditions
+  const conditions = [
+    gte(orders.createdAt, fromDate),
+    lte(orders.createdAt, toDate),
+  ];
+  if (branchId) conditions.push(eq(orders.branchId, branchId));
+
+  const whereClause = conditions.length > 1 ? and(...conditions) : conditions[0];
+
+  // Fetch all orders in range
+  const allOrders = await db
+    .select({
+      id: orders.id,
+      orderNumber: orders.orderNumber,
+      total: orders.total,
+      status: orders.status,
+      orderType: orders.orderType,
+      branchId: orders.branchId,
+      customerId: orders.customerId,
+      createdAt: orders.createdAt,
+    })
+    .from(orders)
+    .where(whereClause)
+    .orderBy(desc(orders.createdAt));
+
+  const activeOrders = allOrders.filter((o) => o.status !== "cancelled");
+  const totalRevenue = activeOrders.reduce((s, o) => s + parseFloat(o.total as string), 0);
+  const totalOrders  = allOrders.length;
+  const completedOrders = allOrders.filter((o) => ["delivered", "completed", "collected"].includes(o.status)).length;
+  const cancelledOrders = allOrders.filter((o) => o.status === "cancelled").length;
+  const avgOrderValue = activeOrders.length > 0 ? totalRevenue / activeOrders.length : 0;
+
+  // New customers in date range
+  const customerConditions = [gte(customers.createdAt, fromDate), lte(customers.createdAt, toDate)];
+  const newCustomers = await db.$count(customers, and(...customerConditions));
+
+  // Orders by status
+  const statusMap: Record<string, number> = {};
+  for (const o of allOrders) {
+    statusMap[o.status] = (statusMap[o.status] ?? 0) + 1;
+  }
+  const ordersByStatus = Object.entries(statusMap).map(([status, count]) => ({ status, count }));
+
+  // Orders by type
+  const typeMap: Record<string, number> = {};
+  for (const o of allOrders) {
+    typeMap[o.orderType] = (typeMap[o.orderType] ?? 0) + 1;
+  }
+  const ordersByType = Object.entries(typeMap).map(([type, count]) => ({ type, count }));
+
+  // Revenue by day — group by PH-local date
+  const dayMap: Record<string, { revenue: number; orders: number }> = {};
+  for (const o of activeOrders) {
+    const ph = new Date((o.createdAt as Date).getTime() + 8 * 60 * 60 * 1000);
+    const dateStr = ph.toISOString().split("T")[0];
+    if (!dayMap[dateStr]) dayMap[dateStr] = { revenue: 0, orders: 0 };
+    dayMap[dateStr].revenue += parseFloat(o.total as string);
+    dayMap[dateStr].orders  += 1;
+  }
+  const revenueByDay = Object.entries(dayMap)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, v]) => ({ date, revenue: Math.round(v.revenue * 100) / 100, orders: v.orders }));
+
+  // Top services
+  const orderIds = allOrders.map((o) => o.id);
+  let topServices: { name: string; quantity: number; revenue: number }[] = [];
+  if (orderIds.length > 0) {
+    const itemRows = await db
+      .select({
+        serviceName: services.name,
+        customName: orderItems.customName,
+        totalPrice: orderItems.totalPrice,
+        quantity: orderItems.quantity,
+      })
+      .from(orderItems)
+      .leftJoin(services, eq(services.id, orderItems.serviceId))
+      .where(
+        sql`${orderItems.orderId} = ANY(ARRAY[${sql.join(orderIds.map((id) => sql`${id}::uuid`), sql`, `)}])`
+      );
+
+    const svcMap: Record<string, { quantity: number; revenue: number }> = {};
+    for (const row of itemRows) {
+      const name = row.serviceName ?? row.customName ?? "Unknown";
+      if (!svcMap[name]) svcMap[name] = { quantity: 0, revenue: 0 };
+      svcMap[name].quantity += parseFloat(row.quantity as string);
+      svcMap[name].revenue  += parseFloat(row.totalPrice as string);
+    }
+    topServices = Object.entries(svcMap)
+      .map(([name, v]) => ({ name, quantity: Math.round(v.quantity * 100) / 100, revenue: Math.round(v.revenue * 100) / 100 }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 10);
+  }
+
+  // Full orders list enriched with customer + branch name
+  const branchList = await db.select({ id: branches.id, name: branches.name }).from(branches);
+  const branchMap: Record<string, string> = {};
+  for (const b of branchList) branchMap[b.id] = b.name;
+
+  // Fetch customer names for orders that have customerId
+  const customerIds = [...new Set(allOrders.map((o) => o.customerId).filter(Boolean))] as string[];
+  const customerMap: Record<string, string> = {};
+  if (customerIds.length > 0) {
+    const custRows = await db
+      .select({ id: customers.id, firstName: customers.firstName, lastName: customers.lastName })
+      .from(customers)
+      .where(
+        sql`${customers.id} = ANY(ARRAY[${sql.join(customerIds.map((id) => sql`${id}::uuid`), sql`, `)}])`
+      );
+    for (const c of custRows) customerMap[c.id] = `${c.firstName} ${c.lastName}`.trim();
+  }
+
+  // Build order items map for services summary per order
+  const orderItemsMap: Record<string, string[]> = {};
+  if (orderIds.length > 0) {
+    const allItemRows = await db
+      .select({
+        orderId: orderItems.orderId,
+        serviceName: services.name,
+        customName: orderItems.customName,
+        quantity: orderItems.quantity,
+      })
+      .from(orderItems)
+      .leftJoin(services, eq(services.id, orderItems.serviceId))
+      .where(
+        sql`${orderItems.orderId} = ANY(ARRAY[${sql.join(orderIds.map((id) => sql`${id}::uuid`), sql`, `)}])`
+      );
+    for (const row of allItemRows) {
+      const name = row.serviceName ?? row.customName ?? "Unknown";
+      const qty  = parseFloat(row.quantity as string);
+      const label = qty !== 1 ? `${name} x${qty}` : name;
+      if (!orderItemsMap[row.orderId]) orderItemsMap[row.orderId] = [];
+      orderItemsMap[row.orderId].push(label);
+    }
+  }
+
+  const enrichedOrders = allOrders.map((o) => ({
+    orderNumber: o.orderNumber,
+    customerName: o.customerId ? (customerMap[o.customerId] ?? "Guest") : "Guest",
+    branchName: branchMap[o.branchId] ?? "Unknown",
+    status: o.status,
+    orderType: o.orderType,
+    total: parseFloat(o.total as string).toFixed(2),
+    createdAt: (o.createdAt as Date).toISOString(),
+    services: (orderItemsMap[o.id] ?? []).join(", ") || "—",
+  }));
+
+  return c.json({
+    success: true,
+    data: {
+      summary: { totalOrders, totalRevenue, avgOrderValue, newCustomers, completedOrders, cancelledOrders },
+      ordersByStatus,
+      ordersByType,
+      revenueByDay,
+      topServices,
+      orders: enrichedOrders,
+    },
+  });
 });

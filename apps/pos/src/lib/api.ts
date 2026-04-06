@@ -68,6 +68,13 @@ export const api = {
   analytics: {
     overview: (period: "today" | "week" | "month") =>
       request<{ success: boolean; data: any }>("GET", `/analytics/overview?period=${period}`),
+    dashboard: (params: { branchId?: string; from: string; to: string }) => {
+      const qs = new URLSearchParams();
+      if (params.branchId && params.branchId !== "all") qs.set("branchId", params.branchId);
+      qs.set("from", params.from);
+      qs.set("to", params.to);
+      return request<{ success: boolean; data: any }>("GET", `/admin/analytics?${qs}`);
+    },
   },
   admin: {
     customers: {

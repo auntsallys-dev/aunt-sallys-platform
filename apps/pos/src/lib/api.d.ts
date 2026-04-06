@@ -95,6 +95,14 @@ export declare const api: {
             success: boolean;
             data: any;
         }>;
+        dashboard: (params: {
+            branchId?: string;
+            from: string;
+            to: string;
+        }) => Promise<{
+            success: boolean;
+            data: any;
+        }>;
     };
     admin: {
         customers: {
