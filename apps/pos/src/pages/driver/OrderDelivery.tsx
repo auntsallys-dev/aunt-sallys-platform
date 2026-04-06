@@ -214,8 +214,8 @@ export function DriverOrderDeliveryPage() {
   const delivery = order.delivery;
   const custLat = delivery?.lat ? parseFloat(delivery.lat) : null;
   const custLng = delivery?.lng ? parseFloat(delivery.lng) : null;
-  // Address: try delivery.address (enriched), then fall back to notes field (which has pickup address)
-  const address = delivery?.address ?? delivery?.addressLine ?? (order?.notes?.split("\n")[0] ?? "");
+  // Address: show for ALL statuses (pickup and delivery legs)
+  const address = delivery?.addressLine ?? delivery?.address ?? order?.address ?? (order?.notes?.split("\n")[0] ?? "");
 
   const wazeUrl = custLat && custLng
     ? `https://waze.com/ul?ll=${custLat},${custLng}&navigate=yes&zoom=17`

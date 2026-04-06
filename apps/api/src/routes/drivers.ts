@@ -139,7 +139,9 @@ driversRoutes.get("/orders", async (c) => {
 
     // Most recent leg for map/address enrichment
     const latestDelivery = orderDeliveries[0] ?? null;
-    let enrichedDelivery: any = latestDelivery;
+    let enrichedDelivery: any = latestDelivery ?? {};
+
+    // Try to get address from delivery leg first
     if (latestDelivery?.addressId) {
       const [addr] = await db.select().from(customerAddresses)
         .where(eq(customerAddresses.id, latestDelivery.addressId))
@@ -152,6 +154,30 @@ driversRoutes.get("/orders", async (c) => {
           lng: addr.lng ?? null,
         };
       }
+    }
+
+    // Always enrich with order-level address (pickupAddressId / deliveryAddressId)
+    // so address shows even before a delivery leg exists (e.g. pickup queue)
+    if (!enrichedDelivery.addressLine) {
+      const addrId = order.pickupAddressId ?? order.deliveryAddressId ?? null;
+      if (addrId) {
+        const [addr] = await db.select().from(customerAddresses)
+          .where(eq(customerAddresses.id, addrId))
+          .limit(1);
+        if (addr) {
+          enrichedDelivery = {
+            ...enrichedDelivery,
+            addressLine: addr.addressLine,
+            lat: addr.lat ?? null,
+            lng: addr.lng ?? null,
+          };
+        }
+      }
+    }
+
+    // Final fallback: use notes if available
+    if (!enrichedDelivery.addressLine && order.notes) {
+      enrichedDelivery = { ...enrichedDelivery, addressLine: order.notes.split("\n")[0] };
     }
 
     // Check if I did the pickup leg (for ⭐ badge)
