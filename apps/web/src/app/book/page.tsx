@@ -364,6 +364,7 @@ export default function BookPage() {
   const [name, setName]       = useState("");
   const [phone, setPhone]     = useState("");
   const [email, setEmail]     = useState("");
+  const [emailOptIn, setEmailOptIn] = useState(false);
   const [nameError, setNameError]   = useState("");
   const [phoneError, setPhoneError] = useState("");
 
@@ -704,6 +705,20 @@ export default function BookPage() {
                   placeholder="maria@example.com"
                   className="w-full border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:border-[#0ABAB5] focus:outline-none transition-colors"
                 />
+                {email.trim().length > 3 && (
+                  <label className="mt-2.5 flex items-center gap-2.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={emailOptIn}
+                      onChange={(e) => {
+                        setEmailOptIn(e.target.checked);
+                        setClientProfile((p) => ({ ...p, emailOrderUpdates: e.target.checked }));
+                      }}
+                      className="h-4 w-4 rounded border-gray-300 accent-[#0ABAB5] cursor-pointer"
+                    />
+                    <span className="text-sm text-gray-600">Keep me posted on my order status via email</span>
+                  </label>
+                )}
               </div>
 
               {/* ── New Client Profile Section ── */}
