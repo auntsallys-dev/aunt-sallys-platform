@@ -107,6 +107,14 @@ export declare const api: {
                 data: any[];
                 meta: any;
             }>;
+            get: (customerId: string) => Promise<{
+                success: boolean;
+                data: any;
+            }>;
+            update: (customerId: string, data: Record<string, unknown>) => Promise<{
+                success: boolean;
+                data: any;
+            }>;
             orderHistory: (customerId: string) => Promise<{
                 success: boolean;
                 data: any;

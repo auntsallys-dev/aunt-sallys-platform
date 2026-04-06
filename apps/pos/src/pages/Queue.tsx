@@ -9,6 +9,7 @@ interface QueueOrder {
   id: string;
   orderNumber: string;
   customerName: string;
+  bookedAs?: string;
   total: string;
   status: OrderStatus;
   orderType: string;
@@ -187,13 +188,18 @@ export function QueuePage() {
                       {order.needsClarification && order.status === "pending" && (
                         <span
                           className="inline-flex items-center gap-0.5 rounded-full bg-red-50 px-1.5 py-0.5 text-xs font-semibold text-red-500 ring-1 ring-red-200"
-                          title="A customer with this name or number already exists. Verify identity before confirming."
+                          title={order.bookedAs ? `Booked as "${order.bookedAs}" but registered as "${order.customerName}". Verify identity before confirming.` : "A customer with this name or number already exists. Verify identity before confirming."}
                         >
-                          ⚠️ clarify
+                          {order.bookedAs ? `⚠️ Booked as "${order.bookedAs}"` : "⚠️ clarify"}
                         </span>
                       )}
                     </div>
                     <div className="font-bold text-gray-900">{order.customerName}</div>
+                    {order.needsClarification && order.bookedAs && (
+                      <div className="mt-1 rounded-md bg-red-50 px-2 py-1 text-xs text-red-600 ring-1 ring-red-200">
+                        ⚠️ Booked as <span className="font-semibold">"{order.bookedAs}"</span> — registered as <span className="font-semibold">"{order.customerName}"</span>
+                      </div>
+                    )}
                     <div className="mt-0.5 text-sm text-gray-500 line-clamp-1">{servicesSummary}</div>
                   </div>
                   <div className="text-right">

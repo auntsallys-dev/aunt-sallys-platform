@@ -82,6 +82,85 @@ adminRoutes.get("/customers", async (c) => {
   });
 });
 
+// GET /api/v1/admin/customers/:id — full detail with profile fields + last 5 orders
+adminRoutes.get("/customers/:id", async (c) => {
+  const authUser = c.get("authUser");
+  const superOnly = ["superadmin", "org_admin"];
+  if (!superOnly.includes(authUser.role)) {
+    return c.json({ success: false, error: "Forbidden" }, 403);
+  }
+
+  const customerId = c.req.param("id") as string;
+  const [customer] = await db.select().from(customers).where(eq(customers.id, customerId)).limit(1);
+  if (!customer) return c.json({ success: false, error: "Customer not found" }, 404);
+
+  const orderCount = await db.$count(orders, eq(orders.customerId, customerId));
+
+  const recentOrders = await db
+    .select({
+      id: orders.id,
+      orderNumber: orders.orderNumber,
+      status: orders.status,
+      total: orders.total,
+      createdAt: orders.createdAt,
+      orderType: orders.orderType,
+    })
+    .from(orders)
+    .where(eq(orders.customerId, customerId))
+    .orderBy(desc(orders.createdAt))
+    .limit(5);
+
+  return c.json({
+    success: true,
+    data: {
+      ...customer,
+      orderCount,
+      recentOrders,
+    },
+  });
+});
+
+// PATCH /api/v1/admin/customers/:id — update customer fields
+adminRoutes.patch("/customers/:id", async (c) => {
+  const authUser = c.get("authUser");
+  const superOnly = ["superadmin", "org_admin"];
+  if (!superOnly.includes(authUser.role)) {
+    return c.json({ success: false, error: "Forbidden" }, 403);
+  }
+
+  const customerId = c.req.param("id") as string;
+  const [existing] = await db.select().from(customers).where(eq(customers.id, customerId)).limit(1);
+  if (!existing) return c.json({ success: false, error: "Customer not found" }, 404);
+
+  let body: any;
+  try { body = await c.req.json(); } catch { return c.json({ success: false, error: "Invalid JSON" }, 400); }
+
+  const allowed = [
+    "firstName", "lastName", "phone", "email", "notes",
+    "gender", "age", "maritalStatus", "livesAlone", "housingType",
+    "hasHelper", "frequentServices", "emailOrderUpdates", "emailPromos",
+  ];
+
+  const updates: Record<string, unknown> = {};
+  for (const key of allowed) {
+    if (key in body) updates[key] = body[key];
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return c.json({ success: false, error: "No valid fields to update" }, 400);
+  }
+
+  updates.updatedAt = new Date();
+
+  const [updated] = await db
+    .update(customers)
+    .set(updates)
+    .where(eq(customers.id, customerId))
+    .returning();
+
+  return c.json({ success: true, data: updated });
+});
+
 // GET /api/v1/admin/customers/:id/orders
 adminRoutes.get("/customers/:id/orders", async (c) => {
   const customerId = c.req.param("id");

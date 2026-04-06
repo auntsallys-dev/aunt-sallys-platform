@@ -60,6 +60,8 @@ export const api = {
                 const qs = new URLSearchParams(params).toString();
                 return request("GET", `/admin/customers?${qs}`);
             },
+            get: (customerId) => request("GET", `/admin/customers/${customerId}`),
+            update: (customerId, data) => request("PATCH", `/admin/customers/${customerId}`, data),
             orderHistory: (customerId) => request("GET", `/admin/customers/${customerId}/orders`),
         },
         drivers: {

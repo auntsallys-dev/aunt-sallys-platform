@@ -36,6 +36,7 @@ export const orders = pgTable("orders", {
   estimatedCompletion: timestamp("estimated_completion", { withTimezone: true }),
   completedAt: timestamp("completed_at", { withTimezone: true }),
   needsClarification: boolean("needs_clarification").default(false),
+  bookedAs: varchar("booked_as", { length: 255 }),
   createdBy: uuid("created_by").references(() => users.id),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),

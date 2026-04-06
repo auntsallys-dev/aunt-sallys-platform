@@ -75,6 +75,10 @@ export const api = {
         const qs = new URLSearchParams(params as Record<string, string>).toString();
         return request<{ success: boolean; data: any[]; meta: any }>("GET", `/admin/customers?${qs}`);
       },
+      get: (customerId: string) =>
+        request<{ success: boolean; data: any }>("GET", `/admin/customers/${customerId}`),
+      update: (customerId: string, data: Record<string, unknown>) =>
+        request<{ success: boolean; data: any }>("PATCH", `/admin/customers/${customerId}`, data),
       orderHistory: (customerId: string) =>
         request<{ success: boolean; data: any }>("GET", `/admin/customers/${customerId}/orders`),
     },

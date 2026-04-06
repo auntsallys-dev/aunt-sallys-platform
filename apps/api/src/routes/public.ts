@@ -217,6 +217,11 @@ publicRoutes.post("/bookings", async (c) => {
   const notesLines: string[] = [`Online booking via auntsallyslaundry.com. Pickup address: ${address}`];
   if (driverNotes?.trim()) notesLines.push(`Driver notes: ${driverNotes.trim()}`);
 
+  // If existing customer with name mismatch, record what was typed
+  const bookedAs = (needsClarification && existing && storedName !== fullNameLower)
+    ? name.trim()
+    : undefined;
+
   const [order] = await db
     .insert(orders)
     .values({
@@ -230,6 +235,7 @@ publicRoutes.post("/bookings", async (c) => {
       notes: notesLines.join("\n"),
       pickupAddressId: addressId,
       needsClarification,
+      bookedAs: bookedAs ?? null,
     })
     .returning();
 
