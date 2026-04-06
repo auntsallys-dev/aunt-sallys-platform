@@ -406,12 +406,16 @@ ordersRoutes.patch("/:id/status", authenticate, async (c) => {
         if (customer?.email && customer.emailOrderUpdates === true) {
           const [branch] = await db.select({ name: branches.name }).from(branches).where(eq(branches.id, order.branchId)).limit(1);
           const customerName = `${customer.firstName} ${customer.lastName}`.trim();
+          // For self-pickup orders that become ready, send the pickup-specific email
+          const emailStatus = (status === "ready" && order.returnMethod === "self_pickup")
+            ? "ready_self_pickup"
+            : status;
           sendOrderStatusEmail({
             to: customer.email,
             customerName,
             orderNumber: order.orderNumber,
             trackingCode: order.orderNumber,
-            status,
+            status: emailStatus,
             branchName: branch?.name ?? undefined,
             total: order.total ? String(order.total) : undefined,
           }).catch(console.error);

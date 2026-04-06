@@ -35,13 +35,14 @@ export const orders = pgTable("orders", {
   deliveryAddressId: uuid("delivery_address_id").references(() => customerAddresses.id),
   estimatedCompletion: timestamp("estimated_completion", { withTimezone: true }),
   completedAt: timestamp("completed_at", { withTimezone: true }),
+  returnMethod: varchar("return_method", { length: 50 }).default("delivery"),
   needsClarification: boolean("needs_clarification").default(false),
   bookedAs: varchar("booked_as", { length: 255 }),
   createdBy: uuid("created_by").references(() => users.id),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 }, (t) => [
-  check("orders_status_check", sql`${t.status} IN ('pending', 'confirmed', 'picked_up', 'processing', 'ready', 'out_for_delivery', 'delivered', 'completed', 'cancelled')`),
+  check("orders_status_check", sql`${t.status} IN ('pending', 'confirmed', 'out_for_pickup', 'picked_up', 'processing', 'ready', 'assigned_for_pickup', 'out_for_delivery', 'delivered', 'collected', 'completed', 'cancelled', 'transferred')`),
   check("orders_order_type_check", sql`${t.orderType} IN ('walk_in', 'pickup', 'delivery')`),
   check("orders_payment_status_check", sql`${t.paymentStatus} IN ('unpaid', 'partial', 'paid', 'refunded')`),
 ]);

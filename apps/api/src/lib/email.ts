@@ -76,6 +76,12 @@ const STATUS_CONTENT: Record<string, { subject: string; badge: string; headline:
     headline: "Fresh and clean!",
     body: "Your laundry is done and ready. We'll have it delivered to you soon.",
   },
+  ready_self_pickup: {
+    subject: "Your laundry is ready for pickup! 🏪",
+    badge: "Ready for Pickup",
+    headline: "Your laundry is clean and waiting!",
+    body: "Your laundry is done! Please come by our branch to pick it up at your convenience.",
+  },
   out_for_delivery: {
     subject: "Your laundry is on the way 🚚",
     badge: "Out for Delivery",

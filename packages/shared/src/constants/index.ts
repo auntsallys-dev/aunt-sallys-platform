@@ -9,8 +9,10 @@ export const ORDER_STATUSES = [
   "assigned_for_pickup",
   "out_for_delivery",
   "delivered",
+  "collected",
   "completed",
   "cancelled",
+  "transferred",
 ] as const;
 
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
@@ -25,8 +27,10 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   assigned_for_pickup: "Assigned for Pickup",
   out_for_delivery: "Out for Delivery",
   delivered: "Delivered",
+  collected: "Collected",
   completed: "Completed",
   cancelled: "Cancelled",
+  transferred: "Transferred",
 };
 
 export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
@@ -39,8 +43,10 @@ export const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
   assigned_for_pickup: "blue",
   out_for_delivery: "indigo",
   delivered: "green",
+  collected: "teal",
   completed: "green",
   cancelled: "red",
+  transferred: "gray",
 };
 
 // ── Payment Statuses ─────────────────────────────────────────

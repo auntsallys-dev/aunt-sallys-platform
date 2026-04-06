@@ -248,7 +248,7 @@ function needsBrandSelection(serviceName: string): "detergent" | "fabcon" | null
   return null;
 }
 
-type Step = "info" | "address" | "branch" | "services" | "review";
+type Step = "info" | "address" | "branch" | "services" | "return" | "review";
 
 interface Branch {
   id: string;
@@ -299,9 +299,10 @@ const STEP_LABELS: Record<Step, string> = {
   address:  "Address",
   branch:   "Branch",
   services: "Services",
+  return:   "Return",
   review:   "Review",
 };
-const STEPS: Step[] = ["info", "address", "branch", "services", "review"];
+const STEPS: Step[] = ["info", "address", "branch", "services", "return", "review"];
 
 const CATEGORY_LABELS: Record<string, string> = {
   wash_dry_fold:  "Wash, Dry & Fold",
@@ -385,6 +386,9 @@ export default function BookPage() {
   // Step 4 — services
   const [items, setItems] = useState<SelectedItem[]>([]);
   const [brandPickerId, setBrandPickerId] = useState<string | null>(null);
+
+  // Step 5 — return method
+  const [returnMethod, setReturnMethod] = useState<"delivery" | "self_pickup">("delivery");
 
   const subtotal = items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
 
@@ -560,6 +564,7 @@ export default function BookPage() {
           addressLat: pinLatLng?.lat ?? undefined,
           addressLng: pinLatLng?.lng ?? undefined,
           branchId,
+          returnMethod,
           notes: notesLines.join("\n") || undefined,
           items: items.map((i) => ({
             serviceId: i.serviceId,
@@ -1374,14 +1379,88 @@ export default function BookPage() {
                 <button onClick={() => setStep("branch")} className="flex-1 border border-gray-200 py-4 text-sm font-medium text-gray-500 hover:border-gray-300 transition-colors">← Back</button>
                 <button
                   disabled={items.length === 0}
-                  onClick={() => setStep("review")}
+                  onClick={() => setStep("return")}
                   className="flex-1 rounded-sm bg-[#0ABAB5] py-4 text-sm font-medium tracking-wide text-white hover:bg-[#089e9a] disabled:opacity-40 transition-colors"
-                >Review →</button>
+                >Continue →</button>
               </div>
             </div>
           )}
 
-          {/* ── Step 5: Review ────────────────────────────────────────── */}
+          {/* ── Step 5: Return Method ─────────────────────────────────── */}
+          {step === "return" && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-lg font-medium text-gray-900 mb-1">How would you like to get your laundry back?</h2>
+                <p className="text-sm text-gray-400">Choose your preferred return method.</p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                {/* Delivery card */}
+                <button
+                  type="button"
+                  onClick={() => setReturnMethod("delivery")}
+                  className={`text-left border p-5 transition-colors rounded-sm ${
+                    returnMethod === "delivery"
+                      ? "border-[#0ABAB5] bg-[#0ABAB5]/5 ring-1 ring-[#0ABAB5]"
+                      : "border-gray-200 bg-white hover:border-gray-300"
+                  }`}
+                >
+                  <div className="text-3xl mb-3">🚚</div>
+                  <div className="font-semibold text-gray-900 text-sm mb-1">Deliver to my address</div>
+                  <div className="text-xs text-gray-400">We'll bring it back to you</div>
+                  {returnMethod === "delivery" && (
+                    <div className="mt-3 flex items-center gap-1.5 text-xs font-medium text-[#0ABAB5]">
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                      Selected
+                    </div>
+                  )}
+                </button>
+
+                {/* Self-pickup card */}
+                <button
+                  type="button"
+                  onClick={() => setReturnMethod("self_pickup")}
+                  className={`text-left border p-5 transition-colors rounded-sm ${
+                    returnMethod === "self_pickup"
+                      ? "border-[#0ABAB5] bg-[#0ABAB5]/5 ring-1 ring-[#0ABAB5]"
+                      : "border-gray-200 bg-white hover:border-gray-300"
+                  }`}
+                >
+                  <div className="text-3xl mb-3">🏪</div>
+                  <div className="font-semibold text-gray-900 text-sm mb-1">I'll pick it up</div>
+                  <div className="text-xs text-gray-400">We'll notify you when ready</div>
+                  {returnMethod === "self_pickup" && (
+                    <div className="mt-3 flex items-center gap-1.5 text-xs font-medium text-[#0ABAB5]">
+                      <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                      Selected
+                    </div>
+                  )}
+                </button>
+              </div>
+
+              {returnMethod === "self_pickup" && (
+                <div className="border border-amber-200 bg-amber-50 px-4 py-3 rounded-sm text-sm text-amber-700">
+                  <span className="font-semibold">Note:</span> Pick-up &amp; Delivery fee (₱180) still applies — we're collecting from you.
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button onClick={() => setStep("services")} className="flex-1 border border-gray-200 py-4 text-sm font-medium text-gray-500 hover:border-gray-300 transition-colors">← Back</button>
+                <button
+                  onClick={() => setStep("review")}
+                  className="flex-1 rounded-sm bg-[#0ABAB5] py-4 text-sm font-medium tracking-wide text-white hover:bg-[#089e9a] transition-colors"
+                >
+                  Review →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Step 6: Review ────────────────────────────────────────── */}
           {step === "review" && (
             <div className="space-y-6">
               <div className="border border-gray-100 bg-white p-5">
@@ -1393,6 +1472,14 @@ export default function BookPage() {
                   <div className="flex justify-between gap-4"><dt className="text-gray-400 shrink-0">Address</dt><dd className="text-right text-gray-900">{fullAddress}{pinLatLng ? " 📍" : ""}</dd></div>
                   {driverNotes && <div className="flex justify-between gap-4"><dt className="text-gray-400 shrink-0">Driver Notes</dt><dd className="text-right text-gray-900 max-w-[60%]">{driverNotes}</dd></div>}
                   <div className="flex justify-between"><dt className="text-gray-400">Branch</dt><dd className="text-gray-900">{selectedBranch?.name}</dd></div>
+                  <div className="flex justify-between">
+                    <dt className="text-gray-400">Return</dt>
+                    <dd className="text-gray-900">
+                      {returnMethod === "self_pickup"
+                        ? `🏪 You'll pick up at ${selectedBranch?.name ?? "branch"}`
+                        : `🚚 Delivered to your address`}
+                    </dd>
+                  </div>
                 </dl>
               </div>
 
@@ -1425,7 +1512,7 @@ export default function BookPage() {
               </p>
 
               <div className="flex gap-3">
-                <button onClick={() => setStep("services")} className="flex-1 border border-gray-200 py-4 text-sm font-medium text-gray-500 hover:border-gray-300 transition-colors">← Back</button>
+                <button onClick={() => setStep("return")} className="flex-1 border border-gray-200 py-4 text-sm font-medium text-gray-500 hover:border-gray-300 transition-colors">← Back</button>
                 <button
                   onClick={handleSubmit}
                   disabled={submitting}

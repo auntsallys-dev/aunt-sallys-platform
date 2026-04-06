@@ -57,8 +57,14 @@ export function DriverOrderDeliveryPage() {
   useEffect(() => { fetchOrder(); }, [id]);
 
   // Initialize Leaflet map with both customer and driver pins
+  // Re-init if map exists but had no coordinates before (e.g. order opened at pickup leg)
   useEffect(() => {
-    if (!order || !mapRef.current || leafletMap.current) return;
+    if (!order || !mapRef.current) return;
+    if (leafletMap.current) {
+      // Destroy and reinit if we now have coords but didn't before
+      leafletMap.current.remove();
+      leafletMap.current = null;
+    }
 
     const delivery = order.delivery;
     let custLat: number | null = null;
@@ -269,12 +275,19 @@ export function DriverOrderDeliveryPage() {
           )}
         </div>
 
-        {/* Map */}
+        {/* Map — shows for both pickup and delivery legs */}
         <div className="rounded-2xl overflow-hidden shadow-sm ring-1 ring-gray-100">
+          <div className="bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-500 border-b border-gray-100">
+            {order.status === "out_for_pickup"
+              ? "📦 Pickup location — client's address"
+              : order.status === "out_for_delivery"
+              ? "🚚 Delivery location — return laundry here"
+              : "📍 Client location"}
+          </div>
           <div ref={mapRef} style={{ height: 240, width: "100%" }} />
-          {delivery && !delivery.lat && (
+          {!custLat && (
             <div className="bg-yellow-50 px-4 py-2 text-xs text-yellow-700">
-              ⚠️ No GPS coordinates for this address.
+              ⚠️ No GPS coordinates — use address for navigation below.
             </div>
           )}
         </div>

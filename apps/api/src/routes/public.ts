@@ -64,7 +64,7 @@ publicRoutes.post("/bookings", async (c) => {
   const {
     name, phone, email, address, addressLat, addressLng, branchId, items, notes: driverNotes,
     gender, age, maritalStatus, livesAlone, housingType, hasHelper, frequentServices,
-    emailOrderUpdates, emailPromos,
+    emailOrderUpdates, emailPromos, returnMethod,
   } = body as {
     name: string;
     phone: string;
@@ -84,6 +84,7 @@ publicRoutes.post("/bookings", async (c) => {
     frequentServices?: string[];
     emailOrderUpdates?: boolean;
     emailPromos?: boolean;
+    returnMethod?: string;
   };
 
   if (!name || !phone || !branchId || !items?.length) {
@@ -238,6 +239,7 @@ publicRoutes.post("/bookings", async (c) => {
       branchId,
       customerId: customer.id,
       orderType: "delivery",
+      returnMethod: (returnMethod === "self_pickup" ? "self_pickup" : "delivery"),
       subtotal: String(subtotal),
       deliveryFee: "0",
       total: String(subtotal), // subtotal already includes logistics if auto-added
