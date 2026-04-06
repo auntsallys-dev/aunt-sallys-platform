@@ -12,13 +12,14 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; next?: strin
   ready:             { label: "Ready for Delivery",    color: "bg-green-100 text-green-800",   driverAssign: "delivery" },
   out_for_delivery:  { label: "Out for Delivery",      color: "bg-indigo-100 text-indigo-800", readOnly: true },
   delivered:         { label: "Delivered",             color: "bg-emerald-100 text-emerald-800", readOnly: true },
+  collected:         { label: "Collected",             color: "bg-teal-100 text-teal-800",     readOnly: true },
   completed:         { label: "Completed",             color: "bg-gray-100 text-gray-800" },
   cancelled:         { label: "Cancelled",             color: "bg-red-100 text-red-800" },
   assigned_for_pickup: { label: "Assigned for Pickup", color: "bg-blue-100 text-blue-800", readOnly: true },
 };
 
-const NON_EDITABLE = ["completed", "delivered", "cancelled"];
-const NON_CANCELLABLE = ["completed", "delivered", "cancelled"];
+const NON_EDITABLE = ["completed", "delivered", "collected", "cancelled"];
+const NON_CANCELLABLE = ["completed", "delivered", "collected", "cancelled"];
 
 // ── Edit Order Modal ──────────────────────────────────────────────────────────
 
@@ -402,7 +403,12 @@ export function OrderDetailPage() {
   }
   if (!order) return null;
 
-  const config = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.pending;
+  const isSelfPickup = order.returnMethod === "self_pickup";
+  const baseConfig = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.pending;
+  // For self_pickup orders at "ready" status: override to show "Mark as Collected" instead of driver assign
+  const config = (order.status === "ready" && isSelfPickup)
+    ? { ...baseConfig, next: "collected", nextLabel: "Mark as Collected", driverAssign: undefined }
+    : baseConfig;
   const currentStep = STATUS_STEPS.indexOf(order.status);
   const canEdit = !NON_EDITABLE.includes(order.status);
   const canRefund = order.paymentStatus === "paid";
@@ -469,6 +475,19 @@ export function OrderDetailPage() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Return method badge */}
+      <div className="mb-4 flex items-center gap-2">
+        {isSelfPickup ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-100 px-3 py-1 text-xs font-semibold text-teal-800">
+            🏪 Self Pickup
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">
+            🚚 Delivery
+          </span>
+        )}
       </div>
 
       {/* Order items */}

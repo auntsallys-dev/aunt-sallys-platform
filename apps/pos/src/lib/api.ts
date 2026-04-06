@@ -40,7 +40,7 @@ export const api = {
       const param = isPhone ? `phone=${encodeURIComponent(query)}` : `name=${encodeURIComponent(query)}`;
       return request<{ success: boolean; data: any[] }>("GET", `/customers?${param}`);
     },
-    create: (data: { firstName: string; lastName?: string; phone?: string; email?: string }) =>
+    create: (data: { firstName: string; lastName?: string; phone?: string; email?: string; address?: string }) =>
       request<{ success: boolean; data: any }>("POST", "/customers", data),
   },
   orders: {

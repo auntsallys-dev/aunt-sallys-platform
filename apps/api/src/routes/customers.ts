@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { or, ilike } from "drizzle-orm";
-import { db, customers } from "@aunt-sallys/db";
+import { db, customers, customerAddresses } from "@aunt-sallys/db";
 import { authenticate } from "../middleware/auth.js";
 import { z } from "zod";
 
@@ -30,9 +30,10 @@ customersRoutes.post("/", authenticate, async (c) => {
   const schema = z.object({
     firstName: z.string().min(1),
     lastName: z.string().optional().default(""),
-    phone: z.string().min(7).default(""),
+    phone: z.string().optional().default(""),
     email: z.string().email().optional(),
     notes: z.string().optional(),
+    address: z.string().optional(), // full address line (street, brgy, city)
   });
 
   let body: unknown;
@@ -42,7 +43,7 @@ customersRoutes.post("/", authenticate, async (c) => {
   if (!result.success) return c.json({ success: false, error: result.error.flatten() }, 400);
 
   const authUser = c.get("authUser");
-  const { firstName, lastName, phone, email, notes } = result.data;
+  const { firstName, lastName, phone, email, notes, address } = result.data;
 
   const [customer] = await db.insert(customers).values({
     firstName,
@@ -52,6 +53,16 @@ customersRoutes.post("/", authenticate, async (c) => {
     notes,
     orgId: authUser.orgId!,
   }).returning();
+
+  // Create default address record if provided
+  if (address?.trim()) {
+    await db.insert(customerAddresses).values({
+      customerId: customer.id,
+      label: "home",
+      addressLine: address.trim(),
+      isDefault: true,
+    });
+  }
 
   return c.json({ success: true, data: customer }, 201);
 });

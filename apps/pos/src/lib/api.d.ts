@@ -31,6 +31,7 @@ export declare const api: {
             lastName?: string;
             phone?: string;
             email?: string;
+            address?: string;
         }) => Promise<{
             success: boolean;
             data: any;

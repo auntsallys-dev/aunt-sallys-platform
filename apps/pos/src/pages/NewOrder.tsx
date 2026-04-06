@@ -81,6 +81,11 @@ function CustomerModal({
   const [newFirst, setNewFirst] = useState("");
   const [newLast, setNewLast] = useState("");
   const [newPhone, setNewPhone] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [newStreet, setNewStreet] = useState("");
+  const [newBarangay, setNewBarangay] = useState("");
+  const [newCity, setNewCity] = useState("");
+  const [newPostal, setNewPostal] = useState("");
   const [creating, setCreating] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
 
@@ -108,10 +113,14 @@ function CustomerModal({
     if (!newFirst.trim()) return;
     setCreating(true);
     try {
+      const addressLine = [newStreet.trim(), newBarangay.trim(), newCity.trim(), newPostal.trim()]
+        .filter(Boolean).join(", ");
       const res = await api.customers.create({
         firstName: newFirst.trim(),
         lastName: newLast.trim() || undefined,
         phone: newPhone.trim() || undefined,
+        email: newEmail.trim() || undefined,
+        address: addressLine || undefined,
       });
       onSelect(res.data);
     } catch {
@@ -170,26 +179,64 @@ function CustomerModal({
 
         {/* Not found → create */}
         {(notFound || showCreate) && (
-          <div className="space-y-2 border-t border-gray-100 pt-3">
+          <div className="space-y-2 border-t border-gray-100 pt-3 max-h-80 overflow-y-auto">
             <p className="text-xs font-medium text-gray-500">New customer</p>
-            <input
-              value={newFirst}
-              onChange={(e) => setNewFirst(e.target.value)}
-              placeholder="First name *"
-              className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
-            />
-            <input
-              value={newLast}
-              onChange={(e) => setNewLast(e.target.value)}
-              placeholder="Last name"
-              className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
-            />
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                value={newFirst}
+                onChange={(e) => setNewFirst(e.target.value)}
+                placeholder="First name *"
+                className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
+              />
+              <input
+                value={newLast}
+                onChange={(e) => setNewLast(e.target.value)}
+                placeholder="Last name"
+                className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
+              />
+            </div>
             <input
               value={newPhone}
               onChange={(e) => setNewPhone(e.target.value)}
-              placeholder="Phone"
+              placeholder="Phone (e.g. 09171234567)"
               className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
             />
+            <input
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              placeholder="Email (optional)"
+              type="email"
+              className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
+            />
+            <p className="text-xs font-medium text-gray-400 pt-1">Address</p>
+            <input
+              value={newStreet}
+              onChange={(e) => setNewStreet(e.target.value)}
+              placeholder="Street / Unit / House No."
+              className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
+            />
+            <input
+              value={newBarangay}
+              onChange={(e) => setNewBarangay(e.target.value)}
+              placeholder="Barangay"
+              className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                value={newCity}
+                onChange={(e) => setNewCity(e.target.value)}
+                placeholder="City"
+                className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
+              />
+              <input
+                value={newPostal}
+                onChange={(e) => setNewPostal(e.target.value)}
+                placeholder="Postal code"
+                inputMode="numeric"
+                className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none"
+              />
+            </div>
+            <p className="text-xs text-gray-400">City locked to Metro Manila for delivery orders.</p>
             <button
               onClick={handleCreate}
               disabled={creating || !newFirst.trim()}
@@ -290,7 +337,7 @@ export function NewOrderPage() {
   const [showDiscountInput, setShowDiscountInput] = useState(false);
   const [discountStr, setDiscountStr] = useState("");
   const [discountType, setDiscountType] = useState<"peso" | "percent">("peso");
-  const [orderType] = useState<"walk_in" | "pickup" | "delivery">("walk_in");
+  const [orderType, setOrderType] = useState<"walk_in" | "delivery">("walk_in");
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -644,6 +691,39 @@ export function NewOrderPage() {
             <span className="text-xs font-medium text-green-700">
               {customer.firstName} {customer.lastName}
             </span>
+          )}
+        </div>
+
+        {/* Order type toggle */}
+        <div className="border-b border-gray-100 px-4 py-2">
+          <p className="mb-1.5 text-xs font-medium text-gray-400">Order Type</p>
+          <div className="flex rounded-xl overflow-hidden border border-gray-200">
+            <button
+              onClick={() => setOrderType("walk_in")}
+              className="flex-1 py-2 text-xs font-semibold transition-colors flex items-center justify-center gap-1"
+              style={{
+                background: orderType === "walk_in" ? "#00ACC1" : "#fff",
+                color: orderType === "walk_in" ? "#fff" : "#374151",
+              }}
+            >
+              🏃 Walk-in
+            </button>
+            <button
+              onClick={() => setOrderType("delivery")}
+              className="flex-1 py-2 text-xs font-semibold transition-colors flex items-center justify-center gap-1"
+              style={{
+                background: orderType === "delivery" ? "#00ACC1" : "#fff",
+                color: orderType === "delivery" ? "#fff" : "#374151",
+              }}
+            >
+              🚚 Pickup &amp; Delivery
+            </button>
+          </div>
+          {orderType === "walk_in" && (
+            <p className="mt-1 text-xs text-gray-400">Payment at counter. No driver queue.</p>
+          )}
+          {orderType === "delivery" && (
+            <p className="mt-1 text-xs text-gray-400">Driver assigned after confirmation.</p>
           )}
         </div>
 
