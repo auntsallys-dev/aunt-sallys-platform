@@ -77,6 +77,8 @@ branchesRoutes.patch("/:id", authenticate, adminOnly, async (c) => {
   if (body.lat !== undefined) updates.lat = body.lat ? String(body.lat) : null;
   if (body.lng !== undefined) updates.lng = body.lng ? String(body.lng) : null;
   if (body.isActive !== undefined) updates.isActive = body.isActive;
+  if (body.operatingHours !== undefined) updates.operatingHours = body.operatingHours;
+  if (body.secondaryPhone !== undefined) updates.secondaryPhone = body.secondaryPhone;
 
   const [updated] = await db.update(branches).set(updates).where(eq(branches.id, id)).returning();
   return c.json({ success: true, data: updated });

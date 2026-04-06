@@ -7,6 +7,7 @@ interface BranchForm {
   address: string;
   phone: string;
   email: string;
+  operatingHours: string;
 }
 
 const EMPTY_FORM: BranchForm = {
@@ -15,6 +16,7 @@ const EMPTY_FORM: BranchForm = {
   address: "",
   phone: "",
   email: "",
+  operatingHours: "",
 };
 
 function BranchModal({
@@ -34,6 +36,7 @@ function BranchModal({
           address: initial.address ?? "",
           phone: initial.phone ?? "",
           email: initial.email ?? "",
+          operatingHours: initial.operatingHours ?? "",
         }
       : EMPTY_FORM
   );
@@ -142,6 +145,17 @@ function BranchModal({
             </div>
           </div>
 
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-gray-500 uppercase tracking-wide">Operating Hours</label>
+            <textarea
+              rows={3}
+              value={form.operatingHours}
+              onChange={(e) => setForm((f) => ({ ...f, operatingHours: e.target.value }))}
+              placeholder="e.g. Mon–Fri: 9AM–6PM | Sat: 9AM–3PM | Closed Sundays"
+              className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm focus:border-brand-500 focus:outline-none resize-none"
+            />
+          </div>
+
           <div className="flex gap-3 pt-2">
             <button
               type="button"
@@ -190,6 +204,7 @@ export function AdminBranchesPage() {
       address: form.address || undefined,
       phone: form.phone || undefined,
       email: form.email || undefined,
+      operatingHours: form.operatingHours || undefined,
     };
     if (editTarget) {
       await api.adminBranches.update(editTarget.id, payload);
@@ -265,7 +280,12 @@ export function AdminBranchesPage() {
 
               {branch.address && <p className="mb-1 text-sm text-gray-500">{branch.address}</p>}
               {branch.phone && <p className="mb-1 text-sm text-gray-500">{branch.phone}</p>}
-              {branch.email && <p className="mb-4 text-sm text-gray-500">{branch.email}</p>}
+              {branch.email && <p className="mb-1 text-sm text-gray-500">{branch.email}</p>}
+              {branch.operatingHours && (
+                <p className="mb-4 text-xs text-gray-400 leading-relaxed">
+                  🕐 {branch.operatingHours}
+                </p>
+              )}
 
               <div className="flex gap-2 mt-4">
                 <button

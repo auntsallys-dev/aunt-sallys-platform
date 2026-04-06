@@ -20,7 +20,15 @@ export const publicRoutes = new Hono();
 // GET /api/v1/public/branches
 publicRoutes.get("/branches", async (c) => {
   const list = await db
-    .select({ id: branches.id, name: branches.name, slug: branches.slug, address: branches.address })
+    .select({
+      id: branches.id,
+      name: branches.name,
+      slug: branches.slug,
+      address: branches.address,
+      phone: branches.phone,
+      secondaryPhone: branches.secondaryPhone,
+      operatingHours: branches.operatingHours,
+    })
     .from(branches)
     .where(eq(branches.isActive, true));
   return c.json({ success: true, data: list });

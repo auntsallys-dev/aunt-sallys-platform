@@ -4,6 +4,31 @@ import Navbar from "@/components/Navbar";
 
 const TEAL = "#0ABAB5";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://api.auntsallyslaundry.com";
+
+interface BranchData {
+  id: string;
+  name: string;
+  slug: string;
+  address: string | null;
+  phone: string | null;
+  secondaryPhone: string | null;
+  operatingHours: string | null;
+}
+
+async function fetchBranches(): Promise<BranchData[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/v1/public/branches`, {
+      next: { revalidate: 300 },
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
 const SERVICES = [
   {
     category: "Wash Dry Fold",
@@ -83,7 +108,9 @@ const PLANS = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const liveBranches = await fetchBranches();
+
   return (
     <div className="bg-white font-sans">
       <Navbar />
@@ -197,11 +224,11 @@ export default function HomePage() {
           <h2 className="font-serif text-4xl font-light text-gray-900">Our Branches</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {BRANCHES.map((b) => (
-            <div key={b.name} className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
+          {(liveBranches.length > 0 ? liveBranches : BRANCHES.map((b) => ({ id: b.name, name: b.name, slug: "", address: b.area, phone: null, secondaryPhone: null, operatingHours: null }))).map((b) => (
+            <div key={b.id} className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
               <div className="w-6 h-px mb-4" style={{ backgroundColor: TEAL }} />
               <h3 className="font-serif text-lg font-medium text-gray-900 mb-1">{b.name}</h3>
-              <p className="text-sm text-gray-500 mb-3">{b.area}</p>
+              {b.address && <p className="text-sm text-gray-500 mb-3">{b.address}</p>}
               <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: TEAL }}>
                 <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: TEAL }} />
                 Open
@@ -230,43 +257,72 @@ export default function HomePage() {
                 admin@auntsallyslaundry.com
               </a>
             </div>
-            {/* General */}
+            {/* Social / General */}
             <div className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
               <div className="w-6 h-px mb-4" style={{ backgroundColor: TEAL }} />
-              <h3 className="font-serif text-lg font-medium text-gray-900 mb-1">Operating Hours</h3>
-              <p className="text-sm text-gray-500 mb-1">Open daily across all branches</p>
-              <p className="text-sm font-medium text-gray-900">7:00 AM – 8:00 PM</p>
+              <h3 className="font-serif text-lg font-medium text-gray-900 mb-1">Follow Us</h3>
+              <p className="text-sm text-gray-500 mb-3">Stay updated on promos, new services, and branch news</p>
+              <a href="https://facebook.com/auntsallyslaundry" target="_blank" rel="noopener noreferrer" className="text-sm font-medium hover:underline" style={{ color: TEAL }}>
+                facebook.com/auntsallyslaundry
+              </a>
             </div>
           </div>
 
           {/* Branch contacts */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
-              <div className="w-6 h-px mb-4" style={{ backgroundColor: TEAL }} />
-              <h3 className="font-serif text-base font-medium text-gray-900 mb-1">Arton West Residence</h3>
-              <p className="text-xs text-gray-500 mb-3">GF-RS-102 The Arton West Tower, Aurora Blvd, Loyola Heights, Quezon City</p>
-              <a href="tel:09173072559" className="text-sm font-medium hover:underline block" style={{ color: TEAL }}>0917 307 2559</a>
-            </div>
-            <div className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
-              <div className="w-6 h-px mb-4" style={{ backgroundColor: TEAL }} />
-              <h3 className="font-serif text-base font-medium text-gray-900 mb-1">Ayala Mall The 30th</h3>
-              <p className="text-xs text-gray-500 mb-3">LGF Ayala Malls 30th, 30 Meralco Ave, Pasig City</p>
-              <a href="tel:09175272559" className="text-sm font-medium hover:underline block" style={{ color: TEAL }}>0917 527 2559</a>
-            </div>
-            <div className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
-              <div className="w-6 h-px mb-4" style={{ backgroundColor: TEAL }} />
-              <h3 className="font-serif text-base font-medium text-gray-900 mb-1">Tiendesitas</h3>
-              <p className="text-xs text-gray-500 mb-3">PA-01 Tiendesitas En Frontera Verde, Ortigas East, Pasig City</p>
-              <a href="tel:09306975505" className="text-sm font-medium hover:underline block" style={{ color: TEAL }}>0930 697 5505</a>
-              <a href="tel:83627678" className="text-sm font-medium hover:underline block mt-1" style={{ color: TEAL }}>8362-7678</a>
-            </div>
-            <div className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
-              <div className="w-6 h-px mb-4" style={{ backgroundColor: TEAL }} />
-              <h3 className="font-serif text-base font-medium text-gray-900 mb-1">Xavierville</h3>
-              <p className="text-xs text-gray-500 mb-3">45 Xavierville Ave, Loyola Heights, Quezon City</p>
-              <a href="tel:09947095448" className="text-sm font-medium hover:underline block" style={{ color: TEAL }}>0994 709 5448</a>
-              <a href="tel:87086560" className="text-sm font-medium hover:underline block mt-1" style={{ color: TEAL }}>8708-6560</a>
-            </div>
+            {liveBranches.length > 0 ? liveBranches.map((branch) => (
+              <div key={branch.id} className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
+                <div className="w-6 h-px mb-4" style={{ backgroundColor: TEAL }} />
+                <h3 className="font-serif text-base font-medium text-gray-900 mb-1">{branch.name}</h3>
+                {branch.address && <p className="text-xs text-gray-500 mb-3">{branch.address}</p>}
+                {branch.phone && (
+                  <a href={`tel:${branch.phone.replace(/\D/g, "")}`} className="text-sm font-medium hover:underline block" style={{ color: TEAL }}>
+                    {branch.phone}
+                  </a>
+                )}
+                {branch.secondaryPhone && (
+                  <a href={`tel:${branch.secondaryPhone.replace(/\D/g, "")}`} className="text-sm font-medium hover:underline block mt-1" style={{ color: TEAL }}>
+                    {branch.secondaryPhone}
+                  </a>
+                )}
+                {branch.operatingHours && (
+                  <p className="text-xs text-gray-500 mt-3 leading-relaxed">
+                    {branch.operatingHours.split(" | ").map((line, i) => (
+                      <span key={i} className="block">{line}</span>
+                    ))}
+                  </p>
+                )}
+              </div>
+            )) : (
+              <>
+                <div className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
+                  <div className="w-6 h-px mb-4" style={{ backgroundColor: TEAL }} />
+                  <h3 className="font-serif text-base font-medium text-gray-900 mb-1">Arton West Residence</h3>
+                  <p className="text-xs text-gray-500 mb-3">GF-RS-102 The Arton West Tower, Aurora Blvd, Loyola Heights, Quezon City</p>
+                  <a href="tel:09173072559" className="text-sm font-medium hover:underline block" style={{ color: TEAL }}>0917 307 2559</a>
+                </div>
+                <div className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
+                  <div className="w-6 h-px mb-4" style={{ backgroundColor: TEAL }} />
+                  <h3 className="font-serif text-base font-medium text-gray-900 mb-1">Ayala Mall The 30th</h3>
+                  <p className="text-xs text-gray-500 mb-3">LGF Ayala Malls 30th, 30 Meralco Ave, Pasig City</p>
+                  <a href="tel:09175272559" className="text-sm font-medium hover:underline block" style={{ color: TEAL }}>0917 527 2559</a>
+                </div>
+                <div className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
+                  <div className="w-6 h-px mb-4" style={{ backgroundColor: TEAL }} />
+                  <h3 className="font-serif text-base font-medium text-gray-900 mb-1">Tiendesitas</h3>
+                  <p className="text-xs text-gray-500 mb-3">PA-01 Tiendesitas En Frontera Verde, Ortigas East, Pasig City</p>
+                  <a href="tel:09306975505" className="text-sm font-medium hover:underline block" style={{ color: TEAL }}>0930 697 5505</a>
+                  <a href="tel:83627678" className="text-sm font-medium hover:underline block mt-1" style={{ color: TEAL }}>8362-7678</a>
+                </div>
+                <div className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
+                  <div className="w-6 h-px mb-4" style={{ backgroundColor: TEAL }} />
+                  <h3 className="font-serif text-base font-medium text-gray-900 mb-1">Xavierville</h3>
+                  <p className="text-xs text-gray-500 mb-3">45 Xavierville Ave, Loyola Heights, Quezon City</p>
+                  <a href="tel:09947095448" className="text-sm font-medium hover:underline block" style={{ color: TEAL }}>0994 709 5448</a>
+                  <a href="tel:87086560" className="text-sm font-medium hover:underline block mt-1" style={{ color: TEAL }}>8708-6560</a>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </section>
