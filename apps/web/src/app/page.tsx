@@ -213,6 +213,64 @@ export default function HomePage() {
 
       {/* Subscription Plans — temporarily hidden until finalized */}
 
+      {/* Contact Us */}
+      <section id="contact" className="py-20 px-4 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-14">
+            <p className="text-xs tracking-[0.3em] uppercase mb-3" style={{ color: TEAL }}>Get In Touch</p>
+            <h2 className="font-serif text-4xl font-light text-gray-900">Contact Us</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+            {/* Email */}
+            <div className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
+              <div className="w-6 h-px mb-4" style={{ backgroundColor: TEAL }} />
+              <h3 className="font-serif text-lg font-medium text-gray-900 mb-1">Email Us</h3>
+              <p className="text-sm text-gray-500 mb-3">For inquiries, partnerships, and general concerns</p>
+              <a href="mailto:admin@auntsallyslaundry.com" className="text-sm font-medium hover:underline" style={{ color: TEAL }}>
+                admin@auntsallyslaundry.com
+              </a>
+            </div>
+            {/* General */}
+            <div className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
+              <div className="w-6 h-px mb-4" style={{ backgroundColor: TEAL }} />
+              <h3 className="font-serif text-lg font-medium text-gray-900 mb-1">Operating Hours</h3>
+              <p className="text-sm text-gray-500 mb-1">Open daily across all branches</p>
+              <p className="text-sm font-medium text-gray-900">7:00 AM – 8:00 PM</p>
+            </div>
+          </div>
+
+          {/* Branch contacts */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
+              <div className="w-6 h-px mb-4" style={{ backgroundColor: TEAL }} />
+              <h3 className="font-serif text-base font-medium text-gray-900 mb-1">Arton West Residence</h3>
+              <p className="text-xs text-gray-500 mb-3">GF-RS-102 The Arton West Tower, Aurora Blvd, Loyola Heights, Quezon City</p>
+              <a href="tel:09173072559" className="text-sm font-medium hover:underline block" style={{ color: TEAL }}>0917 307 2559</a>
+            </div>
+            <div className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
+              <div className="w-6 h-px mb-4" style={{ backgroundColor: TEAL }} />
+              <h3 className="font-serif text-base font-medium text-gray-900 mb-1">Ayala Mall The 30th</h3>
+              <p className="text-xs text-gray-500 mb-3">LGF Ayala Malls 30th, 30 Meralco Ave, Pasig City</p>
+              <a href="tel:09175272559" className="text-sm font-medium hover:underline block" style={{ color: TEAL }}>0917 527 2559</a>
+            </div>
+            <div className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
+              <div className="w-6 h-px mb-4" style={{ backgroundColor: TEAL }} />
+              <h3 className="font-serif text-base font-medium text-gray-900 mb-1">Tiendesitas</h3>
+              <p className="text-xs text-gray-500 mb-3">PA-01 Tiendesitas En Frontera Verde, Ortigas East, Pasig City</p>
+              <a href="tel:09306975505" className="text-sm font-medium hover:underline block" style={{ color: TEAL }}>0930 697 5505</a>
+              <a href="tel:83627678" className="text-sm font-medium hover:underline block mt-1" style={{ color: TEAL }}>8362-7678</a>
+            </div>
+            <div className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
+              <div className="w-6 h-px mb-4" style={{ backgroundColor: TEAL }} />
+              <h3 className="font-serif text-base font-medium text-gray-900 mb-1">Xavierville</h3>
+              <p className="text-xs text-gray-500 mb-3">45 Xavierville Ave, Loyola Heights, Quezon City</p>
+              <a href="tel:09947095448" className="text-sm font-medium hover:underline block" style={{ color: TEAL }}>0994 709 5448</a>
+              <a href="tel:87086560" className="text-sm font-medium hover:underline block mt-1" style={{ color: TEAL }}>8708-6560</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="py-20 px-4 text-center" style={{ backgroundColor: TEAL }}>
         <p className="text-xs tracking-[0.3em] uppercase mb-4 text-white/70">Ready?</p>

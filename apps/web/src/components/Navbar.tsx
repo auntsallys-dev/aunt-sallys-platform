@@ -25,6 +25,12 @@ export default function Navbar() {
             Track Order
           </Link>
           <Link
+            href="/#contact"
+            className="text-sm text-white/80 hover:text-white transition-colors tracking-wide"
+          >
+            Contact
+          </Link>
+          <Link
             href="/book"
             className="rounded-sm bg-white px-5 py-2 text-sm font-medium text-[#0ABAB5] hover:bg-white/90 transition-colors tracking-wide"
           >
