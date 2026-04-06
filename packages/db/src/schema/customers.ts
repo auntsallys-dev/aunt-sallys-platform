@@ -5,6 +5,7 @@ import {
   text,
   decimal,
   boolean,
+  integer,
   timestamp,
   check,
 } from "drizzle-orm/pg-core";
@@ -26,6 +27,16 @@ export const customers = pgTable("customers", {
   email: varchar("email", { length: 255 }),
   notes: text("notes"),
   preferredBranchId: uuid("preferred_branch_id").references(() => branches.id),
+  // Profile fields
+  gender: varchar("gender", { length: 50 }),
+  age: integer("age"),
+  maritalStatus: varchar("marital_status", { length: 50 }),
+  livesAlone: boolean("lives_alone"),
+  housingType: varchar("housing_type", { length: 100 }),
+  hasHelper: boolean("has_helper"),
+  frequentServices: text("frequent_services").array(),
+  emailOrderUpdates: boolean("email_order_updates").default(false),
+  emailPromos: boolean("email_promos").default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

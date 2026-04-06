@@ -4,6 +4,7 @@ import {
   varchar,
   text,
   decimal,
+  boolean,
   timestamp,
   check,
 } from "drizzle-orm/pg-core";
@@ -34,6 +35,7 @@ export const orders = pgTable("orders", {
   deliveryAddressId: uuid("delivery_address_id").references(() => customerAddresses.id),
   estimatedCompletion: timestamp("estimated_completion", { withTimezone: true }),
   completedAt: timestamp("completed_at", { withTimezone: true }),
+  needsClarification: boolean("needs_clarification").default(false),
   createdBy: uuid("created_by").references(() => users.id),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),

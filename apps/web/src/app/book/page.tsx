@@ -339,6 +339,22 @@ export default function BookPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Client profile state
+  const [profileExpanded, setProfileExpanded] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
+  const [profileQuestion, setProfileQuestion] = useState(1);
+  const [clientProfile, setClientProfile] = useState<{
+    gender?: string;
+    age?: number;
+    maritalStatus?: string;
+    livesAlone?: boolean;
+    housingType?: string;
+    hasHelper?: boolean;
+    frequentServices: string[];
+    emailOrderUpdates: boolean;
+    emailPromos: boolean;
+  }>({ frequentServices: [], emailOrderUpdates: false, emailPromos: false });
+
   // Remote data
   const [branches, setBranches] = useState<Branch[]>([]);
   const [serviceGroups, setServiceGroups] = useState<ReturnType<typeof groupServices>>([]);
@@ -550,6 +566,17 @@ export default function BookPage() {
             unitPrice: i.unitPrice,
             notes: i.brand ? `Brand: ${i.brand}` : undefined,
           })),
+          ...(profileSaved && {
+            gender: clientProfile.gender,
+            age: clientProfile.age,
+            maritalStatus: clientProfile.maritalStatus,
+            livesAlone: clientProfile.livesAlone,
+            housingType: clientProfile.housingType,
+            hasHelper: clientProfile.hasHelper,
+            frequentServices: clientProfile.frequentServices.length > 0 ? clientProfile.frequentServices : undefined,
+            emailOrderUpdates: clientProfile.emailOrderUpdates,
+            emailPromos: clientProfile.emailPromos,
+          }),
         }),
       });
       const data = await res.json();
@@ -678,6 +705,294 @@ export default function BookPage() {
                   className="w-full border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:border-[#0ABAB5] focus:outline-none transition-colors"
                 />
               </div>
+
+              {/* ── New Client Profile Section ── */}
+              {!profileSaved ? (
+                !profileExpanded ? (
+                  <div className="border border-dashed border-[#0ABAB5]/40 bg-[#0ABAB5]/5 p-5 rounded-sm">
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">🎁</span>
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-900 text-sm">New client? Unlock exclusive discounts &amp; promos</p>
+                        <p className="mt-1 text-xs text-gray-500 leading-relaxed">
+                          Fill this out once and we&apos;ll send you personalized offers, priority deals, and order updates straight to your inbox.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => { setProfileExpanded(true); setProfileQuestion(1); }}
+                          className="mt-3 rounded-sm bg-[#0ABAB5] px-5 py-2.5 text-xs font-semibold text-white hover:bg-[#089e9a] transition-colors"
+                        >
+                          Yes, I want discounts →
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="border border-[#0ABAB5]/30 bg-white rounded-sm overflow-hidden">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 bg-[#0ABAB5]/5">
+                      <p className="text-xs font-semibold text-[#0ABAB5] uppercase tracking-widest">New Client Profile</p>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-gray-400">Question {profileQuestion} of 7</span>
+                        <button
+                          type="button"
+                          onClick={() => { setProfileExpanded(false); setProfileSaved(true); }}
+                          className="text-gray-300 hover:text-gray-500 text-lg leading-none"
+                          aria-label="Close"
+                        >×</button>
+                      </div>
+                    </div>
+
+                    {/* Progress bar */}
+                    <div className="h-1 bg-gray-100">
+                      <div
+                        className="h-1 bg-[#0ABAB5] transition-all duration-300"
+                        style={{ width: `${(profileQuestion / 7) * 100}%` }}
+                      />
+                    </div>
+
+                    <div className="p-5 space-y-4">
+                      {/* Q1: Gender */}
+                      {profileQuestion === 1 && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-800 mb-3">What&apos;s your gender?</p>
+                          <div className="flex flex-wrap gap-2">
+                            {["Male", "Female", "Prefer not to say"].map((opt) => (
+                              <button
+                                key={opt}
+                                type="button"
+                                onClick={() => setClientProfile((p) => ({ ...p, gender: opt }))}
+                                className={`rounded-full border px-4 py-2 text-xs font-medium transition-colors ${
+                                  clientProfile.gender === opt
+                                    ? "border-[#0ABAB5] bg-[#0ABAB5] text-white"
+                                    : "border-gray-200 text-gray-600 hover:border-[#0ABAB5]/50"
+                                }`}
+                              >
+                                {opt}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Q2: Age */}
+                      {profileQuestion === 2 && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-800 mb-3">How old are you?</p>
+                          <input
+                            type="number"
+                            min={16}
+                            max={100}
+                            value={clientProfile.age ?? ""}
+                            onChange={(e) => setClientProfile((p) => ({ ...p, age: e.target.value ? parseInt(e.target.value) : undefined }))}
+                            placeholder="e.g. 28"
+                            className="w-32 border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-300 focus:border-[#0ABAB5] focus:outline-none transition-colors"
+                          />
+                        </div>
+                      )}
+
+                      {/* Q3: Marital Status */}
+                      {profileQuestion === 3 && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-800 mb-3">What&apos;s your relationship status?</p>
+                          <div className="flex gap-2">
+                            {["Single", "Married"].map((opt) => (
+                              <button
+                                key={opt}
+                                type="button"
+                                onClick={() => setClientProfile((p) => ({ ...p, maritalStatus: opt }))}
+                                className={`rounded-full border px-4 py-2 text-xs font-medium transition-colors ${
+                                  clientProfile.maritalStatus === opt
+                                    ? "border-[#0ABAB5] bg-[#0ABAB5] text-white"
+                                    : "border-gray-200 text-gray-600 hover:border-[#0ABAB5]/50"
+                                }`}
+                              >
+                                {opt}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Q4: Lives Alone */}
+                      {profileQuestion === 4 && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-800 mb-3">Do you live alone?</p>
+                          <div className="flex gap-2">
+                            {[{ label: "Yes", value: true }, { label: "No", value: false }].map((opt) => (
+                              <button
+                                key={opt.label}
+                                type="button"
+                                onClick={() => setClientProfile((p) => ({ ...p, livesAlone: opt.value }))}
+                                className={`rounded-full border px-4 py-2 text-xs font-medium transition-colors ${
+                                  clientProfile.livesAlone === opt.value
+                                    ? "border-[#0ABAB5] bg-[#0ABAB5] text-white"
+                                    : "border-gray-200 text-gray-600 hover:border-[#0ABAB5]/50"
+                                }`}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Q5: Housing Type */}
+                      {profileQuestion === 5 && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-800 mb-3">What type of home do you live in?</p>
+                          <div className="flex flex-wrap gap-2">
+                            {["Condo", "Townhouse", "House", "Dorm", "Other"].map((opt) => (
+                              <button
+                                key={opt}
+                                type="button"
+                                onClick={() => setClientProfile((p) => ({ ...p, housingType: opt }))}
+                                className={`rounded-full border px-4 py-2 text-xs font-medium transition-colors ${
+                                  clientProfile.housingType === opt
+                                    ? "border-[#0ABAB5] bg-[#0ABAB5] text-white"
+                                    : "border-gray-200 text-gray-600 hover:border-[#0ABAB5]/50"
+                                }`}
+                              >
+                                {opt}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Q6: Has Helper */}
+                      {profileQuestion === 6 && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-800 mb-3">Do you have a maid or helper for laundry?</p>
+                          <div className="flex gap-2">
+                            {[{ label: "Yes", value: true }, { label: "No", value: false }].map((opt) => (
+                              <button
+                                key={opt.label}
+                                type="button"
+                                onClick={() => setClientProfile((p) => ({ ...p, hasHelper: opt.value }))}
+                                className={`rounded-full border px-4 py-2 text-xs font-medium transition-colors ${
+                                  clientProfile.hasHelper === opt.value
+                                    ? "border-[#0ABAB5] bg-[#0ABAB5] text-white"
+                                    : "border-gray-200 text-gray-600 hover:border-[#0ABAB5]/50"
+                                }`}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Q7: Frequent Services + email prefs */}
+                      {profileQuestion === 7 && (
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-sm font-medium text-gray-800 mb-3">Which services do you think you&apos;ll use most? <span className="text-gray-400 font-normal">(select all that apply)</span></p>
+                            <div className="space-y-2">
+                              {["Comforter Wash", "Rug Cleaning", "Regular Wash & Fold", "Bed Sheet Wash", "Dry Cleaning", "Steam Cleaning"].map((svc) => {
+                                const checked = clientProfile.frequentServices.includes(svc);
+                                return (
+                                  <label key={svc} className="flex items-center gap-3 cursor-pointer group">
+                                    <div
+                                      onClick={() => setClientProfile((p) => ({
+                                        ...p,
+                                        frequentServices: checked
+                                          ? p.frequentServices.filter((s) => s !== svc)
+                                          : [...p.frequentServices, svc],
+                                      }))}
+                                      className={`h-5 w-5 flex-shrink-0 border-2 rounded-sm flex items-center justify-center cursor-pointer transition-colors ${
+                                        checked ? "border-[#0ABAB5] bg-[#0ABAB5]" : "border-gray-300 group-hover:border-[#0ABAB5]/50"
+                                      }`}
+                                    >
+                                      {checked && (
+                                        <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                        </svg>
+                                      )}
+                                    </div>
+                                    <span className="text-sm text-gray-700">{svc}</span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          <div className="border-t border-gray-100 pt-4 space-y-2">
+                            <p className="text-xs font-medium text-gray-500 uppercase tracking-widest mb-3">Email Preferences</p>
+                            {[
+                              { key: "emailOrderUpdates" as const, label: "Send me order status updates to my email" },
+                              { key: "emailPromos" as const, label: "Send me exclusive discounts and promos to my email" },
+                            ].map(({ key, label }) => (
+                              <label key={key} className="flex items-center gap-3 cursor-pointer group">
+                                <div
+                                  onClick={() => setClientProfile((p) => ({ ...p, [key]: !p[key] }))}
+                                  className={`h-5 w-5 flex-shrink-0 border-2 rounded-sm flex items-center justify-center cursor-pointer transition-colors ${
+                                    clientProfile[key] ? "border-[#0ABAB5] bg-[#0ABAB5]" : "border-gray-300 group-hover:border-[#0ABAB5]/50"
+                                  }`}
+                                >
+                                  {clientProfile[key] && (
+                                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                    </svg>
+                                  )}
+                                </div>
+                                <span className="text-sm text-gray-700">{label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Navigation */}
+                    <div className="flex gap-3 px-5 pb-5">
+                      {profileQuestion > 1 ? (
+                        <button
+                          type="button"
+                          onClick={() => setProfileQuestion((q) => q - 1)}
+                          className="flex-1 border border-gray-200 py-2.5 text-xs font-medium text-gray-500 hover:border-gray-300 transition-colors"
+                        >
+                          ← Back
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setProfileExpanded(false)}
+                          className="flex-1 border border-gray-200 py-2.5 text-xs font-medium text-gray-400 hover:border-gray-300 transition-colors"
+                        >
+                          Skip
+                        </button>
+                      )}
+                      {profileQuestion < 7 ? (
+                        <button
+                          type="button"
+                          onClick={() => setProfileQuestion((q) => q + 1)}
+                          className="flex-1 rounded-sm bg-[#0ABAB5] py-2.5 text-xs font-semibold text-white hover:bg-[#089e9a] transition-colors"
+                        >
+                          Next →
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => { setProfileExpanded(false); setProfileSaved(true); }}
+                          className="flex-1 rounded-sm bg-[#0ABAB5] py-2.5 text-xs font-semibold text-white hover:bg-[#089e9a] transition-colors"
+                        >
+                          Save &amp; Continue →
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )
+              ) : (
+                <div className="flex items-center gap-3 border border-[#0ABAB5]/30 bg-[#0ABAB5]/5 px-4 py-3 rounded-sm">
+                  <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#0ABAB5]">
+                    <svg className="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                  </div>
+                  <p className="text-sm font-medium text-[#0ABAB5]">Profile saved — you&apos;re eligible for member discounts!</p>
+                </div>
+              )}
 
               <button
                 onClick={handleInfoContinue}

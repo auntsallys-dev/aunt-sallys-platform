@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq, ilike, and, desc } from "drizzle-orm";
+import { eq, ilike, and, desc, or, ne } from "drizzle-orm";
 import {
   db,
   orders,
@@ -52,7 +52,11 @@ publicRoutes.post("/bookings", async (c) => {
     return c.json({ success: false, error: "Invalid JSON" }, 400);
   }
 
-  const { name, phone, email, address, addressLat, addressLng, branchId, items, notes: driverNotes } = body as {
+  const {
+    name, phone, email, address, addressLat, addressLng, branchId, items, notes: driverNotes,
+    gender, age, maritalStatus, livesAlone, housingType, hasHelper, frequentServices,
+    emailOrderUpdates, emailPromos,
+  } = body as {
     name: string;
     phone: string;
     email?: string;
@@ -62,6 +66,15 @@ publicRoutes.post("/bookings", async (c) => {
     branchId: string;
     notes?: string;
     items: { serviceId: string; quantity: number; unitPrice: number; notes?: string }[];
+    gender?: string;
+    age?: number;
+    maritalStatus?: string;
+    livesAlone?: boolean;
+    housingType?: string;
+    hasHelper?: boolean;
+    frequentServices?: string[];
+    emailOrderUpdates?: boolean;
+    emailPromos?: boolean;
   };
 
   if (!name || !phone || !branchId || !items?.length) {
@@ -82,7 +95,24 @@ publicRoutes.post("/bookings", async (c) => {
     .where(eq(customers.phone, phone))
     .limit(1);
 
+  // Profile fields helper
+  const profileFields = {
+    ...(gender !== undefined && { gender }),
+    ...(age !== undefined && { age }),
+    ...(maritalStatus !== undefined && { maritalStatus }),
+    ...(livesAlone !== undefined && { livesAlone }),
+    ...(housingType !== undefined && { housingType }),
+    ...(hasHelper !== undefined && { hasHelper }),
+    ...(frequentServices !== undefined && { frequentServices }),
+    ...(emailOrderUpdates !== undefined && { emailOrderUpdates }),
+    ...(emailPromos !== undefined && { emailPromos }),
+  };
+
   if (existing) {
+    // Update profile fields if provided
+    if (Object.keys(profileFields).length > 0) {
+      await db.update(customers).set(profileFields).where(eq(customers.id, existing.id));
+    }
     customer = existing;
   } else {
     const parts = name.trim().split(" ");
@@ -90,10 +120,33 @@ publicRoutes.post("/bookings", async (c) => {
     const lastName = parts.slice(1).join(" ") || "-";
     const [created] = await db
       .insert(customers)
-      .values({ orgId, firstName, lastName, phone, email: email || undefined })
+      .values({ orgId, firstName, lastName, phone, email: email || undefined, ...profileFields })
       .returning();
     customer = created;
   }
+
+  // Duplicate check: same name but different phone, OR same phone but different name
+  const fullNameLower = name.trim().toLowerCase();
+  let needsClarification = false;
+
+  // Check name conflict: another customer with same first name but different phone
+  const [nameDuplicate] = await db
+    .select({ id: customers.id })
+    .from(customers)
+    .where(
+      and(
+        ne(customers.id, customer.id),
+        ilike(customers.firstName, name.trim().split(" ")[0]),
+        ne(customers.phone, phone),
+      )
+    )
+    .limit(1);
+
+  // Check phone conflict: same phone but stored name differs from submitted name
+  const storedName = `${customer.firstName} ${customer.lastName}`.trim().toLowerCase();
+
+  if (nameDuplicate) needsClarification = true;
+  if (storedName !== fullNameLower && existing) needsClarification = true;
 
   // Create address record for pickup (with coords if provided)
   let addressId: string | undefined;
@@ -176,6 +229,7 @@ publicRoutes.post("/bookings", async (c) => {
       total: String(subtotal), // subtotal already includes logistics if auto-added
       notes: notesLines.join("\n"),
       pickupAddressId: addressId,
+      needsClarification,
     })
     .returning();
 

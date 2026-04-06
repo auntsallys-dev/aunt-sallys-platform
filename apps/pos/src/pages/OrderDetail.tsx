@@ -536,13 +536,26 @@ export function OrderDetailPage() {
           </button>
         )}
         {config.next && (
-          <button
-            disabled={updating}
-            onClick={advanceStatus}
-            className="flex-1 rounded-xl bg-brand-600 py-3 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60 transition-colors shadow-sm"
-          >
-            {updating ? "Updating…" : config.nextLabel}
-          </button>
+          <div className="flex-1 flex flex-col items-stretch gap-1">
+            <button
+              disabled={updating}
+              onClick={advanceStatus}
+              className="w-full rounded-xl bg-brand-600 py-3 text-sm font-semibold text-white hover:bg-brand-700 disabled:opacity-60 transition-colors shadow-sm"
+            >
+              {updating ? "Updating…" : config.nextLabel}
+            </button>
+            {order.needsClarification && order.status === "pending" && (
+              <div
+                className="flex items-center justify-center gap-1"
+                title="A customer with this name or number already exists. Please verify identity before confirming."
+              >
+                <svg className="h-3 w-3 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                </svg>
+                <span className="text-xs font-semibold text-red-500">(clarify)</span>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
