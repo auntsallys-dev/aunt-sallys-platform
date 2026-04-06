@@ -4,6 +4,7 @@ import { db, orders, orderItems, orderStatusHistory, services, branchServices, c
 import { createOrderSchema, updateOrderStatusSchema } from "@aunt-sallys/shared";
 import { authenticate } from "../middleware/auth.js";
 import { formatOrderNumber } from "@aunt-sallys/shared";
+import { sendOrderStatusEmail } from "../lib/email.js";
 
 export const ordersRoutes = new Hono();
 
@@ -391,6 +392,35 @@ ordersRoutes.patch("/:id/status", authenticate, async (c) => {
   if (!order) return c.json({ success: false, error: "Order not found" }, 404);
 
   await db.insert(orderStatusHistory).values({ orderId: id, status, notes, changedBy: authUser.id });
+
+  // Fire-and-forget email notification
+  if (order.customerId) {
+    (async () => {
+      try {
+        const [customer] = await db
+          .select({ email: customers.email, firstName: customers.firstName, lastName: customers.lastName, emailOrderUpdates: customers.emailOrderUpdates })
+          .from(customers)
+          .where(eq(customers.id, order.customerId!))
+          .limit(1);
+
+        if (customer?.email && customer.emailOrderUpdates === true) {
+          const [branch] = await db.select({ name: branches.name }).from(branches).where(eq(branches.id, order.branchId)).limit(1);
+          const customerName = `${customer.firstName} ${customer.lastName}`.trim();
+          sendOrderStatusEmail({
+            to: customer.email,
+            customerName,
+            orderNumber: order.orderNumber,
+            trackingCode: order.orderNumber,
+            status,
+            branchName: branch?.name ?? undefined,
+            total: order.total ? String(order.total) : undefined,
+          }).catch(console.error);
+        }
+      } catch (err) {
+        console.error("[email] Error fetching customer for status email:", err);
+      }
+    })();
+  }
 
   return c.json({ success: true, data: order });
 });

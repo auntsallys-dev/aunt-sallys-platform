@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { eq, ilike, and, desc, or, ne } from "drizzle-orm";
+import { sendOrderStatusEmail } from "../lib/email.js";
 import {
   db,
   orders,
@@ -259,6 +260,23 @@ publicRoutes.post("/bookings", async (c) => {
     notes: driverNotes?.trim() || null,
     addressId: addressId || null,
   });
+
+  // Fire-and-forget booking confirmation email
+  // Use request-body emailOrderUpdates if provided (it may have just been saved); fall back to stored value
+  const customerEmail = customer.email ?? (email || undefined);
+  const customerEmailOrderUpdates = emailOrderUpdates !== undefined ? emailOrderUpdates : (customer as any).emailOrderUpdates;
+  if (customerEmail && customerEmailOrderUpdates === true) {
+    const customerName = `${customer.firstName} ${customer.lastName}`.trim();
+    sendOrderStatusEmail({
+      to: customerEmail,
+      customerName,
+      orderNumber: order.orderNumber,
+      trackingCode: order.orderNumber,
+      status: "booking_received",
+      branchName: branch?.name ?? undefined,
+      total: order.total ? String(order.total) : undefined,
+    }).catch(console.error);
+  }
 
   return c.json({ success: true, data: { trackingCode: order.orderNumber, orderId: order.id } }, 201);
 });
