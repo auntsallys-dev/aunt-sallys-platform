@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq, gte, and, sql } from "drizzle-orm";
+import { eq, gte, lte, and, sql, desc } from "drizzle-orm";
 import { db, orders, orderItems, services, branches, customers } from "@aunt-sallys/db";
 import { authenticate } from "../middleware/auth.js";
 
@@ -136,9 +136,6 @@ analyticsRoutes.get("/full", async (c) => {
 
   const fromDate = new Date(`${fromStr}T00:00:00+08:00`);
   const toDate = new Date(`${toStr}T23:59:59+08:00`);
-
-  const { lte, desc } = await import("drizzle-orm");
-  const { orderStatusHistory } = await import("@aunt-sallys/db");
 
   const conditions: any[] = [gte(orders.createdAt, fromDate), lte(orders.createdAt, toDate)];
   if (branchId) conditions.push(eq(orders.branchId, branchId));
