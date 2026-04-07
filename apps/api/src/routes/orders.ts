@@ -428,3 +428,39 @@ ordersRoutes.patch("/:id/status", authenticate, async (c) => {
 
   return c.json({ success: true, data: order });
 });
+
+// DELETE /api/v1/orders/:id — superadmin hard delete with password confirmation
+ordersRoutes.delete("/:id", authenticate, async (c) => {
+  const id = c.req.param("id") as string;
+  const authUser = c.get("authUser");
+
+  if (authUser.role !== "superadmin") {
+    return c.json({ success: false, error: "Only superadmins can delete orders" }, 403);
+  }
+
+  let body: any;
+  try { body = await c.req.json(); } catch { return c.json({ success: false, error: "Invalid JSON" }, 400); }
+
+  const { password } = body;
+  if (!password) return c.json({ success: false, error: "Password required" }, 400);
+
+  // Verify superadmin password
+  const bcrypt = await import("bcryptjs");
+  const [adminUser] = await db.select().from(users).where(eq(users.id, authUser.id)).limit(1);
+  if (!adminUser) return c.json({ success: false, error: "User not found" }, 404);
+
+  const valid = await bcrypt.default.compare(password, adminUser.passwordHash as string);
+  if (!valid) return c.json({ success: false, error: "Incorrect password" }, 401);
+
+  // Check order exists
+  const [order] = await db.select().from(orders).where(eq(orders.id, id)).limit(1);
+  if (!order) return c.json({ success: false, error: "Order not found" }, 404);
+
+  // Hard delete — cascade through related records
+  await db.delete(orderStatusHistory).where(eq(orderStatusHistory.orderId, id));
+  await db.delete(orderItems).where(eq(orderItems.orderId, id));
+  await db.delete(deliveries).where(eq(deliveries.orderId, id));
+  await db.delete(orders).where(eq(orders.id, id));
+
+  return c.json({ success: true, message: `Order ${order.orderNumber} deleted` });
+});

@@ -284,6 +284,11 @@ export function OrderDetailPage() {
   const [refundLoading, setRefundLoading] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
+  // Delete order (superadmin)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   // Driver assignment
   const [drivers, setDrivers] = useState<any[]>([]);
   const [selectedDriverId, setSelectedDriverId] = useState("");
@@ -430,6 +435,21 @@ export function OrderDetailPage() {
       setError(err.message ?? "Failed to cancel order");
     } finally {
       setCancelLoading(false);
+    }
+  }
+
+  async function deleteOrder() {
+    if (!order) return;
+    setDeleteLoading(true);
+    setDeleteError("");
+    try {
+      await api.orders.delete(order.id, deletePassword);
+      setShowDeleteConfirm(false);
+      navigate(-1);
+    } catch (err: any) {
+      setDeleteError(err.message ?? "Failed to delete order");
+    } finally {
+      setDeleteLoading(false);
     }
   }
 
@@ -732,6 +752,18 @@ export function OrderDetailPage() {
         </div>
       )}
 
+      {/* Delete Order — superadmin only */}
+      {user?.role === "superadmin" && (
+        <div className="mt-2">
+          <button
+            onClick={() => { setShowDeleteConfirm(true); setDeletePassword(""); setDeleteError(""); }}
+            className="w-full rounded-xl border border-red-300 bg-red-50 py-2.5 text-sm font-medium text-red-700 hover:bg-red-100 transition-colors"
+          >
+            🗑️ Delete Order
+          </button>
+        </div>
+      )}
+
       {/* Payment modal */}
       {showPayment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -824,6 +856,50 @@ export function OrderDetailPage() {
                 className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
               >
                 {cancelLoading ? "Cancelling…" : "Yes, Cancel"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Order modal — superadmin + password required */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+            <h2 className="mb-1 text-lg font-bold text-gray-900">🗑️ Delete Order?</h2>
+            <p className="mb-4 text-sm text-gray-500">
+              This will <span className="font-semibold text-red-600">permanently delete</span> order{" "}
+              <span className="font-mono font-medium">{order.orderNumber}</span>. This cannot be undone.
+            </p>
+            <div className="mb-4">
+              <label className="mb-1.5 block text-xs font-medium text-gray-600 uppercase tracking-wide">
+                Enter your password to confirm
+              </label>
+              <input
+                type="password"
+                value={deletePassword}
+                onChange={(e) => { setDeletePassword(e.target.value); setDeleteError(""); }}
+                placeholder="Your superadmin password"
+                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-red-400 focus:outline-none"
+                autoFocus
+              />
+              {deleteError && (
+                <p className="mt-1.5 text-xs text-red-600">{deleteError}</p>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 rounded-xl border border-gray-200 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={deleteLoading || !deletePassword}
+                onClick={deleteOrder}
+                className="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+              >
+                {deleteLoading ? "Deleting…" : "Delete Permanently"}
               </button>
             </div>
           </div>

@@ -47,6 +47,7 @@ export const api = {
         edit: (id, data) => request("PATCH", `/orders/${id}`, data),
         updateStatus: (id, status, notes) => request("PATCH", `/orders/${id}/status`, { status, notes }),
         cancel: (id) => request("PATCH", `/orders/${id}/status`, { status: "cancelled" }),
+        delete: (id, password) => request("DELETE", `/orders/${id}`, { password }),
     },
     payments: {
         create: (data) => request("POST", "/payments", data),

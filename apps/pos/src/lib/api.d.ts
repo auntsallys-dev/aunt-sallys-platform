@@ -78,6 +78,10 @@ export declare const api: {
             success: boolean;
             data: any;
         }>;
+        delete: (id: string, password: string) => Promise<{
+            success: boolean;
+            message: string;
+        }>;
     };
     payments: {
         create: (data: {

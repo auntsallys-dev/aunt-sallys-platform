@@ -60,6 +60,8 @@ export const api = {
       request<{ success: boolean; data: any }>("PATCH", `/orders/${id}/status`, { status, notes }),
     cancel: (id: string) =>
       request<{ success: boolean; data: any }>("PATCH", `/orders/${id}/status`, { status: "cancelled" }),
+    delete: (id: string, password: string) =>
+      request<{ success: boolean; message: string }>("DELETE", `/orders/${id}`, { password }),
   },
   payments: {
     create: (data: { orderId: string; amount: number; method: string; reference?: string }) =>
