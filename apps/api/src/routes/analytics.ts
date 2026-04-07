@@ -121,3 +121,102 @@ analyticsRoutes.get("/overview", async (c) => {
     },
   });
 });
+
+// GET /api/v1/analytics/full — full analytics with date range + branch filter (for new dashboard)
+analyticsRoutes.get("/full", async (c) => {
+  const user = c.get("authUser");
+  if (user.role !== "superadmin" && user.role !== "org_admin") {
+    return c.json({ success: false, error: "Forbidden" }, 403);
+  }
+
+  const branchId = c.req.query("branchId") ?? null;
+  const fromStr = c.req.query("from");
+  const toStr = c.req.query("to");
+  if (!fromStr || !toStr) return c.json({ success: false, error: "Missing required params: from, to" }, 400);
+
+  const fromDate = new Date(`${fromStr}T00:00:00+08:00`);
+  const toDate = new Date(`${toStr}T23:59:59+08:00`);
+
+  const { lte, desc } = await import("drizzle-orm");
+  const { orderStatusHistory } = await import("@aunt-sallys/db");
+
+  const conditions: any[] = [gte(orders.createdAt, fromDate), lte(orders.createdAt, toDate)];
+  if (branchId) conditions.push(eq(orders.branchId, branchId));
+  const whereClause = conditions.length > 1 ? and(...conditions) : conditions[0];
+
+  const allOrders = await db.select({
+    id: orders.id, orderNumber: orders.orderNumber, total: orders.total,
+    status: orders.status, orderType: orders.orderType, branchId: orders.branchId,
+    customerId: orders.customerId, createdAt: orders.createdAt,
+  }).from(orders).where(whereClause).orderBy(desc(orders.createdAt));
+
+  const activeOrders = allOrders.filter(o => o.status !== "cancelled");
+  const totalRevenue = activeOrders.reduce((s, o) => s + parseFloat(o.total as string), 0);
+  const totalOrders = allOrders.length;
+  const completedOrders = allOrders.filter(o => ["delivered","completed","collected"].includes(o.status)).length;
+  const cancelledOrders = allOrders.filter(o => o.status === "cancelled").length;
+  const avgOrderValue = activeOrders.length ? totalRevenue / activeOrders.length : 0;
+
+  const custConditions: any[] = [gte(customers.createdAt, fromDate), lte(customers.createdAt, toDate)];
+  if (branchId) { /* skip branch filter for customers */ }
+  const newCustomers = await db.$count(customers, and(...custConditions));
+
+  const branchList = await db.select({ id: branches.id, name: branches.name }).from(branches);
+  const branchMap: Record<string, string> = {};
+  for (const b of branchList) branchMap[b.id] = b.name;
+
+  const statusCounts: Record<string, number> = {};
+  const typeCounts: Record<string, number> = {};
+  for (const o of allOrders) {
+    statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
+    typeCounts[o.orderType] = (typeCounts[o.orderType] || 0) + 1;
+  }
+
+  const revByDay: Record<string, { revenue: number; orders: number }> = {};
+  for (const o of activeOrders) {
+    const d = new Date(new Date(o.createdAt).getTime() + 8 * 3600 * 1000).toISOString().split("T")[0];
+    if (!revByDay[d]) revByDay[d] = { revenue: 0, orders: 0 };
+    revByDay[d].revenue += parseFloat(o.total as string);
+    revByDay[d].orders += 1;
+  }
+
+  const orderIds = activeOrders.map(o => o.id);
+  let topServices: any[] = [];
+  if (orderIds.length > 0) {
+    const itemRows = await db.select({
+      serviceName: services.name, totalPrice: orderItems.totalPrice, quantity: orderItems.quantity,
+    }).from(orderItems).leftJoin(services, eq(services.id, orderItems.serviceId))
+      .where(sql`${orderItems.orderId} = ANY(ARRAY[${sql.join(orderIds.map(id => sql`${id}::uuid`), sql`, `)}])`);
+    const svcMap: Record<string, { revenue: number; quantity: number }> = {};
+    for (const row of itemRows) {
+      const name = row.serviceName ?? "Unknown";
+      if (!svcMap[name]) svcMap[name] = { revenue: 0, quantity: 0 };
+      svcMap[name].revenue += parseFloat(row.totalPrice as string);
+      svcMap[name].quantity += parseFloat(row.quantity as string);
+    }
+    topServices = Object.entries(svcMap).map(([name, v]) => ({ name, ...v })).sort((a, b) => b.revenue - a.revenue).slice(0, 10);
+  }
+
+  const enrichedOrders = await Promise.all(allOrders.map(async (o) => {
+    let customerName = "Walk-in";
+    if (o.customerId) {
+      const [cust] = await db.select({ firstName: customers.firstName, lastName: customers.lastName })
+        .from(customers).where(eq(customers.id, o.customerId)).limit(1);
+      if (cust) customerName = `${cust.firstName} ${cust.lastName}`.trim();
+    }
+    const items = await db.select({ serviceName: services.name, quantity: orderItems.quantity })
+      .from(orderItems).leftJoin(services, eq(services.id, orderItems.serviceId))
+      .where(eq(orderItems.orderId, o.id));
+    const servicesSummary = items.map(i => `${i.serviceName} x${i.quantity}`).join(", ");
+    return { ...o, customerName, branchName: branchMap[o.branchId] ?? "Unknown", services: servicesSummary };
+  }));
+
+  return c.json({ success: true, data: {
+    summary: { totalOrders, totalRevenue, avgOrderValue, newCustomers, completedOrders, cancelledOrders },
+    ordersByStatus: Object.entries(statusCounts).map(([status, count]) => ({ status, count })),
+    ordersByType: Object.entries(typeCounts).map(([type, count]) => ({ type, count })),
+    revenueByDay: Object.entries(revByDay).sort(([a],[b])=>a.localeCompare(b)).map(([date, v]) => ({ date, ...v })),
+    topServices,
+    orders: enrichedOrders,
+  }});
+});

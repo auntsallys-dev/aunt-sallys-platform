@@ -59,7 +59,7 @@ export const api = {
                 qs.set("branchId", params.branchId);
             qs.set("from", params.from);
             qs.set("to", params.to);
-            return request("GET", `/admin/analytics?${qs}`);
+            return request("GET", `/analytics/full?${qs}`);
         },
     },
     admin: {

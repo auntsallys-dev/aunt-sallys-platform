@@ -73,7 +73,7 @@ export const api = {
       if (params.branchId && params.branchId !== "all") qs.set("branchId", params.branchId);
       qs.set("from", params.from);
       qs.set("to", params.to);
-      return request<{ success: boolean; data: any }>("GET", `/admin/analytics?${qs}`);
+      return request<{ success: boolean; data: any }>("GET", `/analytics/full?${qs}`);
     },
   },
   admin: {
