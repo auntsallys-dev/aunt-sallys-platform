@@ -4,7 +4,7 @@ import Navbar from "@/components/Navbar";
 
 const TEAL = "#0ABAB5";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://api.auntsallyslaundry.com";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "https://aunt-sallys-pos.onrender.com";
 
 interface BranchData {
   id: string;
