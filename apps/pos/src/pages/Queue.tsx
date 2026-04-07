@@ -229,15 +229,26 @@ export function QueuePage() {
                     >
                       Details
                     </button>
-                    {config.next && (
-                      <button
-                        disabled={updatingId === order.id}
-                        onClick={() => advanceStatus(order.id, config.next!)}
-                        className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-700 disabled:opacity-60 transition-colors"
-                      >
-                        {updatingId === order.id ? "…" : config.nextLabel}
-                      </button>
-                    )}
+                    {config.next && (() => {
+                      // Block "Mark Delivered" if unpaid — must collect payment first
+                      const isDeliverAction = config.next === "completed" || config.next === "delivered";
+                      const unpaid = order.paymentStatus !== "paid";
+                      const blocked = isDeliverAction && unpaid;
+                      return (
+                        <button
+                          disabled={updatingId === order.id || blocked}
+                          title={blocked ? "Cannot mark as delivered — payment not yet collected" : undefined}
+                          onClick={() => !blocked && advanceStatus(order.id, config.next!)}
+                          className={`rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-colors ${
+                            blocked
+                              ? "bg-gray-300 cursor-not-allowed"
+                              : "bg-brand-600 hover:bg-brand-700 disabled:opacity-60"
+                          }`}
+                        >
+                          {updatingId === order.id ? "…" : blocked ? "Unpaid" : config.nextLabel}
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>

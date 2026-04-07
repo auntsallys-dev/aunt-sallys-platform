@@ -229,11 +229,11 @@ adminRoutes.get("/drivers", async (c) => {
     .from(users)
     .where(eq(users.isActive, true));
 
-  // Filter to branch if provided
+  // Filter to branch if provided — include driver role
   if (branchId) {
-    driverList = driverList.filter((u) => u.branchId === branchId && ["staff", "branch_admin"].includes(u.role));
+    driverList = driverList.filter((u) => u.branchId === branchId && ["staff", "branch_admin", "driver"].includes(u.role));
   } else {
-    driverList = driverList.filter((u) => ["staff", "branch_admin"].includes(u.role));
+    driverList = driverList.filter((u) => ["staff", "branch_admin", "driver"].includes(u.role));
   }
 
   // Get latest location for each driver from driver_locations table

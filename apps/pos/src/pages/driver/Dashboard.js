@@ -83,6 +83,7 @@ export function DriverDashboardPage() {
         try {
             await api.driver.selfAssign(orderId);
             await fetchOrders();
+            navigate(`/driver/orders/${orderId}`);
         }
         catch (err) {
             setError(err.message ?? "Failed to claim order");
@@ -91,39 +92,29 @@ export function DriverDashboardPage() {
             setBusyIds((prev) => { const s = new Set(prev); s.delete(orderId); return s; });
         }
     }
-    async function handleMarkPickedUp(orderId) {
-        setBusyIds((prev) => new Set(prev).add(orderId + "_pickup"));
-        try {
-            await api.driver.markPickedUp(orderId);
-            await fetchOrders();
-        }
-        catch (err) {
-            setError(err.message ?? "Failed to mark picked up");
-        }
-        finally {
-            setBusyIds((prev) => { const s = new Set(prev); s.delete(orderId + "_pickup"); return s; });
-        }
-    }
     const totalActive = queues.available_pickup.length + queues.available_delivery.length + queues.my_orders.length;
     return (_jsxs("div", { className: "min-h-screen bg-gray-50", children: [_jsxs("header", { className: "sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-3", children: [_jsxs("div", { className: "flex items-center justify-between", children: [_jsxs("div", { children: [_jsxs("div", { className: "text-sm font-bold text-gray-900", children: [user?.firstName, " ", user?.lastName] }), _jsx("div", { className: "text-xs text-gray-400", children: user?.role })] }), _jsxs("div", { className: "flex items-center gap-3", children: [_jsx("button", { onClick: toggleTracking, className: `rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${tracking ? "bg-green-100 text-green-700 ring-1 ring-green-300" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`, children: tracking ? "● Tracking On" : "Start Tracking" }), _jsx("button", { onClick: logout, className: "text-xs text-gray-400 hover:text-gray-600", children: "Sign Out" })] })] }), gpsStatus === "error" && (_jsx("div", { className: "mt-2 rounded-lg bg-red-50 px-3 py-1.5 text-xs text-red-600", children: "GPS unavailable \u2014 check location permissions" }))] }), _jsxs("div", { className: "px-4 py-5 space-y-6", children: [_jsxs("div", { className: "flex items-center justify-between", children: [_jsx("h1", { className: "text-lg font-bold text-gray-900", children: "Orders" }), _jsx("button", { onClick: () => { setLoading(true); fetchOrders(); }, className: "text-xs text-brand-600 hover:text-brand-700", children: "Refresh" })] }), error && _jsx("div", { className: "rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700", children: error }), loading && _jsx("div", { className: "py-12 text-center text-gray-400", children: "Loading orders\u2026" }), !loading && totalActive === 0 && (_jsxs("div", { className: "py-12 text-center", children: [_jsx("div", { className: "text-4xl mb-3", children: "\uD83D\uDE97" }), _jsx("p", { className: "text-gray-500", children: "No orders available." })] })), queues.available_pickup.length > 0 && (_jsxs("section", { children: [_jsxs("h2", { className: "mb-3 text-sm font-bold uppercase tracking-wide text-gray-500", children: ["\uD83D\uDCE6 Available for Pickup (", queues.available_pickup.length, ")"] }), _jsx("div", { className: "space-y-3", children: queues.available_pickup.map((order) => (_jsx(OrderCard, { order: order, onClick: () => navigate(`/driver/orders/${order.id}`), actionLabel: "Claim Pickup", onAction: () => handleSelfAssign(order.id), actionBusy: busyIds.has(order.id) }, order.id))) })] })), queues.available_delivery.length > 0 && (_jsxs("section", { children: [_jsxs("h2", { className: "mb-3 text-sm font-bold uppercase tracking-wide text-gray-500", children: ["\uD83D\uDE9A Ready for Delivery (", queues.available_delivery.length, ")"] }), _jsx("div", { className: "space-y-3", children: queues.available_delivery.map((order) => (_jsx(OrderCard, { order: order, onClick: () => navigate(`/driver/orders/${order.id}`), actionLabel: "Claim Delivery", onAction: () => handleSelfAssign(order.id), actionBusy: busyIds.has(order.id), badge: order.didPickup ? "⭐ You handled the pickup" : undefined }, order.id))) })] })), queues.my_orders.length > 0 && (_jsxs("section", { children: [_jsxs("h2", { className: "mb-3 text-sm font-bold uppercase tracking-wide text-gray-500", children: ["\uD83D\uDDC2 My Active Orders (", queues.my_orders.length, ")"] }), _jsx("div", { className: "space-y-3", children: queues.my_orders.map((order) => {
                                     let actionLabel;
                                     let onAction;
-                                    let actionBusy = false;
+                                    const actionBusy = false;
                                     if (order.status === "out_for_pickup") {
-                                        actionLabel = "I've Picked Up";
-                                        onAction = () => handleMarkPickedUp(order.id);
-                                        actionBusy = busyIds.has(order.id + "_pickup");
+                                        actionLabel = "Navigate to Pickup";
+                                        onAction = () => navigate(`/driver/orders/${order.id}`);
                                     }
                                     else if (order.status === "out_for_delivery") {
-                                        actionLabel = "Mark Delivered";
+                                        actionLabel = "Navigate to Delivery";
                                         onAction = () => navigate(`/driver/orders/${order.id}`);
+                                    }
+                                    else if (order.status === "processing") {
+                                        // Read-only — no action button; badge shown via status pill
+                                        actionLabel = undefined;
+                                        onAction = undefined;
                                     }
                                     else if (order.status === "ready") {
                                         actionLabel = "Claim Delivery";
                                         onAction = () => handleSelfAssign(order.id);
-                                        actionBusy = busyIds.has(order.id);
                                     }
-                                    return (_jsx(OrderCard, { order: order, onClick: () => navigate(`/driver/orders/${order.id}`), actionLabel: actionLabel, onAction: onAction ? (e) => { e.stopPropagation(); onAction(); } : undefined, actionBusy: actionBusy }, order.id));
+                                    return (_jsx(OrderCard, { order: order, onClick: () => navigate(`/driver/orders/${order.id}`), actionLabel: actionLabel, onAction: onAction ? (e) => { e.stopPropagation(); onAction(); } : undefined, actionBusy: actionBusy, badge: order.status === "processing" ? "⏳ At Branch" : undefined }, order.id));
                                 }) })] }))] })] }));
 }
 //# sourceMappingURL=Dashboard.js.map
