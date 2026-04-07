@@ -13,6 +13,7 @@ interface QueueOrder {
   total: string;
   status: OrderStatus;
   orderType: string;
+  returnMethod?: string;
   paymentStatus: string;
   createdAt: string;
   needsClarification?: boolean;
@@ -24,7 +25,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; next?: strin
   confirmed: { label: "Confirmed", color: "bg-blue-100 text-blue-800", next: "processing", nextLabel: "Start Processing" },
   assigned_for_pickup: { label: "Assigned for Pickup", color: "bg-indigo-100 text-indigo-800", next: "confirmed", nextLabel: "Confirm Pickup" },
   processing: { label: "Processing", color: "bg-purple-100 text-purple-800", next: "ready", nextLabel: "Mark Ready" },
-  ready: { label: "Ready", color: "bg-green-100 text-green-800", next: "completed", nextLabel: "Complete" },
+  ready: { label: "Ready", color: "bg-green-100 text-green-800" }, // next computed per-order based on returnMethod
   out_for_delivery: { label: "Out for Delivery", color: "bg-indigo-100 text-indigo-800", next: "completed", nextLabel: "Mark Delivered" },
   delivered: { label: "Delivered", color: "bg-green-100 text-green-800" },
   completed: { label: "Completed", color: "bg-gray-100 text-gray-800" },
@@ -177,7 +178,13 @@ export function QueuePage() {
       ) : (
         <div className="space-y-3">
           {filtered.map((order) => {
-            const config = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.pending;
+            const baseConfig = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.pending;
+            // For "ready" status, next action depends on returnMethod
+            const config = order.status === "ready"
+              ? order.returnMethod === "self_pickup"
+                ? { ...baseConfig, next: "collected", nextLabel: "Mark as Collected" }
+                : { ...baseConfig, next: "out_for_delivery", nextLabel: "Assign for Delivery" }
+              : baseConfig;
             const servicesSummary = order.items?.map((i) => `${i.serviceName} ×${i.quantity}`).join(", ") ?? "—";
             return (
               <div key={order.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
