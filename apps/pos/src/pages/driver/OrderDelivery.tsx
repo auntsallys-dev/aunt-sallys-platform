@@ -4,14 +4,119 @@ import "leaflet/dist/leaflet.css";
 import { api } from "../../lib/api";
 import { useAuth } from "../../contexts/AuthContext";
 
-function PickedUpButton({ orderId, onDone }: { orderId: string; onDone: () => void }) {
+// ── Cloudinary upload ──────────────────────────────────────────────────────────
+async function uploadToCloudinary(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", "auntsallys_driver");
+  formData.append("folder", "auntsallys/driver");
+
+  const res = await fetch("https://api.cloudinary.com/v1_1/dxnufszyx/image/upload", {
+    method: "POST",
+    body: formData,
+  });
+  const data = await res.json();
+  if (!data.secure_url) throw new Error("Upload failed");
+  return data.secure_url;
+}
+
+// ── PhotoCapture component ─────────────────────────────────────────────────────
+function PhotoCapture({
+  label,
+  photoUrl,
+  onCapture,
+  disabled,
+}: {
+  label: string;
+  photoUrl: string | null;
+  onCapture: (url: string) => void;
+  disabled?: boolean;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await uploadToCloudinary(file);
+      onCapture(url);
+    } catch {
+      alert("Photo upload failed. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-gray-100">
+      <p className="mb-3 text-sm font-semibold text-gray-700">{label}</p>
+      {photoUrl ? (
+        <div className="relative">
+          <img
+            src={photoUrl}
+            alt="captured"
+            className="w-full rounded-xl object-cover"
+            style={{ maxHeight: 200 }}
+          />
+          <button
+            onClick={() => inputRef.current?.click()}
+            className="mt-2 w-full rounded-xl border border-gray-200 py-2 text-xs text-gray-500 hover:bg-gray-50"
+          >
+            Retake Photo
+          </button>
+        </div>
+      ) : (
+        <button
+          disabled={disabled || uploading}
+          onClick={() => inputRef.current?.click()}
+          className="w-full rounded-xl border-2 border-dashed border-gray-200 py-8 text-center hover:border-teal-400 transition-colors disabled:opacity-50"
+        >
+          {uploading ? (
+            <div className="text-sm text-gray-400">Uploading…</div>
+          ) : (
+            <>
+              <div className="text-3xl mb-1">📷</div>
+              <div className="text-sm font-semibold text-gray-600">Tap to take photo</div>
+              <div className="text-xs text-gray-400 mt-0.5">Required before proceeding</div>
+            </>
+          )}
+        </button>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleFile}
+      />
+    </div>
+  );
+}
+
+// ── PickedUpButton (pickup leg) ────────────────────────────────────────────────
+function PickedUpButton({
+  orderId,
+  pickupPhoto,
+  onPhotoCapture,
+  onDone,
+}: {
+  orderId: string;
+  pickupPhoto: string | null;
+  onPhotoCapture: (url: string) => void;
+  onDone: () => void;
+}) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
   async function handlePickedUp() {
+    if (!pickupPhoto) return;
     setBusy(true);
     setErr("");
     try {
+      await api.driver.savePickupPhoto(orderId, pickupPhoto);
       await api.driver.markPickedUp(orderId);
       onDone();
     } catch (e: any) {
@@ -22,14 +127,22 @@ function PickedUpButton({ orderId, onDone }: { orderId: string; onDone: () => vo
 
   return (
     <>
+      <PhotoCapture
+        label="📷 Photo of laundry at pickup"
+        photoUrl={pickupPhoto}
+        onCapture={onPhotoCapture}
+      />
       {err && <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{err}</div>}
       <button
-        disabled={busy}
+        disabled={busy || !pickupPhoto}
         onClick={handlePickedUp}
         className="w-full rounded-2xl bg-teal-600 py-4 text-base font-bold text-white hover:bg-teal-700 disabled:opacity-60 transition-colors shadow-sm"
       >
         {busy ? "Processing…" : "📦 I've Picked Up"}
       </button>
+      {!pickupPhoto && (
+        <p className="text-center text-xs text-gray-400">Take a photo above to proceed</p>
+      )}
     </>
   );
 }
@@ -45,6 +158,10 @@ export function DriverOrderDeliveryPage() {
   const [delivered, setDelivered] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Photo state
+  const [pickupPhoto, setPickupPhoto] = useState<string | null>(null);
+  const [deliveryPhoto, setDeliveryPhoto] = useState<string | null>(null);
+
   // Payment collection state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "gcash" | "maya">("cash");
@@ -58,7 +175,6 @@ export function DriverOrderDeliveryPage() {
   async function fetchOrder() {
     try {
       const res = await api.driver.getOrders(user?.branchId ?? undefined);
-      // Handle both new shape { available_pickup, available_delivery, my_orders } and old flat array
       let allOrders: any[];
       if (Array.isArray(res.data)) {
         allOrders = res.data as any[];
@@ -74,6 +190,9 @@ export function DriverOrderDeliveryPage() {
       if (found) {
         setOrder(found);
         if (found.paymentStatus === "paid") setPaymentCollected(true);
+        // Initialize photo state from existing order data
+        if (found.pickupPhotoUrl) setPickupPhoto(found.pickupPhotoUrl);
+        if (found.deliveryPhotoUrl) setDeliveryPhoto(found.deliveryPhotoUrl);
       } else {
         setError("Order not found");
       }
@@ -86,12 +205,10 @@ export function DriverOrderDeliveryPage() {
 
   useEffect(() => { fetchOrder(); }, [id]);
 
-  // Initialize Leaflet map with both customer and driver pins
-  // Re-init if map exists but had no coordinates before (e.g. order opened at pickup leg)
+  // Initialize Leaflet map
   useEffect(() => {
     if (!order || !mapRef.current) return;
     if (leafletMap.current) {
-      // Destroy and reinit if we now have coords but didn't before
       leafletMap.current.remove();
       leafletMap.current = null;
     }
@@ -125,7 +242,6 @@ export function DriverOrderDeliveryPage() {
 
       const markers: [number, number][] = [];
 
-      // Customer marker (teal)
       if (custLat && custLng) {
         const custIcon = L.divIcon({
           className: "",
@@ -140,7 +256,6 @@ export function DriverOrderDeliveryPage() {
         markers.push([custLat, custLng]);
       }
 
-      // Driver marker (blue, from GPS)
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((pos) => {
           const driverLat = pos.coords.latitude;
@@ -158,7 +273,6 @@ export function DriverOrderDeliveryPage() {
 
           markers.push([driverLat, driverLng]);
 
-          // Fit bounds to show both pins
           if (markers.length >= 2) {
             map.fitBounds(markers as any, { padding: [40, 40] });
           }
@@ -193,9 +307,10 @@ export function DriverOrderDeliveryPage() {
   }
 
   async function handleMarkDelivered() {
-    if (!id) return;
+    if (!id || !deliveryPhoto) return;
     setDelivering(true);
     try {
+      await api.driver.saveDeliveryPhoto(id, deliveryPhoto);
       await api.driver.markDelivered(id);
       setDelivered(true);
     } catch (err: any) {
@@ -250,7 +365,6 @@ export function DriverOrderDeliveryPage() {
   const delivery = order.delivery;
   const custLat = delivery?.lat ? parseFloat(delivery.lat) : null;
   const custLng = delivery?.lng ? parseFloat(delivery.lng) : null;
-  // Address: show for ALL statuses (pickup and delivery legs)
   const address = delivery?.addressLine ?? delivery?.address ?? order?.address ?? (order?.notes?.split("\n")[0] ?? "");
 
   const wazeUrl = custLat && custLng
@@ -296,7 +410,6 @@ export function DriverOrderDeliveryPage() {
             </a>
           )}
 
-          {/* Address with copy button */}
           {address && (
             <div className="mt-3 rounded-xl bg-gray-50 p-3 flex items-start justify-between gap-2">
               <p className="text-sm text-gray-700 flex-1">{address}</p>
@@ -314,7 +427,7 @@ export function DriverOrderDeliveryPage() {
           )}
         </div>
 
-        {/* Map — shows for both pickup and delivery legs */}
+        {/* Map */}
         <div className="rounded-2xl overflow-hidden shadow-sm ring-1 ring-gray-100">
           <div className="bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-500 border-b border-gray-100">
             {order.status === "out_for_pickup"
@@ -376,7 +489,12 @@ export function DriverOrderDeliveryPage() {
 
         {/* Status-aware action buttons */}
         {order.status === "out_for_pickup" && (
-          <PickedUpButton orderId={id!} onDone={() => navigate("/driver/dashboard")} />
+          <PickedUpButton
+            orderId={id!}
+            pickupPhoto={pickupPhoto}
+            onPhotoCapture={setPickupPhoto}
+            onDone={() => navigate("/driver/dashboard")}
+          />
         )}
 
         {order.status === "out_for_delivery" && (
@@ -395,14 +513,25 @@ export function DriverOrderDeliveryPage() {
                 ✓ Payment Collected
               </div>
             )}
+
+            {/* Delivery photo */}
+            <PhotoCapture
+              label="📷 Photo proof of delivery"
+              photoUrl={deliveryPhoto}
+              onCapture={setDeliveryPhoto}
+            />
+
             {/* Deliver button */}
             <button
-              disabled={delivering}
+              disabled={delivering || !deliveryPhoto}
               onClick={handleMarkDelivered}
               className="w-full rounded-2xl bg-green-600 py-4 text-base font-bold text-white hover:bg-green-700 disabled:opacity-60 transition-colors shadow-sm"
             >
               {delivering ? "Processing…" : "✓ Mark as Delivered"}
             </button>
+            {!deliveryPhoto && (
+              <p className="text-center text-xs text-gray-400">Take a photo above to proceed</p>
+            )}
           </>
         )}
 

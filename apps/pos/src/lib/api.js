@@ -101,6 +101,8 @@ export const api = {
         collectPayment: (orderId, paymentMethod) => request("PATCH", `/drivers/orders/${orderId}/collect-payment`, { paymentMethod }),
         selfAssign: (orderId) => request("PATCH", `/drivers/orders/${orderId}/self-assign`, {}),
         markPickedUp: (orderId) => request("PATCH", `/drivers/orders/${orderId}/mark-picked-up`, {}),
+        savePickupPhoto: (orderId, photoUrl) => request("PATCH", `/drivers/orders/${orderId}/pickup-photo`, { photoUrl }),
+        saveDeliveryPhoto: (orderId, photoUrl) => request("PATCH", `/drivers/orders/${orderId}/delivery-photo`, { photoUrl }),
     },
 };
 //# sourceMappingURL=api.js.map

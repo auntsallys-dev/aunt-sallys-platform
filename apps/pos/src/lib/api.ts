@@ -133,5 +133,9 @@ export const api = {
       request<{ success: boolean; data: any }>("PATCH", `/drivers/orders/${orderId}/self-assign`, {}),
     markPickedUp: (orderId: string) =>
       request<{ success: boolean; data: any }>("PATCH", `/drivers/orders/${orderId}/mark-picked-up`, {}),
+    savePickupPhoto: (orderId: string, photoUrl: string) =>
+      request<{ success: boolean; data: any }>("PATCH", `/drivers/orders/${orderId}/pickup-photo`, { photoUrl }),
+    saveDeliveryPhoto: (orderId: string, photoUrl: string) =>
+      request<{ success: boolean; data: any }>("PATCH", `/drivers/orders/${orderId}/delivery-photo`, { photoUrl }),
   },
 };

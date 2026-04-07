@@ -315,6 +315,30 @@ driversRoutes.patch("/orders/:id/collect-payment", async (c) => {
   return c.json({ success: true, data: updatedOrder });
 });
 
+// PATCH /api/v1/drivers/orders/:id/pickup-photo — save pickup photo URL
+driversRoutes.patch("/orders/:id/pickup-photo", async (c) => {
+  const orderId = c.req.param("id") as string;
+  const { photoUrl } = await c.req.json();
+  if (!photoUrl) return c.json({ success: false, error: "photoUrl required" }, 400);
+  const [updated] = await db.update(orders)
+    .set({ pickupPhotoUrl: photoUrl, updatedAt: new Date() })
+    .where(eq(orders.id, orderId))
+    .returning();
+  return c.json({ success: true, data: updated });
+});
+
+// PATCH /api/v1/drivers/orders/:id/delivery-photo — save delivery photo URL
+driversRoutes.patch("/orders/:id/delivery-photo", async (c) => {
+  const orderId = c.req.param("id") as string;
+  const { photoUrl } = await c.req.json();
+  if (!photoUrl) return c.json({ success: false, error: "photoUrl required" }, 400);
+  const [updated] = await db.update(orders)
+    .set({ deliveryPhotoUrl: photoUrl, updatedAt: new Date() })
+    .where(eq(orders.id, orderId))
+    .returning();
+  return c.json({ success: true, data: updated });
+});
+
 // PATCH /api/v1/drivers/orders/:id/deliver — mark order as delivered
 driversRoutes.patch("/orders/:id/deliver", async (c) => {
   const orderId = c.req.param("id");

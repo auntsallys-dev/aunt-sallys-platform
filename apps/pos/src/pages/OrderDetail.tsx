@@ -602,6 +602,37 @@ export function OrderDetailPage() {
         </div>
       </div>
 
+      {/* Order Photos */}
+      {(order.pickupPhotoUrl || order.deliveryPhotoUrl) && (
+        <div className="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+          <h3 className="mb-3 font-semibold text-gray-900 text-sm">📷 Order Photos</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {order.pickupPhotoUrl && (
+              <div>
+                <p className="text-xs text-gray-400 mb-1">Pickup</p>
+                <img
+                  src={order.pickupPhotoUrl}
+                  alt="Pickup"
+                  className="w-full rounded-lg object-cover"
+                  style={{ maxHeight: 150 }}
+                />
+              </div>
+            )}
+            {order.deliveryPhotoUrl && (
+              <div>
+                <p className="text-xs text-gray-400 mb-1">Delivery</p>
+                <img
+                  src={order.deliveryPhotoUrl}
+                  alt="Delivery"
+                  className="w-full rounded-lg object-cover"
+                  style={{ maxHeight: 150 }}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Print Receipt */}
       {(order.paymentStatus === "paid" || ["delivered","collected"].includes(order.status)) && (
         <button

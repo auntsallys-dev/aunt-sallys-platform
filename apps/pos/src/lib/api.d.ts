@@ -241,6 +241,14 @@ export declare const api: {
             success: boolean;
             data: any;
         }>;
+        savePickupPhoto: (orderId: string, photoUrl: string) => Promise<{
+            success: boolean;
+            data: any;
+        }>;
+        saveDeliveryPhoto: (orderId: string, photoUrl: string) => Promise<{
+            success: boolean;
+            data: any;
+        }>;
     };
 };
 //# sourceMappingURL=api.d.ts.map
