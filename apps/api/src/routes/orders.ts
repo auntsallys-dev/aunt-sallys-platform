@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq, and, desc, inArray } from "drizzle-orm";
+import { eq, and, desc, inArray, sql } from "drizzle-orm";
 import { db, orders, orderItems, orderStatusHistory, services, branchServices, customers, deliveries, users, branches } from "@aunt-sallys/db";
 import { createOrderSchema, updateOrderStatusSchema } from "@aunt-sallys/shared";
 import { authenticate } from "../middleware/auth.js";
@@ -82,8 +82,15 @@ ordersRoutes.post("/", authenticate, async (c) => {
   const { branchId, customerId, orderType, items, notes, paymentMethod } = result.data;
 
   const year = new Date().getFullYear();
-  const count = await db.$count(orders);
-  const orderNumber = formatOrderNumber(year, count + 1);
+  const prefix = `AS-${year}-`;
+  const [lastOrder] = await db
+    .select({ orderNumber: orders.orderNumber })
+    .from(orders)
+    .where(sql`${orders.orderNumber} LIKE ${prefix + '%'}`)
+    .orderBy(desc(orders.orderNumber))
+    .limit(1);
+  const lastNum = lastOrder ? parseInt(lastOrder.orderNumber.split("-")[2] ?? "0", 10) : 0;
+  const orderNumber = formatOrderNumber(year, lastNum + 1);
 
   let subtotal = 0;
   const itemsToInsert: { serviceId: string; quantity: string; unitPrice: string; totalPrice: string; notes?: string }[] = [];

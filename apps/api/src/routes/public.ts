@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq, ilike, and, desc, or, ne } from "drizzle-orm";
+import { eq, ilike, and, desc, or, ne, sql } from "drizzle-orm";
 import { sendOrderStatusEmail } from "../lib/email.js";
 import {
   db,
@@ -219,10 +219,17 @@ publicRoutes.post("/bookings", async (c) => {
     subtotal += logisticsPrice;
   }
 
-  // Generate order number
-  const count = await db.$count(orders);
+  // Generate order number — use MAX to avoid collisions when orders are deleted
   const year = new Date().getFullYear();
-  const orderNumber = formatOrderNumber(year, count + 1);
+  const prefix = `AS-${year}-`;
+  const [lastOrder] = await db
+    .select({ orderNumber: orders.orderNumber })
+    .from(orders)
+    .where(sql`${orders.orderNumber} LIKE ${prefix + '%'}`)
+    .orderBy(desc(orders.orderNumber))
+    .limit(1);
+  const lastNum = lastOrder ? parseInt(lastOrder.orderNumber.split("-")[2] ?? "0", 10) : 0;
+  const orderNumber = formatOrderNumber(year, lastNum + 1);
 
   const notesLines: string[] = [`Online booking via auntsallyslaundry.com. Pickup address: ${address}`];
   if (driverNotes?.trim()) notesLines.push(`Driver notes: ${driverNotes.trim()}`);
