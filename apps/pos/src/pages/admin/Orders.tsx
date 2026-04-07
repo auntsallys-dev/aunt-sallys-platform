@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../../lib/api";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -314,6 +315,7 @@ function OrderDetailPanel({ order, onClose, onDriverAssigned }: {
 }
 
 export function AdminOrdersPage() {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -393,7 +395,7 @@ export function AdminOrdersPage() {
             ) : filtered.map((o) => (
               <tr
                 key={o.id}
-                onClick={() => setSelectedOrder(o)}
+                onClick={() => navigate(`/admin/orders/${o.id}`)}
                 className="hover:bg-gray-50 cursor-pointer transition-colors"
               >
                 <td className="px-4 py-3 font-mono font-medium text-gray-900">{o.orderNumber ?? o.id?.slice(0, 8)}</td>
