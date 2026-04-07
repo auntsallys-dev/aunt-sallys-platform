@@ -15,7 +15,12 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     },
     body: body ? JSON.stringify(body) : undefined,
   });
-  const json = await res.json();
+  let json: any;
+  try {
+    json = await res.json();
+  } catch {
+    throw new Error(res.ok ? "Invalid server response" : `Server error (${res.status}) — please try again`);
+  }
   if (!res.ok) throw new Error(json.error ?? "Request failed");
   return json;
 }
