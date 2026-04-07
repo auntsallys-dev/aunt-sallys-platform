@@ -145,22 +145,11 @@ export function DriverDashboardPage() {
     try {
       await api.driver.selfAssign(orderId);
       await fetchOrders();
+      navigate(`/driver/orders/${orderId}`);
     } catch (err: any) {
       setError(err.message ?? "Failed to claim order");
     } finally {
       setBusyIds((prev) => { const s = new Set(prev); s.delete(orderId); return s; });
-    }
-  }
-
-  async function handleMarkPickedUp(orderId: string) {
-    setBusyIds((prev) => new Set(prev).add(orderId + "_pickup"));
-    try {
-      await api.driver.markPickedUp(orderId);
-      await fetchOrders();
-    } catch (err: any) {
-      setError(err.message ?? "Failed to mark picked up");
-    } finally {
-      setBusyIds((prev) => { const s = new Set(prev); s.delete(orderId + "_pickup"); return s; });
     }
   }
 
@@ -267,19 +256,21 @@ export function DriverDashboardPage() {
               {queues.my_orders.map((order) => {
                 let actionLabel: string | undefined;
                 let onAction: (() => void) | undefined;
-                let actionBusy = false;
+                const actionBusy = false;
 
                 if (order.status === "out_for_pickup") {
-                  actionLabel = "I've Picked Up";
-                  onAction = () => handleMarkPickedUp(order.id);
-                  actionBusy = busyIds.has(order.id + "_pickup");
-                } else if (order.status === "out_for_delivery") {
-                  actionLabel = "Mark Delivered";
+                  actionLabel = "Navigate to Pickup";
                   onAction = () => navigate(`/driver/orders/${order.id}`);
+                } else if (order.status === "out_for_delivery") {
+                  actionLabel = "Navigate to Delivery";
+                  onAction = () => navigate(`/driver/orders/${order.id}`);
+                } else if (order.status === "processing") {
+                  // Read-only — no action button; badge shown via status pill
+                  actionLabel = undefined;
+                  onAction = undefined;
                 } else if (order.status === "ready") {
                   actionLabel = "Claim Delivery";
                   onAction = () => handleSelfAssign(order.id);
-                  actionBusy = busyIds.has(order.id);
                 }
 
                 return (
@@ -290,6 +281,7 @@ export function DriverDashboardPage() {
                     actionLabel={actionLabel}
                     onAction={onAction ? (e) => { e.stopPropagation(); onAction!(); } : undefined}
                     actionBusy={actionBusy}
+                    badge={order.status === "processing" ? "⏳ At Branch" : undefined}
                   />
                 );
               })}

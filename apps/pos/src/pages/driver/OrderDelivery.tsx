@@ -4,6 +4,36 @@ import "leaflet/dist/leaflet.css";
 import { api } from "../../lib/api";
 import { useAuth } from "../../contexts/AuthContext";
 
+function PickedUpButton({ orderId, onDone }: { orderId: string; onDone: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  async function handlePickedUp() {
+    setBusy(true);
+    setErr("");
+    try {
+      await api.driver.markPickedUp(orderId);
+      onDone();
+    } catch (e: any) {
+      setErr(e.message ?? "Failed to mark picked up");
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      {err && <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{err}</div>}
+      <button
+        disabled={busy}
+        onClick={handlePickedUp}
+        className="w-full rounded-2xl bg-teal-600 py-4 text-base font-bold text-white hover:bg-teal-700 disabled:opacity-60 transition-colors shadow-sm"
+      >
+        {busy ? "Processing…" : "📦 I've Picked Up"}
+      </button>
+    </>
+  );
+}
+
 export function DriverOrderDeliveryPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -237,6 +267,15 @@ export function DriverOrderDeliveryPage() {
         <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700">
           ← Back
         </button>
+        <div className="mt-1 font-semibold text-gray-900 text-sm truncate">
+          {order.status === "out_for_pickup"
+            ? `📦 Pickup — ${order.customerName}`
+            : order.status === "out_for_delivery"
+            ? `🚚 Delivery — ${order.customerName}`
+            : order.status === "processing"
+            ? `⏳ Processing — ${order.customerName}`
+            : order.customerName}
+        </div>
       </header>
 
       <div className="p-4 space-y-4">
@@ -335,31 +374,42 @@ export function DriverOrderDeliveryPage() {
           </div>
         </div>
 
-        {/* Collect Payment button */}
-        {order.paymentStatus !== "paid" && !paymentCollected && (
-          <button
-            onClick={() => setShowPaymentModal(true)}
-            className="w-full rounded-2xl bg-blue-600 py-4 text-base font-bold text-white hover:bg-blue-700 transition-colors shadow-sm"
-          >
-            💳 Collect Payment
-          </button>
+        {/* Status-aware action buttons */}
+        {order.status === "out_for_pickup" && (
+          <PickedUpButton orderId={id!} onDone={() => navigate("/driver/dashboard")} />
         )}
 
-        {(order.paymentStatus === "paid" || paymentCollected) && (
-          <div className="rounded-2xl bg-green-50 px-4 py-3 text-center text-sm font-semibold text-green-700 ring-1 ring-green-200">
-            ✓ Payment Collected
+        {order.status === "out_for_delivery" && (
+          <>
+            {/* Payment */}
+            {order.paymentStatus !== "paid" && !paymentCollected && (
+              <button
+                onClick={() => setShowPaymentModal(true)}
+                className="w-full rounded-2xl bg-blue-600 py-4 text-base font-bold text-white hover:bg-blue-700 transition-colors shadow-sm"
+              >
+                💳 Collect Payment
+              </button>
+            )}
+            {(order.paymentStatus === "paid" || paymentCollected) && (
+              <div className="rounded-2xl bg-green-50 px-4 py-3 text-center text-sm font-semibold text-green-700 ring-1 ring-green-200">
+                ✓ Payment Collected
+              </div>
+            )}
+            {/* Deliver button */}
+            <button
+              disabled={delivering}
+              onClick={handleMarkDelivered}
+              className="w-full rounded-2xl bg-green-600 py-4 text-base font-bold text-white hover:bg-green-700 disabled:opacity-60 transition-colors shadow-sm"
+            >
+              {delivering ? "Processing…" : "✓ Mark as Delivered"}
+            </button>
+          </>
+        )}
+
+        {order.status === "processing" && (
+          <div className="rounded-2xl bg-purple-50 px-4 py-4 text-center text-sm font-semibold text-purple-700 ring-1 ring-purple-200">
+            ⏳ Your branch is processing this order. Sit tight!
           </div>
-        )}
-
-        {/* Deliver button */}
-        {!["delivered", "completed"].includes(order.status) && (
-          <button
-            disabled={delivering}
-            onClick={handleMarkDelivered}
-            className="w-full rounded-2xl bg-green-600 py-4 text-base font-bold text-white hover:bg-green-700 disabled:opacity-60 transition-colors shadow-sm"
-          >
-            {delivering ? "Processing…" : "✓ Mark as Delivered"}
-          </button>
         )}
 
         {["delivered", "completed"].includes(order.status) && (
