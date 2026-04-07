@@ -16,12 +16,9 @@ RUN cd apps/pos && npx vite build
 # Copy POS build to API public dir
 RUN mkdir -p apps/api/public && cp -r apps/pos/dist/* apps/api/public/
 
-# Build the API (compiles TypeScript to dist/)
-RUN pnpm --filter api build
-
 EXPOSE 10000
 ENV NODE_ENV=production
 ENV PORT=10000
 
-# Run compiled JS directly — no tsx needed
-CMD ["node", "apps/api/dist/index.js"]
+# Run via tsx (handles TypeScript imports in monorepo correctly)
+CMD ["node", "apps/api/start.cjs"]
