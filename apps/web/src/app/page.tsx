@@ -227,12 +227,20 @@ export default async function HomePage() {
           {(liveBranches.length > 0 ? liveBranches : BRANCHES.map((b) => ({ id: b.name, name: b.name, slug: "", address: b.area, phone: null, secondaryPhone: null, operatingHours: null }))).map((b) => (
             <div key={b.id} className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
               <div className="w-6 h-px mb-4" style={{ backgroundColor: TEAL }} />
-              <h3 className="font-serif text-lg font-medium text-gray-900 mb-1">{b.name}</h3>
+              <h3 className="font-serif text-lg font-medium text-gray-900 mb-1">{b.name.replace("Aunt Sally's Laundry — ", "")}</h3>
               {b.address && <p className="text-sm text-gray-500 mb-3">{b.address}</p>}
-              <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: TEAL }}>
-                <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: TEAL }} />
-                Open
-              </span>
+              {b.operatingHours ? (
+                <div className="space-y-0.5">
+                  {b.operatingHours.split(" | ").map((line: string, i: number) => (
+                    <p key={i} className="text-xs" style={{ color: i === 0 ? TEAL : "#6b7280" }}>{line}</p>
+                  ))}
+                </div>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium" style={{ color: TEAL }}>
+                  <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: TEAL }} />
+                  Open
+                </span>
+              )}
             </div>
           ))}
         </div>
@@ -273,7 +281,7 @@ export default async function HomePage() {
             {liveBranches.length > 0 ? liveBranches.map((branch) => (
               <div key={branch.id} className="border border-gray-100 p-6 hover:border-[#47d8d5] transition-colors">
                 <div className="w-6 h-px mb-4" style={{ backgroundColor: TEAL }} />
-                <h3 className="font-serif text-base font-medium text-gray-900 mb-1">{branch.name}</h3>
+                <h3 className="font-serif text-base font-medium text-gray-900 mb-1">{branch.name.replace("Aunt Sally's Laundry — ", "")}</h3>
                 {branch.address && <p className="text-xs text-gray-500 mb-3">{branch.address}</p>}
                 {branch.phone && (
                   <a href={`tel:${branch.phone.replace(/\D/g, "")}`} className="text-sm font-medium hover:underline block" style={{ color: TEAL }}>
