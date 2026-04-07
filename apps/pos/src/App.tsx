@@ -91,6 +91,7 @@ function AppRoutes() {
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboardPage />} />
         <Route path="orders" element={<AdminOrdersPage />} />
+        <Route path="orders/:id" element={<OrderDetailPage />} />
         <Route path="customers" element={<AdminCustomersPage />} />
         <Route path="drivers" element={<AdminDriversPage />} />
         <Route path="branches" element={<AdminBranchesPage />} />
