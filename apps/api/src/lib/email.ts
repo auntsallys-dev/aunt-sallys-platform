@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Gracefully handle missing API key — emails simply won't send
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 const FROM = "Aunt Sally's Laundry <noreply@auntsallyslaundry.com>";
 const REPLY_TO = "admin@auntsallyslaundry.com";
@@ -123,6 +124,11 @@ export async function sendOrderStatusEmail(params: SendOrderEmailParams) {
     <a href="${trackingUrl}" class="track-btn">Track My Order →</a>
     <p style="font-size: 13px; color: #9ca3af;">Questions? Reply to this email or call any of our branches.</p>
   `);
+
+  if (!resend) {
+    console.warn("[email] RESEND_API_KEY not set — skipping email send");
+    return;
+  }
 
   try {
     await resend.emails.send({
