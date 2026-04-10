@@ -4,6 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Aunt Sally's — POS</title>
+  <style>
+    @media print {
+      /* Hide sidebar and non-receipt elements */
+      aside, nav { display: none !important; }
+      /* Hide buttons during print */
+      [data-print-hide] { display: none !important; }
+      /* Receipt takes full width */
+      main, .flex, [class*="ml-"] { margin: 0 !important; width: 100% !important; }
+      body { background: white; }
+      @page { margin: 8mm; size: 80mm auto; }
+    }
+  </style>
   </head>
   <body>
     <div id="root"></div>

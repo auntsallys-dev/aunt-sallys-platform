@@ -501,7 +501,16 @@ export function NewOrderPage() {
 
           <p className="mt-6 text-center text-xs text-gray-400">Thank you for choosing Aunt Sally's!</p>
 
-          <div className="mt-6 flex gap-3">
+          <div className="mt-4" data-print-hide>
+            <button
+              onClick={() => window.print()}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-600 py-2.5 text-sm font-semibold text-brand-700 hover:bg-brand-50 active:bg-brand-100 transition-colors"
+            >
+              🖨️ Print Receipt
+            </button>
+          </div>
+
+          <div className="mt-3 flex gap-3" data-print-hide>
             <button
               onClick={() => {
                 setCreatedOrder(null);
