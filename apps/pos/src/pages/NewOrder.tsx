@@ -423,6 +423,58 @@ export function NewOrderPage() {
     }
   }
 
+  // ── Print receipt (Android-compatible) ────────────────────────────────────
+  function printCreatedReceipt() {
+    const items = createdOrder?.items ?? [];
+    const date = new Date(createdOrder!.createdAt).toLocaleString("en-PH", { timeZone: "Asia/Manila", dateStyle: "medium", timeStyle: "short" });
+    const itemRows = items.map((i: any) =>
+      `<tr><td>${i.serviceName ?? i.notes ?? "Custom Service"}</td><td style="text-align:right">x${i.quantity}</td><td style="text-align:right">₱${parseFloat(i.totalPrice ?? i.unitPrice ?? "0").toFixed(2)}</td></tr>`
+    ).join("");
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>Receipt ${createdOrder!.orderNumber}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; margin: 0 auto; padding: 8px; }
+  .bold { font-weight: bold; } .center { text-align: center; }
+  .divider { border-top: 1px dashed #000; margin: 6px 0; }
+  h1 { font-size: 15px; text-align: center; margin-bottom: 2px; }
+  h2 { font-size: 11px; text-align: center; font-weight: normal; margin-bottom: 6px; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 2px 0; vertical-align: top; }
+  .total-row td { font-weight: bold; font-size: 13px; padding-top: 4px; }
+  .footer { text-align: center; margin-top: 10px; font-size: 11px; }
+  @media print { @page { margin: 0; size: 80mm auto; } }
+</style></head>
+<body>
+  <h1>Aunt Sally's Laundry</h1>
+  <h2>Order Receipt</h2>
+  <div class="divider"></div>
+  <div><span class="bold">Order #:</span> ${createdOrder!.orderNumber}</div>
+  <div><span class="bold">Customer:</span> ${customer ? customer.firstName + " " + customer.lastName : "Walk-in"}</div>
+  <div><span class="bold">Date:</span> ${date}</div>
+  <div><span class="bold">Type:</span> ${createdOrder!.orderType === "walk_in" ? "Walk-in" : "Pickup & Delivery"}</div>
+  <div><span class="bold">Payment:</span> ${createdOrder!.paymentMethod ?? "Cash"}</div>
+  <div class="divider"></div>
+  <table>
+    <tr><td><b>Service</b></td><td style="text-align:right"><b>Qty</b></td><td style="text-align:right"><b>Amount</b></td></tr>
+    ${itemRows}
+    <tr><td colspan="3"><div class="divider"></div></td></tr>
+    <tr class="total-row"><td colspan="2">TOTAL</td><td style="text-align:right">₱${parseFloat(createdOrder!.total).toFixed(2)}</td></tr>
+  </table>
+  <div class="divider"></div>
+  <div class="footer"><div>Thank you for choosing Aunt Sally's! 🫧</div></div>
+  <script>window.onload = function() { window.print(); window.onafterprint = function() { window.close(); }; }<\/script>
+</body></html>`;
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }
+
   // ── Receipt view ───────────────────────────────────────────────────────────
   if (createdOrder) {
     return (
@@ -503,7 +555,7 @@ export function NewOrderPage() {
 
           <div className="mt-4" data-print-hide>
             <button
-              onClick={() => window.print()}
+              onClick={() => printCreatedReceipt()}
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand-600 py-2.5 text-sm font-semibold text-brand-700 hover:bg-brand-50 active:bg-brand-100 transition-colors"
             >
               🖨️ Print Receipt

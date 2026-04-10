@@ -343,8 +343,15 @@ export function OrderDetailPage() {
   <script>window.onload = function() { window.print(); window.onafterprint = function() { window.close(); }; }</script>
 </body></html>`;
 
-    const w = window.open("", "_blank", "width=350,height=600");
-    if (w) { w.document.write(html); w.document.close(); }
+    // Use blob URL for Android Chrome compatibility (no popup blocker issues)
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
   }
 
   async function fetchOrder() {
