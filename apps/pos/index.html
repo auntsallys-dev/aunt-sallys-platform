@@ -6,14 +6,31 @@
     <title>Aunt Sally's — POS</title>
   <style>
     @media print {
-      /* Hide sidebar and non-receipt elements */
+      /* Hide sidebar, nav, buttons */
       aside, nav { display: none !important; }
-      /* Hide buttons during print */
       [data-print-hide] { display: none !important; }
-      /* Receipt takes full width */
-      main, .flex, [class*="ml-"] { margin: 0 !important; width: 100% !important; }
-      body { background: white; }
-      @page { margin: 8mm; size: 80mm auto; }
+
+      /* Reset layout — remove sidebar offset */
+      body, html { margin: 0 !important; padding: 0 !important; background: white !important; }
+      #root > * { margin-left: 0 !important; }
+      main { margin: 0 !important; padding: 0 !important; }
+
+      /* Receipt card — flat, no shadow, full width */
+      [data-receipt-card] {
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 4mm !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        font-size: 11px !important;
+      }
+
+      /* Thermal-style dividers */
+      [data-receipt-card] hr { border-top: 1px dashed #000 !important; }
+
+      @page { margin: 0; size: 80mm auto; }
     }
   </style>
   </head>

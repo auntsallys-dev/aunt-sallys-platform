@@ -427,7 +427,7 @@ export function NewOrderPage() {
   if (createdOrder) {
     return (
       <div className="flex h-full items-center justify-center bg-gray-50 p-8">
-        <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-xl ring-1 ring-gray-200">
+        <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-xl ring-1 ring-gray-200" data-receipt-card>
           <div className="mb-6 text-center">
             <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-600">
               <span className="text-lg font-bold text-white">AS</span>
