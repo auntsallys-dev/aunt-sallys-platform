@@ -43,7 +43,7 @@ authRoutes.post("/login", async (c) => {
 
   const accessToken = await signJWT(
     { sub: user.id, role: user.role, orgId: user.orgId, branchId: user.branchId },
-    "15m"
+    "12h"
   );
 
   const rawRefreshToken = crypto.randomBytes(40).toString("hex");
@@ -101,7 +101,7 @@ authRoutes.post("/refresh", async (c) => {
   const newHash = crypto.createHash("sha256").update(newRaw).digest("hex");
   await db.insert(refreshTokens).values({ userId: user.id, tokenHash: newHash, expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) });
 
-  const accessToken = await signJWT({ sub: user.id, role: user.role, orgId: user.orgId, branchId: user.branchId }, "15m");
+  const accessToken = await signJWT({ sub: user.id, role: user.role, orgId: user.orgId, branchId: user.branchId }, "12h");
   return c.json({ success: true, data: { accessToken, refreshToken: newRaw, expiresIn: 43200 } });
 });
 
