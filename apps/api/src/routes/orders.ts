@@ -96,25 +96,44 @@ ordersRoutes.post("/", authenticate, async (c) => {
   let subtotal = 0;
   const itemsToInsert: { serviceId: string; quantity: string; unitPrice: string; totalPrice: string; notes?: string }[] = [];
 
+  const CUSTOM_ITEM_ID = "00000000-0000-0000-0000-000000000001";
+
   for (const item of items) {
-    const [service] = await db.select().from(services).where(eq(services.id, item.serviceId)).limit(1);
-    if (!service) return c.json({ success: false, error: `Service ${item.serviceId} not found` }, 400);
+    const isCustom = item.serviceId === CUSTOM_ITEM_ID;
 
-    // Check branch override
-    const [bs] = await db.select().from(branchServices)
-      .where(and(eq(branchServices.serviceId, item.serviceId), eq(branchServices.branchId, branchId)))
-      .limit(1);
+    if (isCustom) {
+      // Custom items: use provided price and name
+      if (!item.unitPrice || item.unitPrice <= 0) return c.json({ success: false, error: "Custom item must have a price" }, 400);
+      const unitPrice = item.unitPrice;
+      const totalPrice = unitPrice * item.quantity;
+      subtotal += totalPrice;
+      itemsToInsert.push({
+        serviceId: item.serviceId,
+        quantity: String(item.quantity),
+        unitPrice: String(unitPrice),
+        totalPrice: String(totalPrice),
+        notes: item.customName ?? item.notes,
+      });
+    } else {
+      const [service] = await db.select().from(services).where(eq(services.id, item.serviceId)).limit(1);
+      if (!service) return c.json({ success: false, error: `Service ${item.serviceId} not found` }, 400);
 
-    const unitPrice = parseFloat((bs?.priceOverride ?? service.basePrice) as string);
-    const totalPrice = unitPrice * item.quantity;
-    subtotal += totalPrice;
-    itemsToInsert.push({
-      serviceId: item.serviceId,
-      quantity: String(item.quantity),
-      unitPrice: String(unitPrice),
-      totalPrice: String(totalPrice),
-      notes: item.notes,
-    });
+      // Check branch override
+      const [bs] = await db.select().from(branchServices)
+        .where(and(eq(branchServices.serviceId, item.serviceId), eq(branchServices.branchId, branchId)))
+        .limit(1);
+
+      const unitPrice = parseFloat((bs?.priceOverride ?? service.basePrice) as string);
+      const totalPrice = unitPrice * item.quantity;
+      subtotal += totalPrice;
+      itemsToInsert.push({
+        serviceId: item.serviceId,
+        quantity: String(item.quantity),
+        unitPrice: String(unitPrice),
+        totalPrice: String(totalPrice),
+        notes: item.notes,
+      });
+    }
   }
 
   const deliveryFee = orderType === "delivery" ? 50 : 0;

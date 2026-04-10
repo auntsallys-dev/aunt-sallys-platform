@@ -384,11 +384,12 @@ export function NewOrderPage() {
     });
   }
 
+  const CUSTOM_ITEM_ID = "00000000-0000-0000-0000-000000000001";
+
   function addCustomService(name: string, unitPrice: number) {
-    const id = `custom-${Date.now()}`;
     setItems((prev) => [
       ...prev,
-      { serviceId: id, name, quantity: 1, unitPrice, priceUnit: "item" },
+      { serviceId: CUSTOM_ITEM_ID, name, quantity: 1, unitPrice, priceUnit: "item" },
     ]);
   }
 
@@ -407,7 +408,11 @@ export function NewOrderPage() {
         orderType,
         paymentMethod,
         customerId: customer?.id,
-        items: items.map((i) => ({ serviceId: i.serviceId, quantity: i.quantity })),
+        items: items.map((i) => ({
+          serviceId: i.serviceId,
+          quantity: i.quantity,
+          ...(i.serviceId === CUSTOM_ITEM_ID ? { unitPrice: i.unitPrice, customName: i.name } : {}),
+        })),
         discount: discount > 0 ? discount : undefined,
       });
       setCreatedOrder(res.data);

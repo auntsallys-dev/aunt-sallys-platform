@@ -55,6 +55,8 @@ export const orderItemSchema = z.object({
   serviceId: z.string().uuid(),
   quantity: z.number().positive(),
   notes: z.string().optional(),
+  unitPrice: z.number().positive().optional(), // used for custom items
+  customName: z.string().optional(),           // used for custom items
 });
 
 export const createOrderSchema = z.object({
