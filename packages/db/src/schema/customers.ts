@@ -35,7 +35,7 @@ export const customers = pgTable("customers", {
   housingType: varchar("housing_type", { length: 100 }),
   hasHelper: boolean("has_helper"),
   frequentServices: text("frequent_services").array(),
-  emailOrderUpdates: boolean("email_order_updates").default(false),
+  emailOrderUpdates: boolean("email_order_updates").default(true),
   emailPromos: boolean("email_promos").default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),

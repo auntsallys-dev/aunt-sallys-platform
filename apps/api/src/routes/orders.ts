@@ -136,6 +136,34 @@ ordersRoutes.post("/", authenticate, async (c) => {
   await db.insert(orderItems).values(itemsToInsert.map((i) => ({ ...i, orderId: order.id })));
   await db.insert(orderStatusHistory).values({ orderId: order.id, status: "pending", changedBy: authUser.id });
 
+  // Fire-and-forget booking confirmation email for walk-in orders
+  if (order.customerId) {
+    (async () => {
+      try {
+        const [customer] = await db
+          .select({ email: customers.email, firstName: customers.firstName, lastName: customers.lastName, emailOrderUpdates: customers.emailOrderUpdates })
+          .from(customers)
+          .where(eq(customers.id, order.customerId!))
+          .limit(1);
+        if (customer?.email && customer.emailOrderUpdates === true) {
+          const [branch] = await db.select({ name: branches.name }).from(branches).where(eq(branches.id, order.branchId)).limit(1);
+          const customerName = `${customer.firstName} ${customer.lastName}`.trim();
+          sendOrderStatusEmail({
+            to: customer.email,
+            customerName,
+            orderNumber: order.orderNumber,
+            trackingCode: order.orderNumber,
+            status: "booking_received",
+            branchName: branch?.name ?? undefined,
+            total: order.total ? String(order.total) : undefined,
+          }).catch(console.error);
+        }
+      } catch (err) {
+        console.error("[email] Error sending walk-in booking email:", err);
+      }
+    })();
+  }
+
   // Re-fetch with items
   const enrichedItems = await db.select({
     id: orderItems.id,
