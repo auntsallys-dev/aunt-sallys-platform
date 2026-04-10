@@ -354,7 +354,7 @@ export default function BookPage() {
     frequentServices: string[];
     emailOrderUpdates: boolean;
     emailPromos: boolean;
-  }>({ frequentServices: [], emailOrderUpdates: false, emailPromos: false });
+  }>({ frequentServices: [], emailOrderUpdates: true, emailPromos: false });
 
   // Remote data
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -365,7 +365,7 @@ export default function BookPage() {
   const [name, setName]       = useState("");
   const [phone, setPhone]     = useState("");
   const [email, setEmail]     = useState("");
-  const [emailOptIn, setEmailOptIn] = useState(false);
+  const [emailOptIn, setEmailOptIn] = useState(true);
   const [nameError, setNameError]   = useState("");
   const [phoneError, setPhoneError] = useState("");
 
