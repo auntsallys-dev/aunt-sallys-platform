@@ -653,15 +653,13 @@ export function OrderDetailPage() {
         </div>
       )}
 
-      {/* Print Receipt */}
-      {(order.paymentStatus === "paid" || ["delivered","collected"].includes(order.status)) && (
-        <button
-          onClick={() => printReceipt(order)}
-          className="w-full rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 mb-3"
-        >
-          🖨️ Print Receipt
-        </button>
-      )}
+      {/* Print Receipt — always available */}
+      <button
+        onClick={() => printReceipt(order)}
+        className="w-full rounded-xl border border-brand-400 py-2.5 text-sm font-semibold text-brand-700 hover:bg-brand-50 transition-colors flex items-center justify-center gap-2 mb-3"
+      >
+        🖨️ Print Receipt
+      </button>
 
       {/* Actions */}
       <div className="flex gap-3">
