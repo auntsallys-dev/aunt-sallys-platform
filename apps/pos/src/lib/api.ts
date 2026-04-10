@@ -21,7 +21,10 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   } catch {
     throw new Error(res.ok ? "Invalid server response" : `Server error (${res.status}) — please try again`);
   }
-  if (!res.ok) throw new Error(json.error ?? "Request failed");
+  if (!res.ok) {
+    const errMsg = typeof json.error === "string" ? json.error : JSON.stringify(json.error) ?? "Request failed";
+    throw new Error(errMsg);
+  }
   return json;
 }
 

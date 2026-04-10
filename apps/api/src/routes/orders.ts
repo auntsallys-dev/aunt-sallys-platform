@@ -75,7 +75,8 @@ ordersRoutes.post("/", authenticate, async (c) => {
 
   const result = createOrderSchema.safeParse(body);
   if (!result.success) {
-    return c.json({ success: false, error: result.error.flatten() }, 400);
+    const firstError = result.error.errors[0]?.message ?? "Invalid request";
+    return c.json({ success: false, error: firstError }, 400);
   }
 
   const authUser = c.get("authUser");
