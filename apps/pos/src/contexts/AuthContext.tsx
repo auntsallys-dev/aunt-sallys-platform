@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (token && userStr) {
       try {
         const user = JSON.parse(userStr);
-        setState({ user, token, selectedBranchId: branchId, isLoading: false });
+        setState({ user, token, selectedBranchId: branchId && branchId !== "null" ? branchId : (user.branchId ?? null), isLoading: false });
       } catch {
         setState((s) => ({ ...s, isLoading: false }));
       }

@@ -397,7 +397,7 @@ export function NewOrderPage() {
   }
 
   async function handleSubmit() {
-    if (!selectedBranchId) { setError("No branch selected"); return; }
+    if (!selectedBranchId || selectedBranchId === "null") { setError("No branch selected — please log out and log back in"); return; }
     if (items.length === 0) { setError("Add at least one service"); return; }
     setError("");
     setSubmitting(true);
