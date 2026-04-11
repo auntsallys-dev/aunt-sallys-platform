@@ -572,6 +572,8 @@ export default function BookPage() {
             unitPrice: i.unitPrice,
             notes: i.brand ? `Brand: ${i.brand}` : undefined,
           })),
+          // Always send emailOrderUpdates when email is provided
+          ...(email && { emailOrderUpdates: clientProfile.emailOrderUpdates }),
           ...(profileSaved && {
             gender: clientProfile.gender,
             age: clientProfile.age,
