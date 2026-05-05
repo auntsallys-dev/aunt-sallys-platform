@@ -12,6 +12,7 @@
   "dependencies": {
     "@aunt-sallys/db": "workspace:*",
     "@aunt-sallys/shared": "workspace:*",
+    "@aws-sdk/client-s3": "^3.704.0",
     "@hono/node-server": "^1.13.7",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.7",

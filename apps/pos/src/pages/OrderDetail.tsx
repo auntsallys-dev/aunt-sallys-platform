@@ -294,64 +294,53 @@ export function OrderDetailPage() {
   const [selectedDriverId, setSelectedDriverId] = useState("");
   const [assigningDriver, setAssigningDriver] = useState(false);
 
-  function printReceipt(order: any) {
-    const items = order.items ?? [];
-    const branchName = order.branchName ?? "Aunt Sally's Laundry";
-    const date = new Date(order.createdAt).toLocaleString("en-PH", { timeZone: "Asia/Manila", dateStyle: "medium", timeStyle: "short" });
-    const itemRows = items.map((i: any) =>
-      `<tr><td>${i.serviceName ?? i.customName ?? "Service"}</td><td style="text-align:right">x${i.quantity}</td><td style="text-align:right">₱${parseFloat(i.totalPrice ?? i.unitPrice ?? "0").toFixed(2)}</td></tr>`
-    ).join("");
+  /**
+   * Issue a BIR-compliant Sales Invoice for this order (if not already issued)
+   * and open the server-rendered receipt in a new tab for the thermal printer.
+   *
+   * Replaces the old inline-HTML printReceipt(): IBMS no longer generates the
+   * receipt content client-side. BIR-graded invoices come from the server,
+   * which computes the per-branch serial, VAT breakdown, and audit trail.
+   * See apps/api/src/routes/invoices.ts.
+   */
+  async function printReceipt(order: any) {
+    try {
+      // 1. Find or issue the Sales Invoice for this order.
+      let invoiceId: string | undefined = order.invoiceId;
+      if (!invoiceId) {
+        const issueRes = await api.invoices.issue({
+          orderId: order.id,
+          customer: {
+            name: order.customerName ?? "Walk-in Customer",
+            address: order.customerAddress ?? null,
+            tin: order.customerTin ?? null,
+            businessStyle: null,
+          },
+          discount: order.discountType
+            ? {
+                type: order.discountType,
+                idNumber: order.discountIdNumber ?? null,
+                amount: parseFloat(order.discount ?? "0") || undefined,
+                reason: order.discountReason ?? null,
+              }
+            : undefined,
+        });
+        invoiceId = issueRes.data.id as string;
+      }
 
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-<title>Receipt ${order.orderNumber}</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; margin: 0 auto; padding: 8px; }
-  .center { text-align: center; }
-  .bold { font-weight: bold; }
-  .divider { border-top: 1px dashed #000; margin: 6px 0; }
-  h1 { font-size: 15px; text-align: center; margin-bottom: 2px; }
-  h2 { font-size: 11px; text-align: center; font-weight: normal; margin-bottom: 6px; }
-  table { width: 100%; border-collapse: collapse; }
-  td { padding: 2px 0; vertical-align: top; }
-  .total-row td { font-weight: bold; font-size: 13px; padding-top: 4px; }
-  .footer { text-align: center; margin-top: 10px; font-size: 11px; }
-  @media print { @page { margin: 0; size: 80mm auto; } }
-</style></head>
-<body>
-  <h1>Aunt Sally's Laundry</h1>
-  <h2>${branchName}</h2>
-  <div class="divider"></div>
-  <div><span class="bold">Order #:</span> ${order.orderNumber}</div>
-  <div><span class="bold">Customer:</span> ${order.customerName}</div>
-  <div><span class="bold">Date:</span> ${date}</div>
-  <div><span class="bold">Type:</span> ${order.orderType === "walk_in" ? "Walk-in" : order.returnMethod === "self_pickup" ? "Self Pickup" : "Pickup & Delivery"}</div>
-  <div class="divider"></div>
-  <table>
-    <tr><td><b>Service</b></td><td style="text-align:right"><b>Qty</b></td><td style="text-align:right"><b>Amount</b></td></tr>
-    ${itemRows}
-    <tr><td colspan="3"><div class="divider"></div></td></tr>
-    <tr class="total-row"><td colspan="2">TOTAL</td><td style="text-align:right">₱${parseFloat(order.total).toFixed(2)}</td></tr>
-    <tr><td colspan="2">Payment</td><td style="text-align:right">${order.paymentStatus === "paid" ? "PAID" : "UNPAID"}</td></tr>
-  </table>
-  <div class="divider"></div>
-  <div class="footer">
-    <div>Track: auntsallyslaundry.com/track</div>
-    <div>Code: ${order.trackingCode ?? ""}</div>
-    <div style="margin-top:6px">Thank you! 🫧</div>
-  </div>
-  <script>window.onload = function() { window.print(); window.onafterprint = function() { window.close(); }; }</script>
-</body></html>`;
-
-    // Use blob URL for Android Chrome compatibility (no popup blocker issues)
-    const blob = new Blob([html], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.target = "_blank";
-    a.rel = "noopener";
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 10000);
+      // 2. Fetch the printable HTML and open it via blob URL.
+      const html = await api.invoices.printHtml(invoiceId!);
+      const blob = new Blob([html], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    } catch (err: any) {
+      alert(`Could not print receipt: ${err?.message ?? err}`);
+    }
   }
 
   async function fetchOrder() {

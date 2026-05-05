@@ -8,10 +8,12 @@
     "./types": "./src/types/index.ts",
     "./constants": "./src/constants/index.ts",
     "./utils": "./src/utils/index.ts",
-    "./validators": "./src/validators/index.ts"
+    "./validators": "./src/validators/index.ts",
+    "./tax": "./src/tax/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types --no-warnings src/tax/vat.test.ts src/tax/integration.test.ts"
   },
   "dependencies": {
     "zod": "^3.23.8"

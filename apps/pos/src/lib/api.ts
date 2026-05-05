@@ -75,6 +75,61 @@ export const api = {
     create: (data: { orderId: string; amount: number; method: string; reference?: string }) =>
       request<{ success: boolean; data: any }>("POST", "/payments", data),
   },
+  invoices: {
+    issue: (data: {
+      orderId: string;
+      customer: { name: string; address?: string | null; tin?: string | null; businessStyle?: string | null };
+      discount?: { type: "none" | "sc" | "pwd" | "promo" | "manager"; idNumber?: string | null; amount?: number; reason?: string | null };
+      lineTaxClass?: Record<string, "vatable" | "vat_exempt" | "zero_rated">;
+    }) => request<{ success: boolean; data: any }>("POST", "/invoices/issue", data),
+    get: (id: string) => request<{ success: boolean; data: any }>("GET", `/invoices/${id}`),
+    list: (params?: { branchId?: string; from?: string; to?: string; includeVoided?: boolean }) => {
+      const qs = new URLSearchParams(params as Record<string, string>).toString();
+      return request<{ success: boolean; data: any[] }>("GET", `/invoices${qs ? `?${qs}` : ""}`);
+    },
+    void: (id: string, reason: string) =>
+      request<{ success: boolean; data: { reversalInvoiceId: string } }>("POST", `/invoices/${id}/void`, { reason }),
+    /** Fetch the server-rendered HTML for printing. Auth via Authorization header. */
+    printHtml: async (id: string): Promise<string> => {
+      const res = await fetch(`${BASE}/invoices/${id}/print`, {
+        headers: { Authorization: `Bearer ${getToken() ?? ""}` },
+      });
+      if (!res.ok) throw new Error(`Print failed (${res.status})`);
+      return res.text();
+    },
+  },
+  collectionReceipts: {
+    create: (data: {
+      invoiceId: string;
+      amount: number;
+      paymentMethod: "cash" | "card" | "gcash" | "maya" | "bank_transfer" | "other";
+      paymentReference?: string | null;
+      receivedFromName?: string;
+      receivedFromTin?: string | null;
+    }) => request<{ success: boolean; data: any }>("POST", "/collection-receipts", data),
+    printHtml: async (id: string): Promise<string> => {
+      const res = await fetch(`${BASE}/collection-receipts/${id}/print`, {
+        headers: { Authorization: `Bearer ${getToken() ?? ""}` },
+      });
+      if (!res.ok) throw new Error(`Print failed (${res.status})`);
+      return res.text();
+    },
+  },
+  register: {
+    open: (branchId: string, businessDate: string, openingCash = 0) =>
+      request<{ success: boolean; data: any }>("POST", "/register/open", { branchId, businessDate, openingCash }),
+    close: (sessionId: string, countedCash: number, notes?: string) =>
+      request<{ success: boolean; data: any }>("POST", "/register/close", { sessionId, countedCash, notes }),
+    active: (branchId: string) =>
+      request<{ success: boolean; data: any }>("GET", `/register/active?branchId=${branchId}`),
+    zHtml: async (sessionId: string): Promise<string> => {
+      const res = await fetch(`${BASE}/register/${sessionId}/z`, {
+        headers: { Authorization: `Bearer ${getToken() ?? ""}` },
+      });
+      if (!res.ok) throw new Error(`Z-Reading failed (${res.status})`);
+      return res.text();
+    },
+  },
   analytics: {
     overview: (period: "today" | "week" | "month") =>
       request<{ success: boolean; data: any }>("GET", `/analytics/overview?period=${period}`),

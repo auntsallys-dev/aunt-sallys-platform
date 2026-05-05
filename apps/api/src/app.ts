@@ -12,6 +12,10 @@ import { publicRoutes } from "./routes/public.js";
 import { analyticsRoutes } from "./routes/analytics.js";
 import { adminRoutes } from "./routes/admin.js";
 import { driversRoutes } from "./routes/drivers.js";
+import { invoicesRoutes } from "./routes/invoices.js";
+import { collectionReceiptsRoutes } from "./routes/collection-receipts.js";
+import { registerRoutes } from "./routes/register.js";
+import { reportsRoutes } from "./routes/reports.js";
 import { readFileSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -42,6 +46,10 @@ app.route("/api/v1/public", publicRoutes);
 app.route("/api/v1/analytics", analyticsRoutes);
 app.route("/api/v1/admin", adminRoutes);
 app.route("/api/v1/drivers", driversRoutes);
+app.route("/api/v1/invoices", invoicesRoutes);
+app.route("/api/v1/collection-receipts", collectionReceiptsRoutes);
+app.route("/api/v1/register", registerRoutes);
+app.route("/api/v1/reports", reportsRoutes);
 
 // Serve static POS frontend
 app.use("/assets/*", serveStatic({ root: "./public" }));
