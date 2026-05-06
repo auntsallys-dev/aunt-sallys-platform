@@ -118,13 +118,15 @@ invoicesRoutes.post("/issue", authenticate, async (c) => {
     }, 422);
   }
 
-  // Refuse if an invoice already exists for this order.
-  const [existing] = await db.select({ id: salesInvoices.id })
+  // Idempotent: if an invoice was already issued for this order, return it
+  // instead of erroring. Lets the POS "Print Receipt" button be clicked
+  // multiple times without a duplicate-invoice error.
+  const [existing] = await db.select()
     .from(salesInvoices)
     .where(eq(salesInvoices.orderId, order.id))
     .limit(1);
   if (existing) {
-    return c.json({ success: false, error: "Invoice already issued for this order", invoiceId: existing.id }, 409);
+    return c.json({ success: true, data: existing, alreadyIssued: true });
   }
 
   // Determine seller VAT status. For now read from branch.settings or env.
