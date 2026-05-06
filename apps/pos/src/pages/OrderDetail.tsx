@@ -294,6 +294,15 @@ export function OrderDetailPage() {
   const [selectedDriverId, setSelectedDriverId] = useState("");
   const [assigningDriver, setAssigningDriver] = useState(false);
 
+  // BIR discount picker — applied at invoice issuance time.
+  // 'none' = no discount; 'sc' / 'pwd' apply 20% off + VAT-exempt rule (BIR
+  // R.A. 9994 / R.A. 10754); 'promo' / 'manager' are flat-amount.
+  type DiscountKind = "none" | "sc" | "pwd" | "promo" | "manager";
+  const [discountKind, setDiscountKind] = useState<DiscountKind>("none");
+  const [discountIdNumber, setDiscountIdNumber] = useState("");   // SC / PWD card number
+  const [discountAmount, setDiscountAmount] = useState("");       // promo / manager flat amount
+  const [discountReason, setDiscountReason] = useState("");       // manager override reason
+
   /**
    * Issue a BIR-compliant Sales Invoice for this order (if not already issued)
    * and open the server-rendered receipt in a new tab for the thermal printer.
@@ -305,6 +314,23 @@ export function OrderDetailPage() {
    */
   async function printReceipt(order: any) {
     try {
+      // ---- Validate discount picker before issuing ----
+      if ((discountKind === "sc" || discountKind === "pwd") && !discountIdNumber.trim()) {
+        alert(`${discountKind.toUpperCase()} discount requires an ID number. Please enter it before printing.`);
+        return;
+      }
+      if (discountKind === "manager" && !discountReason.trim()) {
+        alert("Manager-override discount requires a reason. Please enter one before printing.");
+        return;
+      }
+      const flatAmount = discountKind === "promo" || discountKind === "manager"
+        ? parseFloat(discountAmount || "0")
+        : undefined;
+      if ((discountKind === "promo" || discountKind === "manager") && (!flatAmount || flatAmount <= 0)) {
+        alert(`${discountKind} discount requires a positive peso amount.`);
+        return;
+      }
+
       // 1. Find or issue the Sales Invoice for this order.
       let invoiceId: string | undefined = order.invoiceId;
       if (!invoiceId) {
@@ -316,12 +342,12 @@ export function OrderDetailPage() {
             tin: order.customerTin ?? null,
             businessStyle: null,
           },
-          discount: order.discountType
+          discount: discountKind !== "none"
             ? {
-                type: order.discountType,
-                idNumber: order.discountIdNumber ?? null,
-                amount: parseFloat(order.discount ?? "0") || undefined,
-                reason: order.discountReason ?? null,
+                type: discountKind,
+                idNumber: discountIdNumber.trim() || null,
+                amount: flatAmount,
+                reason: discountReason.trim() || null,
               }
             : undefined,
         });
@@ -648,6 +674,62 @@ export function OrderDetailPage() {
           </div>
         </div>
       )}
+
+      {/* BIR Discount picker — applied at invoice issuance */}
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 mb-3">
+        <label className="block text-xs font-semibold text-slate-600 mb-1.5">Discount (applied to invoice)</label>
+        <select
+          value={discountKind}
+          onChange={(e) => setDiscountKind(e.target.value as DiscountKind)}
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 mb-2"
+        >
+          <option value="none">No discount</option>
+          <option value="sc">Senior Citizen — 20% off + VAT exempt</option>
+          <option value="pwd">PWD — 20% off + VAT exempt</option>
+          <option value="promo">Promo — flat peso amount</option>
+          <option value="manager">Manager Override — flat amount + reason</option>
+        </select>
+
+        {(discountKind === "sc" || discountKind === "pwd") && (
+          <input
+            type="text"
+            value={discountIdNumber}
+            onChange={(e) => setDiscountIdNumber(e.target.value)}
+            placeholder={`${discountKind === "sc" ? "Senior Citizen" : "PWD"} ID number (required)`}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 mb-1"
+          />
+        )}
+
+        {(discountKind === "promo" || discountKind === "manager") && (
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={discountAmount}
+            onChange={(e) => setDiscountAmount(e.target.value)}
+            placeholder="Discount amount in PHP (e.g. 50.00)"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 mb-1"
+          />
+        )}
+
+        {discountKind === "manager" && (
+          <input
+            type="text"
+            value={discountReason}
+            onChange={(e) => setDiscountReason(e.target.value)}
+            placeholder="Reason for override (required, audit-trailed)"
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 mb-1"
+          />
+        )}
+
+        {discountKind !== "none" && (
+          <p className="text-[11px] text-slate-500 mt-1">
+            {discountKind === "sc" || discountKind === "pwd"
+              ? "BIR rule: 20% off the VATable subset, then that subset becomes VAT-exempt. ID number is captured on the invoice and audit trail."
+              : "Discount amount is recorded against the invoice and the audit trail."}
+          </p>
+        )}
+      </div>
 
       {/* Print Receipt — always available */}
       <button
