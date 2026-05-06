@@ -343,6 +343,15 @@ export function NewOrderPage() {
   const [error, setError] = useState("");
   const [createdOrder, setCreatedOrder] = useState<CreatedOrder | null>(null);
 
+  // BIR discount picker — applied at invoice issuance time on print.
+  // 'sc' / 'pwd' apply 20% off + VAT-exempt (RA 9994 / RA 10754); 'promo' /
+  // 'manager' are flat-amount. Lives on the receipt success view.
+  type DiscountKind = "none" | "sc" | "pwd" | "promo" | "manager";
+  const [discountKind, setDiscountKind] = useState<DiscountKind>("none");
+  const [discountIdNumber, setDiscountIdNumber] = useState("");
+  const [discountAmount, setDiscountAmount] = useState("");
+  const [discountReason, setDiscountReason] = useState("");
+
   useEffect(() => {
     if (selectedBranchId) {
       api.services
@@ -423,56 +432,66 @@ export function NewOrderPage() {
     }
   }
 
-  // ── Print receipt (Android-compatible) ────────────────────────────────────
-  function printCreatedReceipt() {
-    const items = createdOrder?.items ?? [];
-    const date = new Date(createdOrder!.createdAt).toLocaleString("en-PH", { timeZone: "Asia/Manila", dateStyle: "medium", timeStyle: "short" });
-    const itemRows = items.map((i: any) =>
-      `<tr><td>${i.serviceName ?? i.notes ?? "Custom Service"}</td><td style="text-align:right">x${i.quantity}</td><td style="text-align:right">₱${parseFloat(i.totalPrice ?? i.unitPrice ?? "0").toFixed(2)}</td></tr>`
-    ).join("");
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-<title>Receipt ${createdOrder!.orderNumber}</title>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; margin: 0 auto; padding: 8px; }
-  .bold { font-weight: bold; } .center { text-align: center; }
-  .divider { border-top: 1px dashed #000; margin: 6px 0; }
-  h1 { font-size: 15px; text-align: center; margin-bottom: 2px; }
-  h2 { font-size: 11px; text-align: center; font-weight: normal; margin-bottom: 6px; }
-  table { width: 100%; border-collapse: collapse; }
-  td { padding: 2px 0; vertical-align: top; }
-  .total-row td { font-weight: bold; font-size: 13px; padding-top: 4px; }
-  .footer { text-align: center; margin-top: 10px; font-size: 11px; }
-  @media print { @page { margin: 0; size: 80mm auto; } }
-</style></head>
-<body>
-  <h1>Aunt Sally's Laundry</h1>
-  <h2>Order Receipt</h2>
-  <div class="divider"></div>
-  <div><span class="bold">Order #:</span> ${createdOrder!.orderNumber}</div>
-  <div><span class="bold">Customer:</span> ${customer ? customer.firstName + " " + customer.lastName : "Walk-in"}</div>
-  <div><span class="bold">Date:</span> ${date}</div>
-  <div><span class="bold">Type:</span> ${createdOrder!.orderType === "walk_in" ? "Walk-in" : "Pickup & Delivery"}</div>
-  <div><span class="bold">Payment:</span> ${createdOrder!.paymentMethod ?? "Cash"}</div>
-  <div class="divider"></div>
-  <table>
-    <tr><td><b>Service</b></td><td style="text-align:right"><b>Qty</b></td><td style="text-align:right"><b>Amount</b></td></tr>
-    ${itemRows}
-    <tr><td colspan="3"><div class="divider"></div></td></tr>
-    <tr class="total-row"><td colspan="2">TOTAL</td><td style="text-align:right">₱${parseFloat(createdOrder!.total).toFixed(2)}</td></tr>
-  </table>
-  <div class="divider"></div>
-  <div class="footer"><div>Thank you for choosing Aunt Sally's! 🫧</div></div>
-  <script>window.onload = function() { window.print(); window.onafterprint = function() { window.close(); }; }<\/script>
-</body></html>`;
-    const blob = new Blob([html], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.target = "_blank";
-    a.rel = "noopener";
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  // ── Print receipt — issues BIR Sales Invoice via the server ──────────────
+  // The POS no longer renders receipt content client-side; the server
+  // computes the per-branch invoice serial, VAT breakdown, and audit trail
+  // (apps/api/src/routes/invoices.ts).
+  async function printCreatedReceipt() {
+    if (!createdOrder) return;
+    try {
+      // Validate discount inputs before issuing the invoice.
+      if ((discountKind === "sc" || discountKind === "pwd") && !discountIdNumber.trim()) {
+        alert(`${discountKind.toUpperCase()} discount requires an ID number. Please enter it before printing.`);
+        return;
+      }
+      if (discountKind === "manager" && !discountReason.trim()) {
+        alert("Manager-override discount requires a reason. Please enter one before printing.");
+        return;
+      }
+      const flatAmount = discountKind === "promo" || discountKind === "manager"
+        ? parseFloat(discountAmount || "0")
+        : undefined;
+      if ((discountKind === "promo" || discountKind === "manager") && (!flatAmount || flatAmount <= 0)) {
+        alert(`${discountKind} discount requires a positive peso amount.`);
+        return;
+      }
+
+      // Issue (or fetch) the Sales Invoice for this order.
+      let invoiceId: string | undefined = (createdOrder as any).invoiceId;
+      if (!invoiceId) {
+        const res = await api.invoices.issue({
+          orderId: createdOrder.id,
+          customer: {
+            name: customer ? `${customer.firstName} ${customer.lastName}` : "Walk-in Customer",
+            address: null,
+            tin: null,
+            businessStyle: null,
+          },
+          discount: discountKind !== "none"
+            ? {
+                type: discountKind,
+                idNumber: discountIdNumber.trim() || null,
+                amount: flatAmount,
+                reason: discountReason.trim() || null,
+              }
+            : undefined,
+        });
+        invoiceId = res.data.id as string;
+      }
+
+      // Fetch the server-rendered Sales Invoice HTML and open it for print.
+      const html = await api.invoices.printHtml(invoiceId!);
+      const blob = new Blob([html], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    } catch (err: any) {
+      alert(`Could not print receipt: ${err?.message ?? err}`);
+    }
   }
 
   // ── Receipt view ───────────────────────────────────────────────────────────
@@ -552,6 +571,62 @@ export function NewOrderPage() {
           </div>
 
           <p className="mt-6 text-center text-xs text-gray-400">Thank you for choosing Aunt Sally's!</p>
+
+          {/* BIR Discount picker — applied at invoice issuance */}
+          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3" data-print-hide>
+            <label className="block text-xs font-semibold text-slate-600 mb-1.5">Discount (applied to invoice)</label>
+            <select
+              value={discountKind}
+              onChange={(e) => setDiscountKind(e.target.value as DiscountKind)}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 mb-2"
+            >
+              <option value="none">No discount</option>
+              <option value="sc">Senior Citizen — 20% off + VAT exempt</option>
+              <option value="pwd">PWD — 20% off + VAT exempt</option>
+              <option value="promo">Promo — flat peso amount</option>
+              <option value="manager">Manager Override — flat amount + reason</option>
+            </select>
+
+            {(discountKind === "sc" || discountKind === "pwd") && (
+              <input
+                type="text"
+                value={discountIdNumber}
+                onChange={(e) => setDiscountIdNumber(e.target.value)}
+                placeholder={`${discountKind === "sc" ? "Senior Citizen" : "PWD"} ID number (required)`}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 mb-1"
+              />
+            )}
+
+            {(discountKind === "promo" || discountKind === "manager") && (
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={discountAmount}
+                onChange={(e) => setDiscountAmount(e.target.value)}
+                placeholder="Discount amount in PHP (e.g. 50.00)"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 mb-1"
+              />
+            )}
+
+            {discountKind === "manager" && (
+              <input
+                type="text"
+                value={discountReason}
+                onChange={(e) => setDiscountReason(e.target.value)}
+                placeholder="Reason for override (required, audit-trailed)"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-300 mb-1"
+              />
+            )}
+
+            {discountKind !== "none" && (
+              <p className="text-[11px] text-slate-500 mt-1">
+                {discountKind === "sc" || discountKind === "pwd"
+                  ? "BIR rule: 20% off the VATable subset, then that subset becomes VAT-exempt. ID number is captured on the invoice and audit trail."
+                  : "Discount amount is recorded against the invoice and the audit trail."}
+              </p>
+            )}
+          </div>
 
           <div className="mt-4" data-print-hide>
             <button
