@@ -1,10 +1,16 @@
 /**
- * Applies the hand-written SQL files in packages/db/sql/ in numeric order.
- * Run AFTER `pnpm db:migrate` so the Drizzle schema exists.
+ * Applies the hand-written SQL files in packages/db/sql/ in numeric order
+ * (0001_, 0002_, 0003_, ...) — the BIR append-only triggers/functions that sit
+ * on top of the pushed Drizzle schema.
  *
- * Each .sql file is wrapped in its own BEGIN ... COMMIT internally — we run
- * them one at a time. The script is idempotent: every CREATE in those files
- * uses CREATE OR REPLACE / IF NOT EXISTS, so re-running is safe.
+ * DO NOT rely on remembering to run this separately. The canonical deploy is
+ * `pnpm --filter @aunt-sallys/db db:deploy`, which pushes the schema and THEN
+ * runs this applier in one shot — so the tamper-proof triggers can never be
+ * left off a freshly-provisioned database. This stays runnable on its own only
+ * for re-applying after a manual schema change.
+ *
+ * The script is idempotent: every CREATE uses CREATE OR REPLACE / IF NOT EXISTS
+ * and every trigger is DROP-then-CREATE, so re-running is safe.
  */
 import postgres from "postgres";
 import fs from "node:fs";

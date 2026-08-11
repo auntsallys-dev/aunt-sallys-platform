@@ -159,9 +159,7 @@ $$;
 -- enforcement happens at the role/grant level (out of scope for this file).
 
 COMMENT ON FUNCTION issue_invoice_number IS
-  'BIR CAS — issues the next sequential invoice number for a branch. ' ||
-  'Application role MUST NOT call setval() or ALTER SEQUENCE directly. ' ||
-  'Per RR 11-2024, invoice serials must be non-resettable.';
+  'BIR CAS — issues the next sequential invoice number for a branch. Application role MUST NOT call setval() or ALTER SEQUENCE directly. Per RR 11-2024, invoice serials must be non-resettable.';
 
 -- -----------------------------------------------------------------------------
 -- 4. Audit trail — append-only enforcement

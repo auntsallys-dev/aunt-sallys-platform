@@ -30,6 +30,7 @@ import { spawn } from "node:child_process";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { db, backupLog } from "@aunt-sallys/db";
 // @aws-sdk/client-s3 is dynamically imported inside uploadToR2 so this file
 // typechecks even when the SDK isn't installed in the dev sandbox. In
 // production the dependency MUST be installed (see apps/api/package.json).
@@ -154,35 +155,70 @@ async function uploadToR2(cfg: Config, key: string, srcPath: string): Promise<vo
 
 export async function runBackup(): Promise<{ key: string; sha256: string; size: number }> {
   const cfg = loadConfig();
-  const ts = new Date().toISOString().replace(/[:.]/g, "-");
+  const startedAt = new Date();
+  const ts = startedAt.toISOString().replace(/[:.]/g, "-");
   const tmpDump = `/tmp/aunt-sallys-${ts}.dump`;
   const tmpEnc = `${tmpDump}.aes`;
 
   console.log(`[backup] starting at ${ts}`);
-  await pgDump(cfg.databaseUrl, tmpDump);
+  try {
+    await pgDump(cfg.databaseUrl, tmpDump);
 
-  const { sha256, size } = await encryptFileAesGcm(tmpDump, tmpEnc, cfg.encKeyHex);
+    const { sha256, size } = await encryptFileAesGcm(tmpDump, tmpEnc, cfg.encKeyHex);
 
-  const yyyymm = ts.slice(0, 7);
-  const key = `daily/${yyyymm}/aunt-sallys-${ts}.dump.aes`;
+    const yyyymm = ts.slice(0, 7);
+    const key = `daily/${yyyymm}/aunt-sallys-${ts}.dump.aes`;
 
-  if (cfg.localDir) {
-    const dst = path.join(cfg.localDir, key);
-    fs.mkdirSync(path.dirname(dst), { recursive: true });
-    fs.copyFileSync(tmpEnc, dst);
-    console.log(`[backup] local copy → ${dst}`);
-  } else {
-    await uploadToR2(cfg, key, tmpEnc);
-    console.log(`[backup] uploaded → r2://${cfg.r2.bucket}/${key}`);
+    if (cfg.localDir) {
+      const dst = path.join(cfg.localDir, key);
+      fs.mkdirSync(path.dirname(dst), { recursive: true });
+      fs.copyFileSync(tmpEnc, dst);
+      console.log(`[backup] local copy → ${dst}`);
+    } else {
+      await uploadToR2(cfg, key, tmpEnc);
+      console.log(`[backup] uploaded → r2://${cfg.r2.bucket}/${key}`);
+    }
+
+    console.log(`[backup] sha256=${sha256} size=${size}`);
+
+    // Clean tmp files
+    try { fs.unlinkSync(tmpDump); } catch {}
+    try { fs.unlinkSync(tmpEnc); } catch {}
+
+    // BIR retention evidence — record the successful run (append-only log).
+    await recordBackup({ objectKey: key, sha256, sizeBytes: size, status: "success", error: null, startedAt });
+
+    return { key, sha256, size };
+  } catch (err) {
+    // A failed backup must be visible, not silent — record it and re-throw.
+    try { fs.unlinkSync(tmpDump); } catch {}
+    try { fs.unlinkSync(tmpEnc); } catch {}
+    await recordBackup({
+      objectKey: null,
+      sha256: null,
+      sizeBytes: null,
+      status: "failed",
+      error: err instanceof Error ? err.message : String(err),
+      startedAt,
+    });
+    throw err;
   }
+}
 
-  console.log(`[backup] sha256=${sha256} size=${size}`);
-
-  // Clean tmp files
-  try { fs.unlinkSync(tmpDump); } catch {}
-  try { fs.unlinkSync(tmpEnc); } catch {}
-
-  return { key, sha256, size };
+/** Append one row to backup_log. Never throws — logging must not mask the run's real outcome. */
+async function recordBackup(row: {
+  objectKey: string | null;
+  sha256: string | null;
+  sizeBytes: number | null;
+  status: "success" | "failed";
+  error: string | null;
+  startedAt: Date;
+}): Promise<void> {
+  try {
+    await db.insert(backupLog).values(row);
+  } catch (e) {
+    console.error("[backup] WARNING — could not write backup_log row:", e);
+  }
 }
 
 // Entrypoint when run directly: `node dist/jobs/backup.js`

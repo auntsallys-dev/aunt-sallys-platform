@@ -13,6 +13,7 @@
 
 import { formatPhp } from "@aunt-sallys/shared/tax";
 import type { SalesInvoice, SalesInvoiceItem, CollectionReceipt } from "@aunt-sallys/db";
+import { assertFiscalCoreIntact } from "./invoice-fiscal-core.js";
 
 const COMMON_CSS = `
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -32,6 +33,7 @@ const COMMON_CSS = `
   .total-row td { font-weight: bold; font-size: 13px; padding-top: 4px; border-top: 1px solid #000; }
   .footer { text-align: center; margin-top: 10px; font-size: 10px; }
   .void-banner { background: #000; color: #fff; text-align: center; padding: 4px 0; margin: 6px 0; font-weight: bold; }
+  .reprint-banner { border: 2px solid #000; text-align: center; padding: 3px 0; margin: 6px 0; font-weight: bold; letter-spacing: 2px; }
   @media print { @page { margin: 0; size: 80mm auto; } body { width: 80mm; } }
 `;
 
@@ -58,6 +60,10 @@ export interface InvoiceRenderInput {
   paymentMethod?: string | null;
   paymentReference?: string | null;
   amountTendered?: number | null;
+  /** True when this render is a reprint of an already-printed invoice (BIR: must be watermarked). */
+  isReprint?: boolean;
+  /** 1 = original, 2+ = the nth reprint. Shown in the watermark for traceability. */
+  printSeq?: number | null;
 }
 
 export function renderSalesInvoiceHtml(input: InvoiceRenderInput): string {
@@ -68,6 +74,9 @@ export function renderSalesInvoiceHtml(input: InvoiceRenderInput): string {
     : "";
   const reversalBanner = inv.voidsInvoiceId
     ? `<div class="void-banner">REVERSAL OF INVOICE</div>`
+    : "";
+  const reprintBanner = input.isReprint
+    ? `<div class="reprint-banner">REPRINT${input.printSeq && input.printSeq > 1 ? ` — COPY #${esc(input.printSeq)}` : ""}</div>`
     : "";
 
   const itemRows = input.items
@@ -86,7 +95,7 @@ export function renderSalesInvoiceHtml(input: InvoiceRenderInput): string {
       ? Math.max(0, input.amountTendered - parseFloat(inv.total))
       : null;
 
-  return `<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -94,7 +103,7 @@ export function renderSalesInvoiceHtml(input: InvoiceRenderInput): string {
   <style>${COMMON_CSS}</style>
 </head>
 <body>
-  ${reversalBanner}${voidBanner}
+  ${reversalBanner}${voidBanner}${reprintBanner}
   <h1>${esc(inv.sellerRegisteredName)}</h1>
   <h2>Trading as ${esc(inv.sellerTradeName)}</h2>
   <div class="center small">${esc(inv.sellerAddress)}</div>
@@ -148,6 +157,8 @@ export function renderSalesInvoiceHtml(input: InvoiceRenderInput): string {
   <script>window.onload = function() { window.print(); window.onafterprint = function() { window.close(); }; }<\/script>
 </body>
 </html>`;
+  assertFiscalCoreIntact(html, inv);
+  return html;
 }
 
 export interface CrRenderInput {

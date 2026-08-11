@@ -8,5 +8,7 @@ export * from "./payments.js";
 export * from "./deliveries.js";
 export * from "./driver-locations.js";
 export * from "./invoices.js";
+export * from "./invoice_prints.js";
+export * from "./backup_log.js";
 export * from "./audit_trail.js";
 export * from "./register_sessions.js";

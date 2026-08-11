@@ -19,6 +19,7 @@ import {
   db,
   salesInvoices,
   salesInvoiceItems,
+  invoicePrints,
   orders,
   orderItems,
   customers,
@@ -129,22 +130,39 @@ invoicesRoutes.post("/issue", authenticate, async (c) => {
     return c.json({ success: true, data: existing, alreadyIssued: true });
   }
 
-  // Determine seller VAT status. For now read from branch.settings or env.
-  // Fallback: VAT (per Luxury Momnrock HQ confirmation).
+  // Seller fiscal identity is per-tenant config that must be set in stone before
+  // a branch can issue BIR invoices. No cross-tenant fallback: an unconfigured
+  // branch must FAIL loudly, never inherit another taxpayer's registered name/TIN.
   const settings = (branch.settings as Record<string, unknown> | null) ?? {};
-  const sellerVatStatus: VatStatus =
-    typeof settings["vatStatus"] === "string" && settings["vatStatus"] === "non-vat"
-      ? "non-vat"
-      : "vat";
-  const sellerRegName =
-    (typeof settings["registeredName"] === "string" && (settings["registeredName"] as string)) ||
-    "BAUTISTA, JENNIFER KRISTINE BONNEVIE";
-  const sellerTradeName =
-    (typeof settings["tradeName"] === "string" && (settings["tradeName"] as string)) ||
-    "Luxury Momnrock Laundry Service";
-  const sellerTin =
-    (typeof settings["tin"] === "string" && (settings["tin"] as string)) ||
-    `236-606-454-${branch.branchCode}`;
+  const cfgStr = (k: string): string | null => {
+    const v = settings[k];
+    return typeof v === "string" && v.trim() !== "" ? v.trim() : null;
+  };
+  const sellerRegName = cfgStr("registeredName");
+  const sellerTradeName = cfgStr("tradeName");
+  const sellerTin = cfgStr("tin");
+  const vatRaw = cfgStr("vatStatus");
+  if (!sellerRegName || !sellerTradeName || !sellerTin || !vatRaw) {
+    const missing = [
+      !sellerRegName && "registeredName",
+      !sellerTradeName && "tradeName",
+      !sellerTin && "tin",
+      !vatRaw && "vatStatus",
+    ].filter(Boolean);
+    return c.json(
+      {
+        success: false,
+        error:
+          `Branch fiscal identity is not configured (missing: ${missing.join(", ")}). ` +
+          `Set the BIR seller identity in branch settings before issuing invoices.`,
+      },
+      422
+    );
+  }
+  if (vatRaw !== "vat" && vatRaw !== "non-vat") {
+    return c.json({ success: false, error: `Invalid vatStatus '${vatRaw}' (expected 'vat' or 'non-vat').` }, 422);
+  }
+  const sellerVatStatus: VatStatus = vatRaw;
 
   // Build tax-compute input.
   const lineTaxClass = input.lineTaxClass ?? {};
@@ -293,6 +311,7 @@ invoicesRoutes.get("/", authenticate, async (c) => {
 
 invoicesRoutes.get("/:id/print", authenticate, async (c) => {
   const id = c.req.param("id")!;
+  const authUser = c.get("authUser");
   const [inv] = await db.select().from(salesInvoices).where(eq(salesInvoices.id, id)).limit(1);
   if (!inv) return c.text("Invoice not found", 404);
 
@@ -304,11 +323,29 @@ invoicesRoutes.get("/:id/print", authenticate, async (c) => {
   const [issuer] = await db.select({ firstName: users.firstName, lastName: users.lastName })
     .from(users).where(eq(users.id, inv.issuedBy)).limit(1);
 
+  // BIR: every print is logged; prints after the first are watermarked REPRINT.
+  // The log is append-only (invoice_prints_block_modify trigger) — each print is
+  // a new row, and printSeq is derived from the count of prior prints.
+  const [{ prior }] = await db
+    .select({ prior: sql<number>`count(*)::int` })
+    .from(invoicePrints)
+    .where(eq(invoicePrints.invoiceId, inv.id));
+  const printSeq = (prior ?? 0) + 1;
+  const isReprint = printSeq > 1;
+  await db.insert(invoicePrints).values({
+    invoiceId: inv.id,
+    printedBy: authUser.id,
+    printSeq,
+    isReprint,
+  });
+
   const html = renderSalesInvoiceHtml({
     invoice: inv,
     items: lines,
     branchName: branch?.name ?? "Branch",
     cashierName: [issuer?.firstName, issuer?.lastName].filter(Boolean).join(" ") || "Cashier",
+    isReprint,
+    printSeq,
   });
   return c.html(html);
 });

@@ -10,7 +10,9 @@
   "scripts": {
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/migrate.ts",
+    "db:push": "drizzle-kit push",
     "db:apply-bir-cas": "tsx src/apply-bir-cas-sql.ts",
+    "db:deploy": "pnpm db:push && pnpm db:apply-bir-cas",
     "db:seed": "tsx src/seed.ts",
     "db:studio": "drizzle-kit studio",
     "typecheck": "tsc --noEmit"
