@@ -32,6 +32,8 @@ const COMMON_CSS = `
   td.amt { text-align: right; }
   .total-row td { font-weight: bold; font-size: 13px; padding-top: 4px; border-top: 1px solid #000; }
   .footer { text-align: center; margin-top: 10px; font-size: 10px; }
+  .nowrap { white-space: nowrap; }
+  .balance { text-wrap: balance; }
   .void-banner { background: #000; color: #fff; text-align: center; padding: 4px 0; margin: 6px 0; font-weight: bold; }
   .reprint-banner { border: 2px solid #000; text-align: center; padding: 3px 0; margin: 6px 0; font-weight: bold; letter-spacing: 2px; }
   @media print { @page { margin: 0; size: 80mm auto; } body { width: 80mm; } }
@@ -106,13 +108,13 @@ export function renderSalesInvoiceHtml(input: InvoiceRenderInput): string {
   ${reversalBanner}${voidBanner}${reprintBanner}
   <h1>${esc(inv.sellerRegisteredName)}</h1>
   <h2>Trading as ${esc(inv.sellerTradeName)}</h2>
-  <div class="center small">${esc(inv.sellerAddress)}</div>
+  <div class="center small balance">${esc(inv.sellerAddress)}</div>
   <div class="center small">TIN: ${esc(inv.sellerTin)} ${inv.sellerVatStatus === "vat" ? "VAT-REGISTERED" : "NON-VAT"}</div>
   <div class="divider"></div>
   <h3>SALES INVOICE</h3>
   <div class="divider"></div>
   <table>
-    <tr><td><b>Invoice No.</b></td><td class="amt">${esc(inv.invoiceNumber)}</td></tr>
+    <tr><td class="nowrap"><b>Invoice No.</b></td><td class="amt">${esc(inv.invoiceNumber)}</td></tr>
     <tr><td><b>Date/Time</b></td><td class="amt">${esc(fmtDate(inv.issuedAt))}</td></tr>
     <tr><td><b>Branch</b></td><td class="amt">${esc(input.branchName)} (${esc(inv.sellerBranchCode)})</td></tr>
     <tr><td><b>Cashier</b></td><td class="amt">${esc(input.cashierName)}</td></tr>

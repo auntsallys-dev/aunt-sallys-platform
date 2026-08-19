@@ -1,1 +1,9 @@
 .vercel
+
+# Stale tsc emit — src is TS/TSX only; JS here shadows source under Vite's
+# .js-before-.tsx resolution. Keep the one hand-written ambient decl.
+src/**/*.js
+src/**/*.js.map
+src/**/*.d.ts
+src/**/*.d.ts.map
+!src/vite-env.d.ts
