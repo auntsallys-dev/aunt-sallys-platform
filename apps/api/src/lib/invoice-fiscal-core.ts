@@ -58,7 +58,7 @@ export const FISCAL_INVOICE_MARKERS: FiscalMarker[] = [
   { id: "zero_rated_sales", label: "Zero-Rated Sales breakdown", present: (h) => /zero-?rated\s*sales/i.test(h) },
   { id: "vat_amount", label: "VAT Amount line", present: (h) => /vat\s*amount/i.test(h) },
   { id: "total_due", label: "Total Amount Due", present: (h) => /total\s*amount\s*due/i.test(h) },
-  { id: "permit_line", label: "BIR Permit/PTU number line", present: (h) => /(bir\s*permit|ptu\s*no)/i.test(h) },
+  { id: "permit_line", label: "BIR Acknowledgement Certificate / Permit number line", present: (h) => /(acknowledgement\s*certificate\s*no|bir\s*permit|ptu\s*no)/i.test(h) },
   {
     id: "validity_notice",
     label: "5-year validity notice",

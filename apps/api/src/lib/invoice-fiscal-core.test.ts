@@ -34,8 +34,8 @@ const compliantHtml = `
   <div>Zero-Rated Sales 0.00</div>
   <div>VAT Amount (12%) 12.00</div>
   <div>TOTAL AMOUNT DUE 112.00</div>
-  <div>BIR Permit No.: [PTU NO. — pending]</div>
-  <div>"THIS INVOICE SHALL BE VALID FOR FIVE (5) YEARS FROM THE DATE OF THE PERMIT"</div>
+  <div>Acknowledgement Certificate No.: [AC NO. — pending]</div>
+  <div>"THIS INVOICE SHALL BE VALID FOR FIVE (5) YEARS FROM THE DATE OF THE ACKNOWLEDGEMENT CERTIFICATE"</div>
 `;
 
 test("a compliant rendering satisfies every fiscal marker", () => {
@@ -50,8 +50,8 @@ test("dropping any single mandatory field throws FiscalCoreViolation", () => {
     ["doc_title", /SALES INVOICE/],
     ["vat_amount", /VAT Amount \(12%\) 12\.00/],
     ["total_due", /TOTAL AMOUNT DUE 112\.00/],
-    ["permit_line", /BIR Permit No\.: \[PTU NO\. — pending\]/],
-    ["validity_notice", /"THIS INVOICE SHALL BE VALID FOR FIVE \(5\) YEARS FROM THE DATE OF THE PERMIT"/],
+    ["permit_line", /Acknowledgement Certificate No\.: \[AC NO\. — pending\]/],
+    ["validity_notice", /"THIS INVOICE SHALL BE VALID FOR FIVE \(5\) YEARS FROM THE DATE OF THE ACKNOWLEDGEMENT CERTIFICATE"/],
     ["seller_tin", new RegExp(inv.sellerTin)],
   ];
   for (const [id, re] of drops) {
